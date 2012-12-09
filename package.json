@@ -1,0 +1,24 @@
+{
+  "name": "uploadfs",
+  "version": "0.1.0",
+  "description": "Store files in a web-accessible location. Includes both S3-based and local filesystem-based backends.",
+  "main": "uploadfs.js",
+  "scripts": {
+    "test": "node test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:boutell/uploadfs.git"
+  },
+  "keywords": [
+    "upload",
+    "files",
+    "s3",
+    "storage"
+  ],
+  "author": "Thomas Boutell",
+  "license": "MIT",
+  "dependencies": {
+    "mkdirp": "~0.3.4"
+  }
+}
