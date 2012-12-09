@@ -11,6 +11,7 @@ var fs = require('fs');
 
 var uploadsPath;
 var uploadsUrl;
+var removeCandidates = {};
 
 var self = module.exports = {
   init: function(options, callback) {
@@ -22,7 +23,37 @@ var self = module.exports = {
     if (!uploadsUrl) {
       return callback('uploadsUrl not set');
     }
+    // We use a timeout that we reinstall each time rather than
+    // an interval to avoid pileups 
+    setTimeout(cleanup, 1000);
     return callback(null);
+
+    function cleanup() {
+      var list = [];
+      // Take a snapshot of the candidates before we do any async stuff
+      for (var candidate in removeCandidates) {
+        list.push(candidate);
+      }
+      // Start accumulating new candidates
+      removeCandidates = {};
+      // Try removing this batch of candidates. An error just means
+      // the directory isn't actually empty, which is fine. If we don't
+      // get an error, try removing the parent directory on the next pass
+      for (var i = 0; (i < list.length); i++) {
+        var path = list[i];
+        if (path.length <= 1) {
+          // Never remove uploadsPath itself
+          continue;
+        }
+        fs.rmdir(uploadsPath + path, function(e) {
+          if (!e) {
+            removeCandidates[dirname(path)] = true;
+          }
+        });
+      }
+      // Try again in 1 second
+      setTimeout(cleanup, 1000);
+    }
   },
 
   copyIn: function(localPath, path, options, callback) {
@@ -43,10 +74,22 @@ var self = module.exports = {
       // retry the whole thing after recursively creating
       // the folder and its parents as needed, avoiding the
       // overhead of checking for folders in the majority
-      // of cases where they already exist. Try this up to
-      // 5 times to guard against rare race conditions with
-      // the rmdir mechanism (see remove()).
-      if ((e.code === 'ENOENT') && ((!options.afterMkdirp) || (options.afterMkdirp <= 5))) {
+      // of cases where they already exist. 
+      //
+      // Try this up to 100 times to guard against race conditions 
+      // with the empty directory cleanup mechanism: as long as 
+      // there are fewer than 100 node processes running this backend
+      // at once, it should not be possible for a sudden burst
+      // of rmdir()s to defeat the mkdir() mechanism. 
+      //
+      // Note that there will only be one node process unless you're using 
+      // cluster, multiple Heroku dynos, or something similar. 
+      //
+      // If you have more than 100 CPU cores bashing on this folder,
+      // I respectfully suggest it may be time for the 
+      // S3 backend anyway.
+
+      if ((e.code === 'ENOENT') && ((!options.afterMkdirp) || (options.afterMkdirp <= 100))) {
         mkdirp(dirname(uploadPath), function (e) {
           if (e) {
             return callback(e);
@@ -83,25 +126,7 @@ var self = module.exports = {
   remove: function(path, callback) {
     var uploadPath = uploadsPath + path;
     fs.unlink(uploadPath, callback);
-    // After a random interval to prevent a slamming scenario,
-    // attempt to remove the folder. If it is not empty this will 
-    // succeed. In that case, try again with the parent folder until 
-    // we run out of parents. This will eventually purge all subdirectories 
-    // if all files have been removed
-    removeDirectoryLaterIfEmpty(dirname(path));
-    function removeDirectoryLaterIfEmpty(path) {
-      // Don't remove the main upload dir
-      if (path.length <= 1) {
-        return;
-      }
-      setTimeout(function() {
-        fs.rmdir(uploadsPath + path, function(e) {
-          if (!e) {
-            removeDirectoryLaterIfEmpty(dirname(path));
-          }
-        });
-      }, Math.random() * 1000 + 1000);
-    }
+    removeCandidates[dirname(path)] = true;
   },
 
   getUrl: function() {
