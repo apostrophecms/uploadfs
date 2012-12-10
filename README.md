@@ -68,7 +68,7 @@ Tom Boutell
 
 [http://github.com/boutell/uploadfs](http://github.com/boutell/uploadfs)
 
-[justjs.com](justjs.com)
+[justjs.com](http://justjs.com)
 
 [@boutell](http://twitter.com/boutell)
 
