@@ -38,7 +38,7 @@ Here's the interesting bit:
       }
     });
 
-Note the use of `uploadfs.getUrl()` to determine the URL of the uploaded image. '''Use this method consistently and your code will find the file in the right place regardless of the backend chosen.'''
+Note the use of `uploadfs.getUrl()` to determine the URL of the uploaded image. **Use this method consistently and your code will find the file in the right place regardless of the backend chosen.**
 
 ## Removing Files
 
