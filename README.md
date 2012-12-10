@@ -1,15 +1,17 @@
 uploadfs
 ========
 
-Copies files to a web-accessible location and provides a consistent way to get the URLs that correspond to those files. Includes both S3-based and local filesystem-based backends. The API offers the same conveniences with both backends:
+uploadfs copies files to a web-accessible location and provides a consistent way to get the URLs that correspond to those files. Includes both S3-based and local filesystem-based backends. The API offers the same conveniences with both backends, avoiding the most frustrating features of each:
 
-* Parent directories are created automatically as needed
-* Content types are inferred from file extensions
-* Files are automatically marked as being readable via the web when using S3
+* Parent directories are created automatically as needed (like S3)
+* Content types are inferred from file extensions (like the filesystem)
+* Files are always made readable via the web)
 
 You can also remove a file if needed.
 
 There is no API to retrieve information about existing files. This is intentional. Constantly manipulating directory information is much slower in the cloud than on a local filesystem and you should not become reliant on it. Your code should maintain its own database of file information if needed, for instance in a MongoDB collection.
+
+## API Overview
 
 Here's the entire API:
 
@@ -20,6 +22,8 @@ Here's the entire API:
 * The `remove` method removes a file from uploadfs.
 
 * The `getUrl` method returns the URL to which you should append uploadfs paths to fetch them with a web browser.
+
+## Working Example
 
 For a complete, very simple and short working example in which a user uploads a profile photo, see `sample.js`.
 
@@ -36,11 +40,15 @@ Here's the interesting bit:
 
 Note the use of `uploadfs.getUrl()` to determine the URL of the uploaded image. '''Use this method consistently and your code will find the file in the right place regardless of the backend chosen.'''
 
+## Removing Files
+
 Here's how to remove a file:
 
     uploadfs.remove('/profiles/me.jpg', function(e) { ... });
 
-'''Be aware that uploads to Amazon S3's us-standard region are not guaranteed to be readable the moment you finish uploading them.''' This is a big difference from how a regular filesystem behaves. One browser might see them right away while another does not. This is called "eventual consistency." To avoid this, you can use an alternate S3 region such as `us-west-2` (Oregon). However, also be aware that updates of an existing file or deletions of a file still won't be instantly seen everywhere, even if you don't use the `us-standard` region. To avoid this problem, include a version number or randomly generated ID in each filename.
+## Important Concerns With S3
+
+**Be aware that uploads to Amazon S3's us-standard region are not guaranteed to be readable the moment you finish uploading them.** This is a big difference from how a regular filesystem behaves. One browser might see them right away while another does not. This is called "eventual consistency." To avoid this, you can use an alternate S3 region such as `us-west-2` (Oregon). However, also be aware that updates of an existing file or deletions of a file still won't be instantly seen everywhere, even if you don't use the `us-standard` region. To avoid this problem, include a version number or randomly generated ID in each filename.
 
 In `sample.js` I configure Express to actually serve the uploaded files when using the local backend. When using the s3 backend, you don't need to do this, because your files are served from S3. S3 URLs look like this:
 
@@ -49,6 +57,8 @@ In `sample.js` I configure Express to actually serve the uploaded files when usi
 If you use `uploadfs.getUrl()` consistently, code written with one backend will migrate easily to the other.
 
 It's up to you to create an Amazon S3 bucket and obtain your secret and key. See sample.js for details.
+
+## Conclusion and Contact Information
 
 That's it! That should be all you need. If not, open an issue on github and we'll talk.
 
