@@ -131,7 +131,6 @@ var self = module.exports = {
 
   getUrl: function() {
     return uploadsUrl;
-  },
-
+  }
 };
 

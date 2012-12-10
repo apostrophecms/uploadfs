@@ -19,6 +19,8 @@
   "author": "Thomas Boutell",
   "license": "MIT",
   "dependencies": {
-    "mkdirp": "~0.3.4"
+    "mkdirp": "~0.3.4",
+    "knox": "~0.4.4",
+    "request": "~2.12.0"
   }
 }
