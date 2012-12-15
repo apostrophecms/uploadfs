@@ -91,14 +91,15 @@ function createApp(err) {
   });
 
   app.post('/', function(req, res) {
-    uploadfs.copyImageIn(req.files.photo.path, '/profiles/me.jpg', function(e) {
+    uploadfs.copyImageIn(req.files.photo.path, '/profiles/me', function(e, info) {
       if (e) {
         res.send('An error occurred: ' + e);
       } else {
-        res.send('<h1>All is well. Here is the image in three sizes.</h1>' +
-          '<div><img src="' + uploadfs.getUrl() + '/profiles/me.small.jpg" /></div>' + 
-          '<div><img src="' + uploadfs.getUrl() + '/profiles/me.medium.jpg" /></div>' +
-          '<div><img src="' + uploadfs.getUrl() + '/profiles/me.large.jpg" /></div>');    
+        res.send('<h1>All is well. Here is the image in three sizes plus the original.</h1>' +
+          '<div><img src="' + uploadfs.getUrl() + info.basePath + '.small.' + info.extension + '" /></div>' + 
+          '<div><img src="' + uploadfs.getUrl() + info.basePath + '.medium.' + info.extension + '" /></div>' + 
+          '<div><img src="' + uploadfs.getUrl() + info.basePath + '.large.' + info.extension + '" /></div>' +
+          '<div><img src="' + uploadfs.getUrl() + info.basePath + '.' + info.extension + '" /></div>');       
       }
     });
   });

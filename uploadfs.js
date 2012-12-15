@@ -55,21 +55,31 @@ var self = module.exports = {
   },
 
   /**
-   * Copy an image into uploadfs. In addition to the original, which is
-   * copied to 'path', scaled versions as defined by the imageSizes option
+   * Copy an image into uploadfs. Scaled versions as defined by the imageSizes option
    * at init() time are copied into uploadfs as follows:
    *
-   * If 'path' is me.jpg and sizes with names 'small', 'medium' and 'large'
+   * If 'path' is '/me' and sizes with names 'small', 'medium' and 'large'
    * were defined at init() time, the scaled versions will be:
    *
-   * 'me.small.jpg', 'me.medium.jpg', 'me.large.jpg'
+   * '/me.small.jpg', '/me.medium.jpg', '/me.large.jpg'
+   *
+   * And the original file will be copied to:
+   *
+   * '/me.jpg'
+   * 
+   * Note that a file extension is added automatically. If you provide a
+   * file extension in 'path' it will be honored when copying the original only.
+   * The scaled versions will get appropriate extensions for their format
+   * as detected by Imagemagick.
    *
    * If there is no error the second argument passed to the callback will
    * be an object with a 'basePath' property containing your original path
-   * with the file extension removed, as a convenience for locating the
-   * scaled versions just by adding .small.jpg, .medium.jpg, etc.
+   * with the file extension removed and an 'extension' property containing
+   * the automatically added file extension, as a convenience for locating the
+   * original and scaled versions just by adding .jpg, .small.jpg, .medium.jpg, 
+   * etc.
    *
-   * Scaled versions have the same format as the original and are no wider
+   * Scaled versions have the same file format as the original and are no wider
    * or taller than specified by the width and height properties of the
    * corresponding size, with the aspect ratio always being preserved. 
    * If options.copyOriginal is explicitly false, the original image is
@@ -120,7 +130,16 @@ var self = module.exports = {
 
     function copyOriginal(callback) {
       if (options.copyOriginal !== false) {
-        self.copyIn(localPath, path, options, callback);
+        context.basePath = path.replace(/\.\w+$/, '');
+        var originalPath;
+        if (context.basePath !== path) {
+          // If there was already an extension, respect it for the original
+          originalPath = path;
+        } else {
+          // Caller did not supply an extension, so add one for the original
+          originalPath = context.basePath + '.' + context.extension;
+        }
+        self.copyIn(localPath, originalPath, options, callback);
       } else {
         callback(null);
       }
@@ -137,7 +156,6 @@ var self = module.exports = {
 
       async.mapSeries(imageSizes, function(size, callback) {
         var suffix = size.name + '.' + context.extension;
-        context.basePath = path.replace(/\.\w+$/, '');
         var tempFile = context.tempFolder + '/' + suffix;
 
         // Can't use imagemagick.resize convenience method because it doesn't
@@ -165,7 +183,7 @@ var self = module.exports = {
       if (context.tempFolder) {
         rmRf(context.tempFolder, function(e) { });
       }
-      callback(err, { basePath: context.basePath });
+      callback(err, { basePath: context.basePath, extension: context.extension });
     }
   },
 

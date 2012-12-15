@@ -110,7 +110,9 @@ function localTestStart() {
 
   function testCopyImageIn() {
     console.log('testing copyImageIn');
-    uploadfs.copyImageIn('test.jpg', '/images/profiles/me.jpg', function(e, info) {
+
+    // Note copyImageIn adds an extension for us
+    uploadfs.copyImageIn('test.jpg', '/images/profiles/me', function(e, info) {
       if (e) {
         console.log('testCopyImageIn failed:');
         console.log(e);
@@ -228,7 +230,8 @@ function s3TestStart() {
 
   function testCopyImageIn() {
     console.log('testing copyImageIn');
-    uploadfs.copyImageIn('test.jpg', '/images/profiles/me.jpg', function(e, info) {
+    // Let copyImageIn supply a file extension
+    uploadfs.copyImageIn('test.jpg', '/images/profiles/me', function(e, info) {
       if (e) {
         console.log('testCopyImageIn failed:');
         console.log(e);
@@ -237,10 +240,10 @@ function s3TestStart() {
       console.log('Waiting 5 seconds for AWS consistency');
       console.log('(Only really necessary in the us-standard region)');
       setTimeout(function() {
-        var path = '/images/profiles/me.jpg';
+        var path = '/images/profiles/me';
         var url = uploadfs.getUrl();
 
-        var paths = [path];
+        var paths = [ info.basePath + '.jpg' ];
         paths.push(info.basePath + '.small.jpg');
         paths.push(info.basePath + '.medium.jpg');
         paths.push(info.basePath + '.large.jpg');

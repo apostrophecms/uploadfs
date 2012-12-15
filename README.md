@@ -43,20 +43,21 @@ Here's the entire API:
 
 For a complete, very simple and short working example in which a user uploads a profile photo, see `sample.js`.
 
-Here's the interesting bit:
+Here's the interesting bit. Note that I do not supply an extension for the final image file, because I want to let Imagemagick figure that out for me.
 
-    app.post('/', function(req, res) {
-      uploadfs.copyImageIn(req.files.photo.path, '/profiles/me.jpg', function(e) {
-        if (e) {
-          res.send('An error occurred: ' + e);
-        } else {
-          res.send('<h1>All is well. Here is the image in three sizes.</h1>' +
-            '<div><img src="' + uploadfs.getUrl() + '/profiles/me.small.jpg" /></div>' + 
-            '<div><img src="' + uploadfs.getUrl() + '/profiles/me.medium.jpg" /></div>' +
-            '<div><img src="' + uploadfs.getUrl() + '/profiles/me.large.jpg" /></div>');    
-        }
-      });
+  app.post('/', function(req, res) {
+    uploadfs.copyImageIn(req.files.photo.path, '/profiles/me', function(e, info) {
+      if (e) {
+        res.send('An error occurred: ' + e);
+      } else {
+        res.send('<h1>All is well. Here is the image in three sizes plus the original.</h1>' +
+          '<div><img src="' + uploadfs.getUrl() + info.basePath + '.small.' + info.extension + '" /></div>' + 
+          '<div><img src="' + uploadfs.getUrl() + info.basePath + '.medium.' + info.extension + '" /></div>' + 
+          '<div><img src="' + uploadfs.getUrl() + info.basePath + '.large.' + info.extension + '" /></div>' +
+          '<div><img src="' + uploadfs.getUrl() + info.basePath + '.' + info.extension + '" /></div>');       
+      }
     });
+  });
 
 Note the use of `uploadfs.getUrl()` to determine the URL of the uploaded image. **Use this method consistently and your code will find the file in the right place regardless of the backend chosen.**
 
