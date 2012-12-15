@@ -1,15 +1,29 @@
 uploadfs
 ========
 
-uploadfs copies files to a web-accessible location and provides a consistent way to get the URLs that correspond to those files. uploadfs includes both S3-based and local filesystem-based backends. The API offers the same conveniences with both backends, avoiding the most frustrating features of each:
+uploadfs copies files to a web-accessible location and provides a consistent way to get the URLs that correspond to those files. uploadfs can also resize and autorotate uploaded images. uploadfs includes both S3-based and local filesystem-based backends. The API offers the same conveniences with both backends, avoiding the most frustrating features of each:
 
 * Parent directories are created automatically as needed (like S3)
 * Content types are inferred from file extensions (like the filesystem)
 * Files are always marked as readable via the web (like a filesystem + web server)
+* Images can be automatically scaled to multiple sizes
+* Scaled versions of images are automatically rotated if necessary for proper display on the web (i.e. iPhone photos with rotation hints are right side up)
 
 You can also remove a file if needed.
 
 There is no API to retrieve information about existing files. This is intentional. Constantly manipulating directory information is much slower in the cloud than on a local filesystem and you should not become reliant on it. Your code should maintain its own database of file information if needed, for instance in a MongoDB collection.
+
+## Requirements
+
+You need:
+
+* A "normal" filesystem in which files stay put forever (i.e. typical VPS or dedicated server hosting), OR Amazon S3, OR a willingness to write a backend for something else (look at `s3.js` and `local.js` for examples)
+
+* [Imagemagick](http://www.imagemagick.org/script/index.php), if you want to use `copyImageIn` to automatically scale images
+
+* A local filesystem in which files stay put at least during the current request, to hold temporary files for Imagemagick's conversions. Heroku provides this, and of course so does any normal, boring VPS or dedicated server
+
+Note that Heroku includes Imagemagick. You can also install it with `apt-get install imagemagick` on Ubuntu servers.
 
 ## API Overview
 
@@ -18,6 +32,8 @@ Here's the entire API:
 * The `init` method passes options to the backend and invokes a callback when the backend is ready.
 
 * The `copyIn` method takes a local filename and copies it to a path in uploadfs. (Note that Express conveniently sets us up for this by dropping file uploads in a temporary local file for the duration of the request.)
+
+* The `copyImageIn` method works like `copyIn`. In addition, it also copies in scaled versions of the image, corresponding to the sizes you specify when calling `init()`.
 
 * The `remove` method removes a file from uploadfs.
 
@@ -29,13 +45,17 @@ For a complete, very simple and short working example in which a user uploads a 
 
 Here's the interesting bit:
 
-    uploadfs.copyIn(req.files.photo.path, '/profiles/me.jpg', function(e) {
-      if (e) {
-        res.send('An error occurred: ' + e);
-      } else {
-        res.send('<h1>All is well. Here is the image.</h1>' +
-          '<img src="' + uploadfs.getUrl() + '/profiles/me.jpg" />'); 
-      }
+    app.post('/', function(req, res) {
+      uploadfs.copyImageIn(req.files.photo.path, '/profiles/me.jpg', function(e) {
+        if (e) {
+          res.send('An error occurred: ' + e);
+        } else {
+          res.send('<h1>All is well. Here is the image in three sizes.</h1>' +
+            '<div><img src="' + uploadfs.getUrl() + '/profiles/me.small.jpg" /></div>' + 
+            '<div><img src="' + uploadfs.getUrl() + '/profiles/me.medium.jpg" /></div>' +
+            '<div><img src="' + uploadfs.getUrl() + '/profiles/me.large.jpg" /></div>');    
+        }
+      });
     });
 
 Note the use of `uploadfs.getUrl()` to determine the URL of the uploaded image. **Use this method consistently and your code will find the file in the right place regardless of the backend chosen.**
@@ -45,6 +65,78 @@ Note the use of `uploadfs.getUrl()` to determine the URL of the uploaded image. 
 Here's how to remove a file:
 
     uploadfs.remove('/profiles/me.jpg', function(e) { ... });
+
+## Configuration Options
+
+Here's are the options I pass to `init()` in `sample.js`. Note that I define the image sizes I want the `copyImageIn` function to produce. No image will be wider or taller than the limits specified. The aspect ratio is always maintained, so one axis will often be smaller than the limits specified. Here's a hint: specify the width you really want, and the maximum height you can put up with. That way only obnoxiously tall images will get a smaller width, as a safeguard.
+
+    { 
+      backend: 'local', 
+      uploadsPath: __dirname + '/public/uploads',
+      uploadsUrl: 'http://localhost:3000' + uploadsLocalUrl,
+      // Required if you use imageSizes and copyImageIn
+      // Temporary files are made here and later automatically removed
+      tempPath: __dirname + '/temp',
+      imageSizes: [
+        {
+          name: 'small',
+          width: 320,
+          height: 320
+        },
+        {
+          name: 'medium',
+          width: 640,
+          height: 640
+        },
+        {
+          name: 'large',
+          width: 1140,
+          height: 1140
+        }
+      ]
+    }
+
+Here is an equivalent configuration for S3:
+
+    {
+      backend: 's3',
+      // Get your credentials at aws.amazon.com
+      secret: 'xxx',
+      key: 'xxx',
+      // You need to create your bucket first before using it here
+      // Go to aws.amazon.com
+      bucket: 'getyourownbucketplease',
+      // I recommend creating your buckets in a region with 
+      // read-after-write consistency (not us-standard)
+      region: 'us-west-2',
+      // Required if you use imageSizes and copyImageIn
+      tempPath: __dirname + '/temp',
+      imageSizes: [
+        {
+          name: 'small',
+          width: 320,
+          height: 320
+        },
+        {
+          name: 'medium',
+          width: 640,
+          height: 640
+        },
+        {
+          name: 'large',
+          width: 1140,
+          height: 1140
+        }
+      ]
+    }
+
+"Why don't you put the temporary files for imagemagick in S3?"
+
+Two good reasons:
+
+1. Imagemagick doesn't know how to write directly to S3.
+
+2. Constantly copying things to and from S3 is very slow compared to working with local temporary files. S3 is only fast when it comes to delivering your finished files to end users. Resist the temptation to use it for many little reads and writes.
 
 ## Important Concerns With S3
 

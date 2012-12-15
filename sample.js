@@ -11,7 +11,26 @@ var uploadsLocalUrl = '/uploads';
 var options = { 
   backend: 'local', 
   uploadsPath: uploadsPath,
-  uploadsUrl: 'http://localhost:3000' + uploadsLocalUrl
+  uploadsUrl: 'http://localhost:3000' + uploadsLocalUrl,
+  // Required if you use imageSizes and copyImageIn
+  tempPath: __dirname + '/temp',
+  imageSizes: [
+    {
+      name: 'small',
+      width: 320,
+      height: 320
+    },
+    {
+      name: 'medium',
+      width: 640,
+      height: 640
+    },
+    {
+      name: 'large',
+      width: 1140,
+      height: 1140
+    }
+  ]
 };
 
 // Or use the S3 backend 
@@ -25,12 +44,35 @@ var options = {
 //   bucket: 'getyourownbucketplease',
 //   // I recommend creating your buckets in a region with 
 //   // read-after-write consistency (not us-standard)
-//   region: 'us-west-2'
+//   region: 'us-west-2',
+//   // Required if you use imageSizes and copyImageIn
+//   tempPath: __dirname + '/temp',
+//   imageSizes: [
+//     {
+//       name: 'small',
+//       width: 320,
+//       height: 320
+//     },
+//     {
+//       name: 'medium',
+//       width: 640,
+//       height: 640
+//     },
+//     {
+//       name: 'large',
+//       width: 1140,
+//       height: 1140
+//     }
+//   ]
 // };
 
 uploadfs.init(options, createApp);
 
-function createApp() {
+function createApp(err) {
+  if (err) {
+    console.log(err);
+    process.exit(1);
+  }
   var app = express();
 
   // For the local backend: serve the uploaded files at /uploads.
@@ -49,12 +91,14 @@ function createApp() {
   });
 
   app.post('/', function(req, res) {
-    uploadfs.copyIn(req.files.photo.path, '/profiles/me.jpg', function(e) {
+    uploadfs.copyImageIn(req.files.photo.path, '/profiles/me.jpg', function(e) {
       if (e) {
         res.send('An error occurred: ' + e);
       } else {
-        res.send('<h1>All is well. Here is the image.</h1>' +
-          '<img src="' + uploadfs.getUrl() + '/profiles/me.jpg" />'); 
+        res.send('<h1>All is well. Here is the image in three sizes.</h1>' +
+          '<div><img src="' + uploadfs.getUrl() + '/profiles/me.small.jpg" /></div>' + 
+          '<div><img src="' + uploadfs.getUrl() + '/profiles/me.medium.jpg" /></div>' +
+          '<div><img src="' + uploadfs.getUrl() + '/profiles/me.large.jpg" /></div>');    
       }
     });
   });

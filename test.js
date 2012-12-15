@@ -1,11 +1,38 @@
 var uploadfs = require('./uploadfs.js');
 var fs = require('fs');
 var request = require('request');
+var _ = require('underscore');
+var async = require('async');
 
 var localOptions = { backend: 'local', uploadsPath: __dirname + '/test', uploadsUrl: 'http://localhost:3000/test' };
 
 // Supply your own. See s3TestOptions-sample.js
 var s3Options = require(__dirname + '/s3TestOptions.js');
+
+var imageSizes = [ 
+  {
+    name: 'small',
+    width: 320,
+    height: 320
+  },
+  {
+    name: 'medium',
+    width: 640,
+    height: 640
+  },
+  {
+    name: 'large',
+    width: 1140,
+    height: 1140
+  }
+];
+
+var tempPath = __dirname + '/temp';
+
+localOptions.imageSizes = imageSizes;
+localOptions.tempPath = tempPath;
+s3Options.imageSizes = imageSizes;
+s3Options.tempPath = tempPath;
 
 localTestStart();
 
@@ -78,7 +105,40 @@ function localTestStart() {
       console.log('testGetUrl did not return the expected URL.');
       process.exit(1);
     }
-    success();
+    testCopyImageIn();
+  }
+
+  function testCopyImageIn() {
+    console.log('testing copyImageIn');
+    uploadfs.copyImageIn('test.jpg', '/images/profiles/me.jpg', function(e, info) {
+      if (e) {
+        console.log('testCopyImageIn failed:');
+        console.log(e);
+        process.exit(1);
+      }
+
+      if (info.basePath !== '/images/profiles/me') {
+        console.log('info.basePath is incorrect');
+        process.exit(1);
+      }
+
+      var stats = fs.statSync('test/images/profiles/me.jpg');
+      if (!stats.size) {
+        console.log('Copied image is empty or missing');
+      }
+      // We already tested remove, just do it to mop up
+      uploadfs.remove('/images/profiles/me.jpg', function(e) { });
+      _.each(imageSizes, function(size) {
+        var name = info.basePath + '.' + size.name + '.jpg';
+        var stats = fs.statSync('test' + name);
+        if (!stats.size) {
+          console.log('Scaled and copied image is empty or missing');
+        }
+        // We already tested remove, just do it to mop up
+        uploadfs.remove(info.basePath + '.' + size.name + '.jpg', function(e) { });
+      });
+      success();
+    });
   }
 
   function success() {
@@ -113,7 +173,7 @@ function s3TestStart() {
       console.log('(Note: only really required for us-standard region or an update of an existing file)');
       setTimeout(function() {
         request(url, function(err, response, body) {
-          if (response.statusCode !== 200) {
+          if (err || (response.statusCode !== 200)) {
             console.log("Did not get 200 status fetching " + url);
             process.exit(1);
           }
@@ -154,11 +214,59 @@ function s3TestStart() {
           // Amazon currently gives out a 403 rather than a 404 and
           // they could conceivably change that, so just make sure
           // it's an error code
-          if (response.statusCode < 400) {
+          if (err || (response.statusCode < 400)) {
             console.log('testRemove did not remove the file.');
             process.exit(1);
           } else {
             console.log('File removed.');
+          }
+          testCopyImageIn();
+        });
+      }, 5000);
+    });
+  }
+
+  function testCopyImageIn() {
+    console.log('testing copyImageIn');
+    uploadfs.copyImageIn('test.jpg', '/images/profiles/me.jpg', function(e, info) {
+      if (e) {
+        console.log('testCopyImageIn failed:');
+        console.log(e);
+        process.exit(1);
+      }
+      console.log('Waiting 5 seconds for AWS consistency');
+      console.log('(Only really necessary in the us-standard region)');
+      setTimeout(function() {
+        var path = '/images/profiles/me.jpg';
+        var url = uploadfs.getUrl();
+
+        var paths = [path];
+        paths.push(info.basePath + '.small.jpg');
+        paths.push(info.basePath + '.medium.jpg');
+        paths.push(info.basePath + '.large.jpg');
+        async.map(paths, function(path, callback) {
+          request(url + path, function(err, response, body) {
+            if (err || (response.statusCode !== 200)) {
+              console.log('testCopyImageIn failed');
+              console.log(e);
+              console.log(response);
+              process.exit(1);
+            }
+            // Just mopping up so the next test isn't a false positive
+            uploadfs.remove(path, function(e) {
+              if (e) {
+                console.log('remove failed');
+                console.log(e);
+                process.exit(1);
+              }
+              callback(null);
+            });
+          });
+        }, function(e) {
+          if (e) {
+            console.log('testCopyImageIn failed');
+            console.log(e);
+            process.exit(1);
           }
           success();
         });
