@@ -8,6 +8,7 @@ var imagemagick = require('node-imagemagick');
 var tempPath;
 var backend;
 var imageSizes;
+var orientOriginals = true;
 
 var self = module.exports = {
   init: function(options, callback) {
@@ -21,6 +22,9 @@ var self = module.exports = {
     // Custom backends can be passed as objects 
     backend = options.backend;
     imageSizes = options.imageSizes ? options.imageSizes : [];
+    if (typeof(options.orientOriginals) !== 'undefined') {
+      orientOriginals = options.orientOriginals;
+    }
 
     async.series([ createTempFolderIfNeeded, backendInit ], callback);
 
@@ -108,6 +112,24 @@ var self = module.exports = {
           return callback(err);
         }
         context.info = info;
+
+        // Imagemagick gives us the raw width and height, but we're
+        // going to orient the scaled images and, in most cases, the
+        // original image so that they actually display properly in
+        // web browsers. So return the oriented width and height
+        // to the developer. Also return the original width and
+        // height just to be thorough, but use the obvious names
+        // for the obvious thing
+
+        context.info.originalWidth = context.info.width;
+        context.info.originalHeight = context.info.height;
+        var o = context.info.orientation;
+        if ((o === 'LeftTop') || (o === 'RightTop') || (o === 'RightBottom') || (o === 'LeftBottom')) {
+          var t = context.info.width;
+          context.info.width = context.info.height;
+          context.info.height = t;
+        }
+
         context.tempName = generateId();
         // File extension from format, which is GIF, JPEG, PNG
         context.extension = info.format.toLowerCase();
@@ -139,7 +161,28 @@ var self = module.exports = {
           // Caller did not supply an extension, so add one for the original
           originalPath = context.basePath + '.' + context.extension;
         }
-        self.copyIn(localPath, originalPath, options, callback);
+
+        // By default, if the original would appear "flipped" on the web,
+        // we ask imagemagick to reorient it. This is pretty much necessary
+        // to make the image useful on a website, but since it's a lossy 
+        // operation, we provide an option to disable it
+
+        if (orientOriginals && context.info.orientation && (context.info.orientation !== 'TopLeft'))
+        {
+          var tempFile = context.tempFolder + '/oriented.' + context.extension;
+          imagemagick.convert(
+            [ localPath, '-auto-orient', tempFile ],
+            function(err) {
+              if (err) {
+                return callback(err);
+              } else {
+                return self.copyIn(tempFile, originalPath, options, callback);
+              }
+            }
+          );
+        } else {
+          self.copyIn(localPath, originalPath, options, callback);
+        }
       } else {
         callback(null);
       }
@@ -183,7 +226,14 @@ var self = module.exports = {
       if (context.tempFolder) {
         rmRf(context.tempFolder, function(e) { });
       }
-      callback(err, { basePath: context.basePath, extension: context.extension });
+      callback(err, {
+        basePath: context.basePath, 
+        extension: context.extension,
+        width: context.info.width,
+        height: context.info.height,
+        originalWidth: context.info.originalWidth,
+        originalHeight: context.info.originalHeight
+      });
     }
   },
 

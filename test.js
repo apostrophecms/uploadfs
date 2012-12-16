@@ -124,6 +124,20 @@ function localTestStart() {
         process.exit(1);
       }
 
+      console.log('Testing that returned image dimensions are reoriented');
+
+      if ((info.width !== 1936) || (info.height !== 2592)) {
+        console.log('Width and height missing or not reoriented for web use');
+        console.log(info);
+        process.exit(1);
+      }
+
+      if ((info.originalWidth !== 2592) || (info.originalHeight !== 1936)) {
+        console.log('Original width and height missing or incorrect');
+        console.log(info);
+        process.exit(1);
+      }
+
       var stats = fs.statSync('test/images/profiles/me.jpg');
       if (!stats.size) {
         console.log('Copied image is empty or missing');

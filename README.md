@@ -8,10 +8,11 @@ uploadfs copies files to a web-accessible location and provides a consistent way
 * Files are always marked as readable via the web (like a filesystem + web server)
 * Images can be automatically scaled to multiple sizes
 * Scaled versions of images are automatically rotated if necessary for proper display on the web (i.e. iPhone photos with rotation hints are right side up)
+* Image width, image height and correct file extension are made available to the developer
 
 You can also remove a file if needed.
 
-There is no API to retrieve information about existing files. This is intentional. Constantly manipulating directory information is much slower in the cloud than on a local filesystem and you should not become reliant on it. Your code should maintain its own database of file information if needed, for instance in a MongoDB collection.
+There is no API to retrieve information about previously uploaded files. This is intentional. Constantly manipulating directory information is much slower in the cloud than on a local filesystem and you should not become reliant on it. Your code should maintain its own database of file information if needed, for instance in a MongoDB collection.
 
 ## Requirements
 
@@ -33,7 +34,7 @@ Here's the entire API:
 
 * The `copyIn` method takes a local filename and copies it to a path in uploadfs. (Note that Express conveniently sets us up for this by dropping file uploads in a temporary local file for the duration of the request.)
 
-* The `copyImageIn` method works like `copyIn`. In addition, it also copies in scaled versions of the image, corresponding to the sizes you specify when calling `init()`.
+* The `copyImageIn` method works like `copyIn`. In addition, it also copies in scaled versions of the image, corresponding to the sizes you specify when calling `init()`. Information about the image is returned in the second argument to the callback.
 
 * The `remove` method removes a file from uploadfs.
 
@@ -61,6 +62,22 @@ Here's the interesting bit. Note that I do not supply an extension for the final
 
 Note the use of `uploadfs.getUrl()` to determine the URL of the uploaded image. **Use this method consistently and your code will find the file in the right place regardless of the backend chosen.**
 
+## Retrieving Information About Images
+
+When you successfully copy an image into uploadfs with copyImageIn, the second argument to your callback has the following useful properties:
+
+`width` (already rotated for the web if necessary, as with iPhone photos)
+
+`height` (already rotated for the web if necessary, as with iPhone photos)
+
+`originalWidth` (not rotated)
+
+`originalHeight` (not rotated)
+
+`extension` (`gif`,`jpg` or `png`)
+
+You should record these properties in your own database if you need access to them later.
+
 ## Removing Files
 
 Here's how to remove a file:
@@ -75,7 +92,7 @@ Here's are the options I pass to `init()` in `sample.js`. Note that I define the
       backend: 'local', 
       uploadsPath: __dirname + '/public/uploads',
       uploadsUrl: 'http://localhost:3000' + uploadsLocalUrl,
-      // Required if you use imageSizes and copyImageIn
+      // Required if you use copyImageIn
       // Temporary files are made here and later automatically removed
       tempPath: __dirname + '/temp',
       imageSizes: [
@@ -110,7 +127,7 @@ Here is an equivalent configuration for S3:
       // I recommend creating your buckets in a region with 
       // read-after-write consistency (not us-standard)
       region: 'us-west-2',
-      // Required if you use imageSizes and copyImageIn
+      // Required if you use copyImageIn
       tempPath: __dirname + '/temp',
       imageSizes: [
         {
@@ -138,6 +155,14 @@ Two good reasons:
 1. Imagemagick doesn't know how to write directly to S3.
 
 2. Constantly copying things to and from S3 is very slow compared to working with local temporary files. S3 is only fast when it comes to delivering your finished files to end users. Resist the temptation to use it for many little reads and writes.
+
+## Less Frequently Used Options
+
+* By default, even the "original" is rotated for you if it is not oriented "top left," as with some iPhone photos. This is necessary for the original to be of any use on the web. But it does modify the original. So if you really don't want this, you can set the `orientOriginals` option to `false`.
+
+* It is possible to pass your own custom backend module instead of `local` or `s3`. Follow `local.js` or `s3.js` as a model, and specify your backend like this:
+
+    backend: require('mybackend.js')
 
 ## Important Concerns With S3
 
