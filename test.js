@@ -1,4 +1,4 @@
-var uploadfs = require('./uploadfs.js');
+var uploadfs = require('./uploadfs.js')();
 var fs = require('fs');
 var request = require('request');
 var _ = require('underscore');

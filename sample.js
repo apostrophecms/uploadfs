@@ -3,7 +3,7 @@
 // depending on which backend you choose.
 
 var express = require('express');
-var uploadfs = require('./uploadfs.js');
+var uploadfs = require('./uploadfs.js')();
 
 // For the local backend
 var uploadsPath = __dirname + '/public/uploads';

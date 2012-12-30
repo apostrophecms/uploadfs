@@ -5,13 +5,17 @@ var fs = require('fs');
 var rmRf = require('rimraf');
 var imagemagick = require('node-imagemagick');
 
-var tempPath;
-var backend;
-var imageSizes;
-var orientOriginals = true;
+module.exports = function() {
+  return new uploadfs();
+}
 
-var self = module.exports = {
-  init: function(options, callback) {
+function uploadfs() {
+  var tempPath;
+  var backend;
+  var imageSizes;
+  var orientOriginals = true;
+  var self = this;
+  self.init = function(options, callback) {
     if (!options.backend) {
       return callback("backend must be specified");
     }
@@ -50,7 +54,7 @@ var self = module.exports = {
     }
   },
 
-  copyIn: function(localPath, path, options, callback) {
+  self.copyIn = function(localPath, path, options, callback) {
     if (typeof(options) === 'function') {
       callback = options;
       options = {};
@@ -96,7 +100,7 @@ var self = module.exports = {
    * so that they will display properly in web browsers. 
    */
 
-  copyImageIn: function(localPath, path, options, callback) {
+  self.copyImageIn = function(localPath, path, options, callback) {
     if (typeof(options) === 'function') {
       callback = options;
       options = {};
@@ -237,11 +241,11 @@ var self = module.exports = {
     }
   },
 
-  getUrl: function(options, callback) {
+  self.getUrl = function(options, callback) {
     return backend.getUrl(options, callback);
   },
 
-  remove: function(path, callback) {
+  self.remove = function(path, callback) {
     return backend.remove(path, callback);
   }
 };

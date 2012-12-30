@@ -14,6 +14,20 @@ You can also remove a file if needed.
 
 There is no API to retrieve information about previously uploaded files. This is intentional. Constantly manipulating directory information is much slower in the cloud than on a local filesystem and you should not become reliant on it. Your code should maintain its own database of file information if needed, for instance in a MongoDB collection.
 
+## CHANGES IN 0.3.0
+
+Starting in version 0.3.0, you must explicitly create an instance of uploadfs. This allows you to have more than one, separately configured instance, and it also avoids serious issues with modules not seeing the same instance automatically as they might expect. For more information see [Singletons in #node.js modules cannot be trusted, or why you can't just do var foo = require('baz').init()](http://justjs.com/posts/singletons-in-node-js-modules-cannot-be-trusted-or-why-you-can-t-just-do-var-foo-require-baz-init).
+
+Existing code that isn't concerned with sharing uploadfs between multiple modules will only need a two line change to be fully compatible:
+
+    // CHANGE THIS
+    var uploadfs = require('uploadfs');
+
+    // TO THIS (note the extra parens)
+    var uploadfs = require('uploadfs')();
+
+If you use uploadfs in multiple source code files, you'll need to pass your `uploadfs` object explicitly, much as you pass your Express `app` object when you want to add routes to it via another file.
+
 ## Requirements
 
 You need:
