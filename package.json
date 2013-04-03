@@ -25,6 +25,6 @@
     "underscore": "~1.4.3",
     "async": "~0.1.22",
     "rimraf": "~2.0.2",
-    "node-imagemagick": "~0.1.8"
+    "node-imagemagick": "https://github.com/boutell/node-imagemagick/tarball/master"
   }
 }
