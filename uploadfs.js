@@ -7,7 +7,7 @@ var async = require('async');
 var crypto = require('crypto');
 var fs = require('fs');
 var rmRf = require('rimraf');
-var imagemagick = require('node-imagemagick');
+var imagemagick = require('imagemagick');
 
 function generateId() {
     return crypto.randomBytes(16).toString('hex');
@@ -117,7 +117,6 @@ function Uploadfs() {
                         return callback(err);
                     }
                     context.info = info;
-                    console.log(context);
 
                     // Imagemagick gives us the raw width and height, but we're
                     // going to orient the scaled images and, in most cases, the
