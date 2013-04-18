@@ -62,6 +62,26 @@ function localTestStart() {
         console.log('testCopyIn did not copy the file faithfully.');
         process.exit(1);
       }
+      testCopyOut();
+    });
+  }
+
+  function testCopyOut() {
+    console.log('testing copyOut');
+    uploadfs.copyOut('/one/two/three/test.txt', 'copy-out-test.txt', function(e) {
+      if (e) {
+        console.log('testCopyOut failed:');
+        console.log(e);
+        process.exit(1);
+      }
+      var content = fs.readFileSync('copy-out-test.txt', 'utf8');
+      var original = fs.readFileSync('test.txt', 'utf8');
+      if (content !== original) {
+        console.log('testCopyOut did not copy the file faithfully.');
+        process.exit(1);
+      }
+      // Don't confuse the next test
+      fs.unlinkSync('copy-out-test.txt');
       testRemove();
     });
   }
@@ -143,6 +163,7 @@ function localTestStart() {
         console.log('Copied image is empty or missing');
       }
       // We already tested remove, just do it to mop up
+      console.log('Removing files...');
       uploadfs.remove('/images/profiles/me.jpg', function(e) { });
       _.each(imageSizes, function(size) {
         var name = info.basePath + '.' + size.name + '.jpg';
@@ -201,9 +222,29 @@ function s3TestStart() {
             console.log("Content not copied faithfully");
             process.exit(1);
           }
-          testRemove();
+          testCopyOut();
         });
       }, 5000);
+    });
+  }
+
+  function testCopyOut() {
+    console.log('testing copyOut');
+    uploadfs.copyOut('/one/two/three/test.txt', 'copy-out-test.txt', function(e) {
+      if (e) {
+        console.log('testCopyOut failed:');
+        console.log(e);
+        process.exit(1);
+      }
+      var content = fs.readFileSync('copy-out-test.txt', 'utf8');
+      var original = fs.readFileSync('test.txt', 'utf8');
+      if (content !== original) {
+        console.log('testCopyOut did not copy the file faithfully.');
+        process.exit(1);
+      }
+      // Don't confuse the next test
+      fs.unlinkSync('copy-out-test.txt');
+      testRemove();
     });
   }
 

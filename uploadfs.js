@@ -63,6 +63,14 @@ function Uploadfs() {
         return backend.copyIn(localPath, path, options, callback);
     };
 
+    self.copyOut = function (path, localPath, options, callback) {
+        if (typeof (options) === 'function') {
+            callback = options;
+            options = {};
+        }
+        return backend.copyOut(path, localPath, options, callback);
+    };
+
     /**
      * Copy an image into uploadfs. Scaled versions as defined by the imageSizes option
      * at init() time are copied into uploadfs as follows:
@@ -236,6 +244,20 @@ function Uploadfs() {
             });
         });
     };
+
+    // self.scale = function (pathIn, pathOut, x, y, width, height, options, callback) {
+    //   if (typeof (options) === 'function') {
+    //       callback = options;
+    //       options = {};
+    //   }
+
+    //   var context = {};
+    //   async.series([
+    //     // Copy the file back to local space if it is not in temporary space
+
+
+    //   ])
+    // };
 
     self.getUrl = function (options, callback) {
         return backend.getUrl(options, callback);

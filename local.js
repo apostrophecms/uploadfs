@@ -13,6 +13,72 @@ var uploadsPath;
 var uploadsUrl;
 var removeCandidates = {};
 
+function copy(path1, path2, options, callback) {
+  // Other people's implementations of fs.copy() lack
+  // error handling, let's be thorough and also implement
+  // a retry that does mkdirp() for consistency with S3
+  var sin = fs.createReadStream(path1);
+  var sout = fs.createWriteStream(path2);
+
+  sin.on('error', function(e) {
+    errorCleanup();
+    return callback(e);
+  });
+
+  sout.on('error', function(e) {
+    // If the destination folder doesn't exist yet,
+    // retry the whole thing after recursively creating
+    // the folder and its parents as needed, avoiding the
+    // overhead of checking for folders in the majority
+    // of cases where they already exist. 
+    //
+    // Try this up to 100 times to guard against race conditions 
+    // with the empty directory cleanup mechanism: as long as 
+    // there are fewer than 100 node processes running this backend
+    // at once, it should not be possible for a sudden burst
+    // of rmdir()s to defeat the mkdir() mechanism. 
+    //
+    // Note that there will only be one node process unless you're using 
+    // cluster, multiple Heroku dynos, or something similar. 
+    //
+    // If you have more than 100 CPU cores bashing on this folder,
+    // I respectfully suggest it may be time for the 
+    // S3 backend anyway.
+
+    if ((e.code === 'ENOENT') && ((!options.afterMkdirp) || (options.afterMkdirp <= 100))) {
+      mkdirp(dirname(path2), function (e) {
+        if (e) {
+          return callback(e);
+        }
+        options.afterMkdirp = options.afterMkdirp ? (options.afterMkdirp + 1) : 1;
+        return copy(path1, path2, options, callback);
+      });
+      return;
+    }
+    errorCleanup();
+    return callback(e);
+  });
+
+  sout.on('close', function() {
+    return callback();
+  });
+
+  // Carry out the actual copying
+  sin.pipe(sout);
+
+  function errorCleanup() {
+    // These are async methods, provide callbacks although
+    // we don't really have any practical steps to take if
+    // we somehow can't clean up after an error has 
+    // already been caught
+    sin.destroy(function(e) { });
+    sout.destroy(function(e) { });
+    // This will fail if we weren't able to write to 
+    // path2 in the first place; don't get excited
+    fs.unlink(path2, function(e) { });
+  }
+}
+
 var self = module.exports = {
   init: function(options, callback) {
     uploadsPath = options.uploadsPath;
@@ -58,69 +124,12 @@ var self = module.exports = {
 
   copyIn: function(localPath, path, options, callback) {
     var uploadPath = uploadsPath + path;
-    // Other people's implementations of fs.copy() lack
-    // error handling, let's be thorough and also implement
-    // a retry that does mkdirp() for consistency with S3
-    var sin = fs.createReadStream(localPath);
-    var sout = fs.createWriteStream(uploadPath);
+    return copy(localPath, uploadPath, options, callback);
+  },
 
-    sin.on('error', function(e) {
-      errorCleanup();
-      return callback(e);
-    });
-
-    sout.on('error', function(e) {
-      // If the destination folder doesn't exist yet,
-      // retry the whole thing after recursively creating
-      // the folder and its parents as needed, avoiding the
-      // overhead of checking for folders in the majority
-      // of cases where they already exist. 
-      //
-      // Try this up to 100 times to guard against race conditions 
-      // with the empty directory cleanup mechanism: as long as 
-      // there are fewer than 100 node processes running this backend
-      // at once, it should not be possible for a sudden burst
-      // of rmdir()s to defeat the mkdir() mechanism. 
-      //
-      // Note that there will only be one node process unless you're using 
-      // cluster, multiple Heroku dynos, or something similar. 
-      //
-      // If you have more than 100 CPU cores bashing on this folder,
-      // I respectfully suggest it may be time for the 
-      // S3 backend anyway.
-
-      if ((e.code === 'ENOENT') && ((!options.afterMkdirp) || (options.afterMkdirp <= 100))) {
-        mkdirp(dirname(uploadPath), function (e) {
-          if (e) {
-            return callback(e);
-          }
-          options.afterMkdirp = options.afterMkdirp ? (options.afterMkdirp + 1) : 1;
-          return self.copyIn(localPath, path, options, callback);
-        });
-        return;
-      }
-      errorCleanup();
-      return callback(e);
-    });
-
-    sout.on('close', function() {
-      return callback();
-    });
-
-    // Carry out the actual copying
-    sin.pipe(sout);
-
-    function errorCleanup() {
-      // These are async methods, provide callbacks although
-      // we don't really have any practical steps to take if
-      // we somehow can't clean up after an error has 
-      // already been caught
-      sin.destroy(function(e) { });
-      sout.destroy(function(e) { });
-      // This will fail if we weren't able to write to 
-      // uploadPath in the first place; don't get excited
-      fs.unlink(uploadPath, function(e) { });
-    }
+  copyOut: function(path, localPath, options, callback) {
+    var downloadPath = uploadsPath + path;
+    return copy(downloadPath, localPath, options, callback);
   },
 
   remove: function(path, callback) {
