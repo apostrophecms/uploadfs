@@ -107,6 +107,8 @@ When you successfully copy an image into uploadfs with copyImageIn, the second a
 
 You should record these properties in your own database if you need access to them later.
 
+**When cropping, the uncropped size of the original image is not returned by uploadfs. It is assumed that if you are cropping you already know what the original dimensions were.**
+
 ## Removing Files
 
 Here's how to remove a file:
