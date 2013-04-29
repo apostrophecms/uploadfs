@@ -63,6 +63,11 @@ function Uploadfs() {
     return backend.copyIn(localPath, path, options, callback);
   };
 
+  // Often useful in conjunction with copyOut
+  self.getTempPath = function() {
+    return tempPath;
+  };
+
   self.copyOut = function (path, localPath, options, callback) {
     if (typeof (options) === 'function') {
       callback = options;
