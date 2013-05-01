@@ -235,7 +235,7 @@ function Uploadfs() {
           // to make the image useful on a website, but since it's a lossy
           // operation, we provide an option to disable it
 
-          var orientThis = (orientOriginals && context.info.orientation && (context.info.orientation !== 'TopLeft'));
+          var orientThis = (orientOriginals && context.info.orientation && (context.info.orientation !== 'TopLeft') && (context.info.orientation !== 'Undefined'));
           var cropThis = options.crop;
           if (orientThis || cropThis) {
             tempFile = context.tempFolder + '/oriented.' + context.extension;
