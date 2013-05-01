@@ -288,7 +288,8 @@ function Uploadfs() {
           var pipeline = im(context.workingPath);
           pipeline.autoOrient();
           addCropToPipeline(pipeline);
-          if (context.scaledJpegQuality) {
+          // Apply the quality setting to scaled JPEGs
+          if (context.scaledJpegQuality && (context.extension === 'jpg')) {
             pipeline.quality(context.scaledJpegQuality);
           }
 
