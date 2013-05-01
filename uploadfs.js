@@ -14,7 +14,7 @@ function generateId() {
 }
 
 function Uploadfs() {
-  var tempPath, backend, imageSizes, orientOriginals = true, self = this;
+  var tempPath, backend, imageSizes, orientOriginals = true, scaledJpegQuality, self = this;
   self.init = function (options, callback) {
     if (!options.backend) {
       return callback("backend must be specified");
@@ -23,6 +23,14 @@ function Uploadfs() {
     if (typeof (options.backend) === 'string') {
       options.backend = require(__dirname + '/' + options.backend + '.js');
     }
+
+    // Reasonable default JPEG quality setting for scaled copies. Imagemagick's default
+    // quality is the quality of the original being converted, which is usually a terrible idea
+    // when it's a super hi res original. And if that isn't apropos it defaults
+    // to 92 which is still sky high and produces very large files
+
+    scaledJpegQuality = options.scaledJpegQuality || 80;
+
     // Custom backends can be passed as objects
     backend = options.backend;
     imageSizes = options.imageSizes || [];
@@ -133,6 +141,8 @@ function Uploadfs() {
 
     var context = {};
 
+    context.scaledJpegQuality = options.scaledJpegQuality || scaledJpegQuality;
+
     // Identify the file type, size, etc. Stuff them into context.info and
     // context.extension
     function identify(path, callback) {
@@ -230,6 +240,8 @@ function Uploadfs() {
           if (orientThis || cropThis) {
             tempFile = context.tempFolder + '/oriented.' + context.extension;
             var pipeline = im(context.workingPath);
+            // We let imagemagick preserve the original quality level for rotated "originals"
+            // as much as possible, we only apply scaledJpegQuality to scaled versions
             if (orientThis) {
               pipeline.autoOrient();
             }
@@ -276,6 +288,9 @@ function Uploadfs() {
           var pipeline = im(context.workingPath);
           pipeline.autoOrient();
           addCropToPipeline(pipeline);
+          if (context.scaledJpegQuality) {
+            pipeline.quality(context.scaledJpegQuality);
+          }
 
           // The '>' means "don't make things bigger
           // than the original, ever." Anyone who does that is bad at the Internet
