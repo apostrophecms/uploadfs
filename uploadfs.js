@@ -293,6 +293,15 @@ function Uploadfs() {
             pipeline.quality(context.scaledJpegQuality);
           }
 
+          // Strip any comments and profiles in scaled versions. Sometimes
+          // graphics programs or cameras embed HUGE profiles, dwarfing the
+          // image itself. You don't need this slowing your downloads.
+
+          // NOTE: this only works with imagemagick... which is fine because
+          // we're using imagemagick... but if you are tempted to switch this
+          // code to use graphicsmagick, you'll need to make this a no-op.
+          pipeline.strip();
+
           // The '>' means "don't make things bigger
           // than the original, ever." Anyone who does that is bad at the Internet
           pipeline.geometry(size.width, size.height, '>').write(
