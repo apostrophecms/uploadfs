@@ -15,6 +15,10 @@ You can also remove a file if needed.
 
 It is possible to copy a file back from uploadfs, but there is no API to retrieve information about files in uploadfs. This is intentional. Constantly manipulating directory information is much slower in the cloud than on a local filesystem and you should not become reliant on it. Your code should maintain its own database of file information if needed, for instance in a MongoDB collection. Copying the actual contents of the file back may occasionally be needed however and this is supported.
 
+## CHANGES IN 0.3.6
+
+The `uploadfs` functionality for identifying a local image file via ImageMagick has been refactored and made available as the `identifyLocalImage` method. This method is primarily used internally but is occasionally helpful in migration situations (e.g. "I forgot to save the metadata for any of my images before").
+
 ## CHANGES IN 0.3.5
 
 Starting in version 0.3.5, you can set the quality level for scaled JPEGs via the scaledJpegQuality option, which defaults to 80. You can pass this option either when initializing `uploadfs` or on individual calls to `copyImageIn`. This option applies only to scaled versions of the image. If uploadfs modifies the "original" image to scale or orient it, Imagemagick's default behavior stays in effect, which is to attempt to maintain the same quality level as the original file. That makes sense for images that will be the basis for further cropping and scaling but results in impractically large files for web deployment of scaled images. Thus the new option and the new default behavior.
@@ -79,6 +83,8 @@ Here's the entire API:
 
 * The `getUrl` method returns the URL to which you should append uploadfs paths to fetch them with a web browser.
 
+* The `identifyLocalImage` method provides direct access to the `uploadfs` functionality for determining the extension, width, height and orientation of images. Normally `copyIn` does everything you need in one step, but this method is occasionally useful for migration purposes.
+
 ## Working Example
 
 For a complete, very simple and short working example in which a user uploads a profile photo, see `sample.js`.
@@ -118,6 +124,8 @@ When you successfully copy an image into uploadfs with copyImageIn, the second a
 You should record these properties in your own database if you need access to them later.
 
 **When cropping, the uncropped size of the original image is not returned by uploadfs. It is assumed that if you are cropping you already know what the original dimensions were.**
+
+The same information is available via `identifyLocalImage` if you want to examine a local file before handing it off to `copyImageIn`.
 
 ## Removing Files
 

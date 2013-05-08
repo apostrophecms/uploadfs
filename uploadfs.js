@@ -145,41 +145,14 @@ function Uploadfs() {
 
     // Identify the file type, size, etc. Stuff them into context.info and
     // context.extension
+
     function identify(path, callback) {
-      im(path).identify(function (err, info) {
+      self.identifyLocalImage(path, function(err, info) {
         if (err) {
           return callback(err);
         }
         context.info = info;
-
-        // Imagemagick gives us the raw width and height, but we're
-        // going to orient the scaled images and, in most cases, the
-        // original image so that they actually display properly in
-        // web browsers. So return the oriented width and height
-        // to the developer. Also return the original width and
-        // height just to be thorough, but use the obvious names
-        // for the obvious thing
-
-        // Copy certain properties to match the way
-        // node-imagemagick returned them to minimize changes
-        // to the rest of our code
-        context.info.width = context.info.size.width;
-        context.info.height = context.info.size.height;
-        context.info.orientation = context.info.Orientation;
-
-        context.info.originalWidth = context.info.width;
-        context.info.originalHeight = context.info.height;
-        var o = context.info.orientation, t;
-        if ((o === 'LeftTop') || (o === 'RightTop') || (o === 'RightBottom') || (o === 'LeftBottom')) {
-          t = context.info.width;
-          context.info.width = context.info.height;
-          context.info.height = t;
-        }
-        // File extension from format, which is GIF, JPEG, PNG
-        context.extension = info.format.toLowerCase();
-        if (context.extension === 'jpeg') {
-          context.extension = 'jpg';
-        }
+        context.extension = info.extension;
         return callback(null);
       });
     }
@@ -354,6 +327,65 @@ function Uploadfs() {
 
   self.remove = function (path, callback) {
     return backend.remove(path, callback);
+  };
+
+  // Use ImageMagick to identify a local image file. Normally you don't need to call
+  // this yourself, it is mostly used by copyImageIn. But you may find it
+  // useful in certain migration situations, so we have exported it.
+  //
+  // If the file is not an image or is too defective to be identified an error is
+  // passed to the callback.
+  //
+  // Otherwise the second argument to the callback is guaranteed to have extension, width,
+  // height, orientation, originalWidth and originalHeight properties. extension will be
+  // gif, jpg or png and is detected from the file's true contents, not the original file
+  // extension. width and height are automatically rotated to TopLeft orientation while
+  // originalWidth and originalHeight are not.
+  //
+  // Any other properties returned are dependent on the version of ImageMagick used and
+  // are not guaranteed.
+  //
+  // If the orientation property is not explicitly set in the file it will be set to
+  // 'Undefined'.
+
+  self.identifyLocalImage = function(path, callback) {
+    // Identify the file type, size, etc. Stuff them into context.info and
+    // context.extension
+    im(path).identify(function (err, info) {
+      if (err) {
+        return callback(err);
+      }
+
+      // Imagemagick gives us the raw width and height, but we're
+      // going to orient the scaled images and, in most cases, the
+      // original image so that they actually display properly in
+      // web browsers. So return the oriented width and height
+      // to the developer. Also return the original width and
+      // height just to be thorough, but use the obvious names
+      // for the obvious thing
+
+      // Copy certain properties to match the way
+      // node-imagemagick returned them to minimize changes
+      // to the rest of our code
+      info.width = info.size.width;
+      info.height = info.size.height;
+      info.orientation = info.Orientation;
+
+      info.originalWidth = info.width;
+      info.originalHeight = info.height;
+      var o = info.orientation, t;
+      if ((o === 'LeftTop') || (o === 'RightTop') || (o === 'RightBottom') || (o === 'LeftBottom')) {
+        t = info.width;
+        info.width = info.height;
+        info.height = t;
+      }
+      // File extension from format, which is GIF, JPEG, PNG
+      info.extension = info.format.toLowerCase();
+      if (info.extension === 'jpeg') {
+        info.extension = 'jpg';
+      }
+      return callback(null, info);
+    });
   };
 }
 
