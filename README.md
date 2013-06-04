@@ -1,6 +1,8 @@
 uploadfs
 ========
 
+<a href="http://apostrophenow.org/"><img src="https://raw.github.com/punkave/uploadfs/master/logos/logo-box-madefor.png" align="right" /></a>
+
 uploadfs copies files to a web-accessible location and provides a consistent way to get the URLs that correspond to those files. uploadfs can also resize, crop and autorotate uploaded images. uploadfs includes both S3-based and local filesystem-based backends. The API offers the same conveniences with both backends, avoiding the most frustrating features of each:
 
 * Parent directories are created automatically as needed (like S3)
@@ -227,16 +229,16 @@ It's up to you to create an Amazon S3 bucket and obtain your secret and key. See
 
 S3 support is based on the excellent [knox](https://npmjs.org/package/knox) module.
 
-## Conclusion and Contact Information
+## About P'unk Avenue and Apostrophe
 
-That's it! That should be all you need. If not, open an issue on github and we'll talk.
+`uploadfs` was created at [P'unk Avenue](http://punkave.com) for use in many projects built with Apostrophe, an open-source content management system built on node.js. Appy isn't mandatory for Apostrophe and vice versa, but they play very well together. If you like `uploadfs` you should definitely [check out apostrophenow.org](http://apostrophenow.org). Also be sure to visit us on [github](http://github.com/punkave).
 
-Tom Boutell
+## Support
 
-[http://github.com/boutell/uploadfs](http://github.com/boutell/uploadfs)
+Feel free to open issues on [github](http://github.com/punkave/uploadfs).
 
-[justjs.com](http://justjs.com)
+<a href="http://punkave.com/"><img src="https://raw.github.com/punkave/uploadfs/master/logos/logo-box-builtby.png" /></a>
 
-[@boutell](http://twitter.com/boutell)
 
-[tom@punkave.com](mailto:tom@punkave.com)
+
+
