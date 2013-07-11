@@ -14,7 +14,7 @@ function generateId() {
 }
 
 function Uploadfs() {
-  var tempPath, backend, imageSizes, orientOriginals = true, scaledJpegQuality, self = this;
+  var tempPath, backend, imageSizes, orientOriginals = true, scaledJpegQuality, parallel, self = this;
   self.init = function (options, callback) {
     if (!options.backend) {
       return callback("backend must be specified");
@@ -23,6 +23,7 @@ function Uploadfs() {
     if (typeof (options.backend) === 'string') {
       options.backend = require(__dirname + '/' + options.backend + '.js');
     }
+    parallel = options.parallel;
 
     // Reasonable default JPEG quality setting for scaled copies. Imagemagick's default
     // quality is the quality of the original being converted, which is usually a terrible idea
@@ -248,13 +249,7 @@ function Uploadfs() {
       },
       // Scale and copy versions of various sizes
       function (callback) {
-        // I use async.mapSeries rather than async.map because the impact
-        // of three imagemagick processes running at once is nontrivial and
-        // there could be many people uploading. In fact, I need to add a
-        // throttling mechanism to delay the launching of extra pipelines
-        // at some point
-
-        async.mapSeries(imageSizes, function (size, callback) {
+        async.mapLimit(imageSizes, parallel || 1, function (size, callback) {
           var suffix = size.name + '.' + context.extension;
           var tempFile = context.tempFolder + '/' + suffix;
 

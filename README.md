@@ -17,6 +17,14 @@ You can also remove a file if needed.
 
 It is possible to copy a file back from uploadfs, but there is no API to retrieve information about files in uploadfs. This is intentional. Constantly manipulating directory information is much slower in the cloud than on a local filesystem and you should not become reliant on it. Your code should maintain its own database of file information if needed, for instance in a MongoDB collection. Copying the actual contents of the file back may occasionally be needed however and this is supported.
 
+## CHANGES IN 0.3.11
+
+The new `parallel` option allows you to specify the maximum number of image sizes to render simultaneously. This defaults to 1, to avoid using a lot of memory and CPU, but if you are under the gun to render a lot of images in a hurry, you can set this as high as the number of image sizes you have. Currently there is no throttling mechanism for multiple unrelated calls to `uploadfs.copyImageIn`, this option relates to the rendering of the various sizes for a single call.
+
+## CHANGES IN 0.3.7-0.3.10
+
+Just packaging and documentation. Now a P'unk Avenue project.
+
 ## CHANGES IN 0.3.6
 
 The `uploadfs` functionality for identifying a local image file via ImageMagick has been refactored and made available as the `identifyLocalImage` method. This method is primarily used internally but is occasionally helpful in migration situations (e.g. "I forgot to save the metadata for any of my images before").
@@ -162,7 +170,11 @@ Here's are the options I pass to `init()` in `sample.js`. Note that I define the
           width: 1140,
           height: 1140
         }
-      ]
+      ],
+      // Render up to 4 image sizes at once. Note this means 4 at once per call
+      // to copyImageIn. There is currently no built-in throttling of multiple calls to
+      // copyImageIn
+      parallel: 4
     }
 
 Here is an equivalent configuration for S3:
@@ -196,7 +208,12 @@ Here is an equivalent configuration for S3:
           width: 1140,
           height: 1140
         }
-      ]
+      ],
+      // Render up to 4 image sizes at once. Note this means 4 at once per call
+      // to copyImageIn. There is currently no built-in throttling of multiple calls to
+      // copyImageIn
+      parallel: 4
+
     }
 
 "Why don't you put the temporary files for imagemagick in S3?"
@@ -214,6 +231,8 @@ Two good reasons:
 * It is possible to pass your own custom backend module instead of `local` or `s3`. Follow `local.js` or `s3.js` as a model, and specify your backend like this:
 
     backend: require('mybackend.js')
+
+* The `parallel` option lets you specify how many image sizes should be rendered simultaneously when using `copyImageIn`. Setting this higher than the number of cores available to you does not make sense. Setting it higher than the number of sizes you have configured has no effect. Be aware that each image pipeline uses quite a lot of memory if the original image dimensions are large (5000x5000x4 is a big number). Also be aware that there is no throttling of multiple, unrelated calls to `copyImageIn`. If you expect a lot of uploads by different users at the same time, we suggest not setting `parallel`, allowing it to default to `1`.
 
 ## Important Concerns With S3
 
