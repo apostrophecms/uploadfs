@@ -2,3 +2,5 @@ node_modules
 s3TestOptions.js
 public/uploads
 temp
+
+.jshintrc
