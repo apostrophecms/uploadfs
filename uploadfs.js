@@ -8,13 +8,14 @@ var rmRf = require('rimraf');
 // works in Heroku. It's a good thing we can do this, since node-imagemagick
 // has been abandoned.
 var im = require('gm').subClass({ imageMagick: true });
+var childProcess = require('child_process');
 
 function generateId() {
   return crypto.randomBytes(16).toString('hex');
 }
 
 function Uploadfs() {
-  var tempPath, backend, imageSizes, orientOriginals = true, scaledJpegQuality, parallel, self = this;
+  var tempPath, backend, imageSizes, orientOriginals = true, scaledJpegQuality, self = this;
   self.init = function (options, callback) {
     if (!options.backend) {
       return callback("backend must be specified");
@@ -23,7 +24,6 @@ function Uploadfs() {
     if (typeof (options.backend) === 'string') {
       options.backend = require(__dirname + '/' + options.backend + '.js');
     }
-    parallel = options.parallel;
 
     // Reasonable default JPEG quality setting for scaled copies. Imagemagick's default
     // quality is the quality of the original being converted, which is usually a terrible idea
@@ -148,7 +148,7 @@ function Uploadfs() {
     // context.extension
 
     function identify(path, callback) {
-      self.identifyLocalImage(path, function(err, info) {
+      return self.identifyLocalImage(path, function(err, info) {
         if (err) {
           return callback(err);
         }
@@ -164,10 +164,15 @@ function Uploadfs() {
       }
     }
 
-    async.series([
+    var originalDone = false;
+    var copyOriginal = options.copyOriginal !== false;
+    var originalPath;
+    var adjustedOriginal = null;
+
+    async.series({
       // Identify the file
-      function (callback) {
-        identify(localPath, function(err) {
+      identify: function (callback) {
+        return identify(localPath, function(err) {
           if (err) {
             return callback(err);
           }
@@ -175,116 +180,164 @@ function Uploadfs() {
         });
       },
       // make a temporary folder for our work
-      function (callback) {
+      temporary: function (callback) {
         // Name the destination folder
         context.tempName = generateId();
         // Create destination folder
         if (imageSizes.length) {
           context.tempFolder = tempPath + '/' + context.tempName;
-          fs.mkdir(context.tempFolder, callback);
+          return fs.mkdir(context.tempFolder, callback);
         } else {
           return callback(null);
         }
       },
-      // Determine base path and working path
-      function (callback) {
+      // Determine base path in uploadfs, working path for temporary files,
+      // and final uploadfs path of the original
+      paths: function (callback) {
         context.basePath = path.replace(/\.\w+$/, '');
         context.workingPath = localPath;
+
+        // Indulge their wild claims about the extension the original
+        // should have if any, otherwise provide the truth from identify
+        if (path.match(/\.\w+$/)) {
+          originalPath = path;
+        } else {
+          originalPath = path + '.' + context.extension;
+        }
         return callback(null);
       },
-      function (callback) {
-        if (options.copyOriginal !== false) {
-          context.basePath = path.replace(/\.\w+$/, '');
-          var originalPath, tempFile;
-          if (context.basePath !== path) {
-            // If there was already an extension, respect it for the original
-            originalPath = path;
-          } else {
-            // Caller did not supply an extension, so add one for the original
-            originalPath = context.basePath + '.' + context.extension;
-          }
-
-          // By default, if the original would appear "flipped" on the web,
-          // we ask imagemagick to reorient it. This is pretty much necessary
-          // to make the image useful on a website, but since it's a lossy
-          // operation, we provide an option to disable it
-
-          var orientThis = (orientOriginals && context.info.orientation && (context.info.orientation !== 'TopLeft') && (context.info.orientation !== 'Undefined'));
-          var cropThis = options.crop;
-          if (orientThis || cropThis) {
-            tempFile = context.tempFolder + '/oriented.' + context.extension;
-            var pipeline = im(context.workingPath);
-            // We let imagemagick preserve the original quality level for rotated "originals"
-            // as much as possible, we only apply scaledJpegQuality to scaled versions
-            if (orientThis) {
-              pipeline.autoOrient();
-            }
-            if (cropThis) {
-              addCropToPipeline(pipeline);
-            }
-            // Do the actual work in imagemagick
-            pipeline.write(tempFile, function(err) {
-              if (err) {
-                return callback(err);
-              }
-              async.series([
-                function(callback) {
-                  if (!cropThis) {
-                    return callback(null);
-                  }
-                  return identify(tempFile, callback);
-                },
-                function(callback) {
-                  return self.copyIn(tempFile, originalPath, options, callback);
-                }
-              ], callback);
-            });
-          } else {
-            // No imagemagick work to be done
-            self.copyIn(context.workingPath, originalPath, options, callback);
-          }
-        } else {
-          callback(null);
+      copyOriginal: function(callback) {
+        // If there are no transformations of the original, copy it
+        // in directly
+        if ((!copyOriginal) || (options.orientOriginals !== false) || (options.crop)) {
+          return callback(null);
         }
+        originalDone = true;
+        return self.copyIn(localPath, originalPath, options, callback);
       },
-      // Scale and copy versions of various sizes
-      function (callback) {
-        async.mapLimit(imageSizes, parallel || 1, function (size, callback) {
+      convert: function (callback) {
+        // For performance we build our own imagemagick command which tackles all the
+        // sizes in one run, avoiding redundant loads. TODO: scale at the beginning to the
+        // largest width and base all subsequent scalings off that, which yields an even
+        // bigger win.
+        //
+        // convert arielheadshot.jpg ( +clone -resize x1140 -write /tmp/ariel1140.jpg +delete ) ( +clone -resize x760 -write /tmp/ariel760.jpg +delete ) ( +clone -resize x520 -write /tmp/ariel520.jpg +delete ) ( +clone -resize x380 -write /tmp/ariel380.jpg +delete ) -resize x190 /tmp/ariel190.jpg
+        var args = [];
+        var crop = options.crop;
+        args.push(context.workingPath);
+        args.push('-auto-orient');
+        if (crop) {
+          args.push('-crop');
+          args.push(crop.width + 'x' + crop.height + '+' + crop.left + '+' + crop.top);
+        }
+        if (context.extension === 'jpg') {
+          // Always convert to a colorspace all browsers understand.
+          // CMYK will flat out fail in IE8 for instance
+          args.push('-colorspace');
+          args.push('sRGB');
+        }
+
+        if (copyOriginal && (!originalDone)) {
+          adjustedOriginal = context.tempFolder + '/original.' + context.extension;
+          args.push('(');
+          args.push('+clone');
+          args.push('-write');
+          args.push(adjustedOriginal);
+          args.push('+delete');
+          args.push(')');
+        }
+
+        // Make sure we strip metadata before we get to scaled versions as
+        // some files have ridiculously huge metadata
+        args.push('-strip');
+
+        // After testing this with several sets of developer eyeballs, we've
+        // decided it is kosher to resample to the largest size we're
+        // interested in keeping, then sample down from there. Since we
+        // do it all inside imagemagick without creating any intermediate
+        // lossy files, there is no quality loss, and the speed benefit is
+        // yet another 2x win! Hooray!
+        var maxWidth = 0, maxHeight = 0;
+        _.each(imageSizes, function(size) {
+          if (size.width > maxWidth) {
+            maxWidth = size.width;
+          }
+          if (size.height > maxHeight) {
+            maxHeight = size.height;
+          }
+        });
+        if (maxWidth && maxHeight) {
+          args.push('-resize');
+          args.push(maxWidth + 'x' + maxHeight + '>');
+        }
+
+        _.each(imageSizes, function(size) {
+          args.push('(');
+          args.push('+clone');
+          args.push('-resize');
+          args.push(size.width + 'x' + size.height + '>');
+          if (context.scaledJpegQuality && (context.extension === 'jpg')) {
+            args.push('-quality');
+            args.push(context.scaledJpegQuality);
+          }
+          args.push('-write');
           var suffix = size.name + '.' + context.extension;
           var tempFile = context.tempFolder + '/' + suffix;
+          args.push(tempFile);
+          args.push('+delete');
+          args.push(')');
+        });
 
-          var pipeline = im(context.workingPath);
-          pipeline.autoOrient();
-          addCropToPipeline(pipeline);
-          // Apply the quality setting to scaled JPEGs
-          if (context.scaledJpegQuality && (context.extension === 'jpg')) {
-            pipeline.quality(context.scaledJpegQuality);
+        // We don't care about the official output, which would be the
+        // intermediate scaled version of the image. Use imagemagick's
+        // official null format
+
+        args.push('null:');
+
+        var convert = childProcess.spawn('convert', args);
+        return convert.on('close', function(code) {
+          if (code !== 0) {
+            return callback(code);
+          } else {
+            return callback(null);
           }
+        });
+      },
 
-          // Strip any comments and profiles in scaled versions. Sometimes
-          // graphics programs or cameras embed HUGE profiles, dwarfing the
-          // image itself. You don't need this slowing your downloads.
-
-          // NOTE: this only works with imagemagick... which is fine because
-          // we're using imagemagick... but if you are tempted to switch this
-          // code to use graphicsmagick, you'll need to make this a no-op.
-          pipeline.strip();
-
-          // The '>' means "don't make things bigger
-          // than the original, ever." Anyone who does that is bad at the Internet
-          pipeline.geometry(size.width, size.height, '>').write(
-            tempFile,
-            function (err) {
-              if (err) {
-                return callback(err);
-              }
-              var permanentFile = context.basePath + '.' + suffix;
-              return self.copyIn(tempFile, permanentFile, options, callback);
+      reidentify: function(callback) {
+        if (adjustedOriginal) {
+          // Push and pop the original size properties as we determined
+          // those on the first identify and don't want to return the values
+          // for the cropped and/or reoriented version
+          var originalWidth = context.info.originalWidth;
+          var originalHeight = context.info.originalHeight;
+          return identify(adjustedOriginal, function(err) {
+            if (err) {
+              return callback(err);
             }
-          );
+            context.info.originalWidth = originalWidth;
+            context.info.originalHeight = originalHeight;
+            return callback(null);
+          });
+        }
+      },
+
+      copySizes: function(callback) {
+        return async.each(imageSizes, function(size, callback) {
+          var suffix = size.name + '.' + context.extension;
+          var tempFile = context.tempFolder + '/' + suffix;
+          var permFile = context.basePath + '.' + suffix;
+          return self.copyIn(tempFile, permFile, options, callback);
         }, callback);
+      },
+
+      copyAdjustedOriginal: function(callback) {
+        if (!adjustedOriginal) {
+          return callback(null);
+        }
+        return self.copyIn(adjustedOriginal, originalPath, options, callback);
       }
-    ], function (err) {
+    }, function (err) {
       // Try to clean up the temp folder. This can fail if its creation
       // failed, in which case there is nothing we can or should do,
       // thus the empty callback
@@ -301,20 +354,6 @@ function Uploadfs() {
       });
     });
   };
-
-  // self.scale = function (pathIn, pathOut, x, y, width, height, options, callback) {
-  //   if (typeof (options) === 'function') {
-  //     callback = options;
-  //     options = {};
-  //   }
-
-  //   var context = {};
-  //   async.series([
-  //   // Copy the file back to local space if it is not in temporary space
-
-
-  //   ])
-  // };
 
   self.getUrl = function (options, callback) {
     return backend.getUrl(options, callback);
