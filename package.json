@@ -1,6 +1,6 @@
 {
   "name": "uploadfs",
-  "version": "0.3.12",
+  "version": "0.3.13",
   "description": "Store files in a web-accessible location via a simplified API. Can automatically scale images. Includes both S3-based and local filesystem-based backends with the most convenient features of each.",
   "main": "uploadfs.js",
   "scripts": {
