@@ -14,8 +14,18 @@ function generateId() {
   return crypto.randomBytes(16).toString('hex');
 }
 
+/**
+ * Instantiates Uploadfs.
+ * @class Represents an instance of Uploadfs. Usually you only want one.
+ */
+
 function Uploadfs() {
   var tempPath, backend, imageSizes, orientOriginals = true, scaledJpegQuality, self = this;
+  /**
+   * Initialize uploadfs. The init method passes options to the backend and invokes a callback when the backend is ready.
+   * @param  {Object}   options: backend, imageSizes, orientOriginals, tempPath, copyOriginal, scaledJpegQuality, contentTypes. backend is the only mandatory option. See the README and individual methods for details.
+   * @param  {Function} callback    Will receive the usual err argument
+   */
   self.init = function (options, callback) {
     if (!options.backend) {
       return callback("backend must be specified");
@@ -64,6 +74,13 @@ function Uploadfs() {
     ], callback);
   };
 
+  /**
+   * The copyIn method takes a local filename and copies it to a path in uploadfs. Any intermediate folders that do not exist are automatically created if the backend requires such things. Just copy things where you want them to go.
+   * @param  {[String]}   localPath   The local filename
+   * @param  {[String]}   path    The path in uploadfs, begins with /
+   * @param  {[Object]}   options    Options (passed to backend). May be skipped
+   * @param  {Function} callback    Will receive the usual err argument
+   */
   self.copyIn = function (localPath, path, options, callback) {
     if (typeof (options) === 'function') {
       callback = options;
@@ -72,11 +89,21 @@ function Uploadfs() {
     return backend.copyIn(localPath, path, options, callback);
   };
 
-  // Often useful in conjunction with copyOut
+  /**
+   * Obtain the temporary folder used for intermediate files created by copyImageIn. Can also be useful when doing your own manipulations with copyOut.
+   * @see Uploadfs#copyOut
+   */
   self.getTempPath = function() {
     return tempPath;
   };
 
+  /**
+   * The copyOut method takes a path in uploadfs and a local filename and copies the file back from uploadfs to the local filesystem. This should be used only rarely. Heavy reliance on this method sets you up for poor performance in S3. However it may be necessary at times, for instance when you want to crop an image differently later. Use it only for occasional operations like cropping.
+   * @param  {String}   path    Path in uploadfs (begins with /)
+   * @param  {String}   localPath    Path in the local filesystem to copy to
+   * @param  {Object}   options    Options (passed to backend). May be skipped
+   * @param  {Function} callback    Receives the usual err argument
+   */
   self.copyOut = function (path, localPath, options, callback) {
     if (typeof (options) === 'function') {
       callback = options;
@@ -132,6 +159,11 @@ function Uploadfs() {
    * be larger than the original. Scaled versions of images with an orientation
    * hint, such as iPhone photographs, are automatically rotated by gm
    * so that they will display properly in web browsers.
+   *
+   * @param {String} localPath    Local filesystem path of existing image file
+   * @param {String} path    Path in uploadfs to copy original to. Leave off the extension to autodetect the true type. Path begins with /
+   * @param {Object} options Options: scaledJpegQuality, copyOriginal, crop (see above)
+   * @param {Function} callback Receives the usual err argument
    */
 
   self.copyImageIn = function (localPath, path, options, callback) {
@@ -363,24 +395,31 @@ function Uploadfs() {
     return backend.remove(path, callback);
   };
 
-  // Use ImageMagick to identify a local image file. Normally you don't need to call
-  // this yourself, it is mostly used by copyImageIn. But you may find it
-  // useful in certain migration situations, so we have exported it.
-  //
-  // If the file is not an image or is too defective to be identified an error is
-  // passed to the callback.
-  //
-  // Otherwise the second argument to the callback is guaranteed to have extension, width,
-  // height, orientation, originalWidth and originalHeight properties. extension will be
-  // gif, jpg or png and is detected from the file's true contents, not the original file
-  // extension. width and height are automatically rotated to TopLeft orientation while
-  // originalWidth and originalHeight are not.
-  //
-  // Any other properties returned are dependent on the version of ImageMagick used and
-  // are not guaranteed.
-  //
-  // If the orientation property is not explicitly set in the file it will be set to
-  // 'Undefined'.
+  /**
+   * Use ImageMagick to identify a local image file. Normally you don't need to call
+   * this yourself, it is mostly used by copyImageIn. But you may find it
+   * useful in certain migration situations, so we have exported it.
+   *
+   * If the file is not an image or is too defective to be identified an error is
+   * passed to the callback.
+   *
+   * Otherwise the second argument to the callback is guaranteed to have extension, width,
+   * height, orientation, originalWidth and originalHeight properties. extension will be
+   * gif, jpg or png and is detected from the file's true contents, not the original file
+   * extension. width and height are automatically rotated to TopLeft orientation while
+   * originalWidth and originalHeight are not.
+   *
+   * Any other properties returned are dependent on the version of ImageMagick used and
+   * are not guaranteed.
+   *
+   * If the orientation property is not explicitly set in the file it will be set to
+   * 'Undefined'.
+   *
+   * @param {String} path Local filesystem path to image file
+   * @param {Function} callback Receives the usual err argument, followed by an object with extension, width, height, orientation, originalWidth and originalHeight properties. Any other properties depend on the version of ImageMagick in use and are not guaranteed
+   *
+   * @see Uploadfs#copyImageIn
+   */
 
   self.identifyLocalImage = function(path, callback) {
     // Identify the file type, size, etc. Stuff them into context.info and
