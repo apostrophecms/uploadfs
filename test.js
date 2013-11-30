@@ -38,7 +38,7 @@ localTestStart();
 
 function localTestStart() {
   options = localOptions;
-  console.log('Initializing uploadfs for the ' + options.backend + ' backend');
+  console.log('Initializing uploadfs for the ' + options.storage + ' backend');
   uploadfs.init(options, function(e) {
     if (e) {
       console.log('uploadfs.init failed:');

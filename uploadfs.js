@@ -215,7 +215,6 @@ function Uploadfs() {
     function identify(path, callback) {
       return self.identifyLocalImage(path, function(err, info) {
         if (err) {
-          console.log('ERROR');
           return callback(err);
         }
         context.info = info;
