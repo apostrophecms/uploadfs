@@ -4,7 +4,7 @@ var request = require('request');
 var _ = require('underscore');
 var async = require('async');
 
-var localOptions = { backend: 'local', uploadsPath: __dirname + '/test', uploadsUrl: 'http://localhost:3000/test' };
+var localOptions = { storage: 'local', uploadsPath: __dirname + '/test', uploadsUrl: 'http://localhost:3000/test' };
 
 // Supply your own. See s3TestOptions-sample.js
 var s3Options = require(__dirname + '/s3TestOptions.js');

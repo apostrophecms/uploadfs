@@ -3,12 +3,7 @@ var async = require('async');
 var crypto = require('crypto');
 var fs = require('fs');
 var rmRf = require('rimraf');
-// Use Aaron Heckmann's graphicsmagick interface in its imagemagick-compatible
-// configuration so our system requirements don't change and everything still
-// works in Heroku. It's a good thing we can do this, since node-imagemagick
-// has been abandoned.
-var im = require('gm').subClass({ imageMagick: true });
-var childProcess = require('child_process');
+var delimiter = require('path').delimiter;
 
 function generateId() {
   return crypto.randomBytes(16).toString('hex');
@@ -27,12 +22,21 @@ function Uploadfs() {
    * @param  {Function} callback    Will receive the usual err argument
    */
   self.init = function (options, callback) {
-    if (!options.backend) {
-      return callback("backend must be specified");
+    // bc: support options.backend
+    self._storage = options.storage || options.backend;
+    if (!self._storage) {
+      return callback("Storage backend must be specified");
     }
-    // Load standard backends, by name
-    if (typeof (options.backend) === 'string') {
-      options.backend = require(__dirname + '/' + options.backend + '.js');
+    // Load standard storage backends, by name. You can also pass an object
+    // with your own implementation
+    if (typeof (self._storage) === 'string') {
+      self._storage = require('./lib/storage/' + self._storage + '.js');
+    }
+
+    // Load image backend
+    self._image = options.image;
+    if (typeof (self._image) === 'string') {
+      self._image = require('./lib/image/' + self._image + '.js');
     }
 
     // Reasonable default JPEG quality setting for scaled copies. Imagemagick's default
@@ -42,8 +46,6 @@ function Uploadfs() {
 
     scaledJpegQuality = options.scaledJpegQuality || 80;
 
-    // Custom backends can be passed as objects
-    backend = options.backend;
     imageSizes = options.imageSizes || [];
     if (typeof (options.orientOriginals) !== 'undefined') {
       orientOriginals = options.orientOriginals;
@@ -67,18 +69,44 @@ function Uploadfs() {
         });
       },
 
-      // invoke backend init with options
+      // invoke storage backend init with options
       function (callback) {
-        return backend.init(options, callback);
+        return self._storage.init(options, callback);
+      },
+
+      // Autodetect image backend if necessary
+      function (callback) {
+        if (!self._image) {
+          var paths = (process.env.PATH || '').split(delimiter);
+          if (!_.find(paths, function(p) {
+            if (fs.existsSync(p + '/imagecrunch')) {
+              self._image = require('./lib/image/imagecrunch.js');
+              return true;
+            }
+            if (fs.existsSync(p + '/identify')) {
+              self._image = require('./lib/image/imagemagick.js');
+              return true;
+            }
+          })) {
+            return callback('no image backend specified and neither imagecrunch nor identify found in PATH');
+          }
+        }
+        return callback(null);
+      },
+
+      // invoke image backend init with options
+      function (callback) {
+        return self._image.init(options, callback);
       }
+
     ], callback);
   };
 
   /**
-   * The copyIn method takes a local filename and copies it to a path in uploadfs. Any intermediate folders that do not exist are automatically created if the backend requires such things. Just copy things where you want them to go.
+   * The copyIn method takes a local filename and copies it to a path in uploadfs. Any intermediate folders that do not exist are automatically created if the storage requires such things. Just copy things where you want them to go.
    * @param  {[String]}   localPath   The local filename
    * @param  {[String]}   path    The path in uploadfs, begins with /
-   * @param  {[Object]}   options    Options (passed to backend). May be skipped
+   * @param  {[Object]}   options    Options (passed to storage). May be skipped
    * @param  {Function} callback    Will receive the usual err argument
    */
   self.copyIn = function (localPath, path, options, callback) {
@@ -86,7 +114,7 @@ function Uploadfs() {
       callback = options;
       options = {};
     }
-    return backend.copyIn(localPath, path, options, callback);
+    return self._storage.copyIn(localPath, path, options, callback);
   };
 
   /**
@@ -109,7 +137,7 @@ function Uploadfs() {
       callback = options;
       options = {};
     }
-    return backend.copyOut(path, localPath, options, callback);
+    return self._storage.copyOut(path, localPath, options, callback);
   };
 
   /**
@@ -172,7 +200,12 @@ function Uploadfs() {
       options = {};
     }
 
-    var context = {};
+    // We'll pass this context to the image processing backend with
+    // additional properties
+    var context = {
+      crop: options.crop,
+      sizes: imageSizes
+    };
 
     context.scaledJpegQuality = options.scaledJpegQuality || scaledJpegQuality;
 
@@ -182,6 +215,7 @@ function Uploadfs() {
     function identify(path, callback) {
       return self.identifyLocalImage(path, function(err, info) {
         if (err) {
+          console.log('ERROR');
           return callback(err);
         }
         context.info = info;
@@ -190,16 +224,9 @@ function Uploadfs() {
       });
     }
 
-    function addCropToPipeline(pipeline) {
-      if (options.crop) {
-        pipeline.crop(options.crop.width, options.crop.height, options.crop.left, options.crop.top);
-      }
-    }
-
     var originalDone = false;
     var copyOriginal = options.copyOriginal !== false;
     var originalPath;
-    var adjustedOriginal = null;
 
     async.series({
       // Identify the file
@@ -247,111 +274,29 @@ function Uploadfs() {
         originalDone = true;
         return self.copyIn(localPath, originalPath, options, callback);
       },
+
       convert: function (callback) {
-        // For performance we build our own imagemagick command which tackles all the
-        // sizes in one run, avoiding redundant loads. TODO: scale at the beginning to the
-        // largest width and base all subsequent scalings off that, which yields an even
-        // bigger win.
-        //
-        // convert arielheadshot.jpg ( +clone -resize x1140 -write /tmp/ariel1140.jpg +delete ) ( +clone -resize x760 -write /tmp/ariel760.jpg +delete ) ( +clone -resize x520 -write /tmp/ariel520.jpg +delete ) ( +clone -resize x380 -write /tmp/ariel380.jpg +delete ) -resize x190 /tmp/ariel190.jpg
-        var args = [];
-        var crop = options.crop;
-        args.push(context.workingPath);
-        args.push('-auto-orient');
-        if (crop) {
-          args.push('-crop');
-          args.push(crop.width + 'x' + crop.height + '+' + crop.left + '+' + crop.top);
-        }
-        if (context.extension === 'jpg') {
-          // Always convert to a colorspace all browsers understand.
-          // CMYK will flat out fail in IE8 for instance
-          args.push('-colorspace');
-          args.push('sRGB');
-        }
-
-        if (copyOriginal && (!originalDone)) {
-          adjustedOriginal = context.tempFolder + '/original.' + context.extension;
-          args.push('(');
-          args.push('+clone');
-          args.push('-write');
-          args.push(adjustedOriginal);
-          args.push('+delete');
-          args.push(')');
-        }
-
-        // Make sure we strip metadata before we get to scaled versions as
-        // some files have ridiculously huge metadata
-        args.push('-strip');
-
-        // After testing this with several sets of developer eyeballs, we've
-        // decided it is kosher to resample to the largest size we're
-        // interested in keeping, then sample down from there. Since we
-        // do it all inside imagemagick without creating any intermediate
-        // lossy files, there is no quality loss, and the speed benefit is
-        // yet another 2x win! Hooray!
-        var maxWidth = 0, maxHeight = 0;
-        _.each(imageSizes, function(size) {
-          if (size.width > maxWidth) {
-            maxWidth = size.width;
-          }
-          if (size.height > maxHeight) {
-            maxHeight = size.height;
-          }
-        });
-        if (maxWidth && maxHeight) {
-          args.push('-resize');
-          args.push(maxWidth + 'x' + maxHeight + '>');
-        }
-
-        _.each(imageSizes, function(size) {
-          args.push('(');
-          args.push('+clone');
-          args.push('-resize');
-          args.push(size.width + 'x' + size.height + '>');
-          if (context.scaledJpegQuality && (context.extension === 'jpg')) {
-            args.push('-quality');
-            args.push(context.scaledJpegQuality);
-          }
-          args.push('-write');
-          var suffix = size.name + '.' + context.extension;
-          var tempFile = context.tempFolder + '/' + suffix;
-          args.push(tempFile);
-          args.push('+delete');
-          args.push(')');
-        });
-
-        // We don't care about the official output, which would be the
-        // intermediate scaled version of the image. Use imagemagick's
-        // official null format
-
-        args.push('null:');
-
-        var convert = childProcess.spawn('convert', args);
-        return convert.on('close', function(code) {
-          if (code !== 0) {
-            return callback(code);
-          } else {
-            return callback(null);
-          }
-        });
+        context.copyOriginal = copyOriginal && (!originalDone);
+        return self._image.convert(context, callback);
       },
 
       reidentify: function(callback) {
-        if (adjustedOriginal) {
-          // Push and pop the original size properties as we determined
-          // those on the first identify and don't want to return the values
-          // for the cropped and/or reoriented version
-          var originalWidth = context.info.originalWidth;
-          var originalHeight = context.info.originalHeight;
-          return identify(adjustedOriginal, function(err) {
-            if (err) {
-              return callback(err);
-            }
-            context.info.originalWidth = originalWidth;
-            context.info.originalHeight = originalHeight;
-            return callback(null);
-          });
+        if (!context.adjustedOriginal) {
+          return callback(null);
         }
+        // Push and pop the original size properties as we determined
+        // those on the first identify and don't want to return the values
+        // for the cropped and/or reoriented version
+        var originalWidth = context.info.originalWidth;
+        var originalHeight = context.info.originalHeight;
+        return identify(context.adjustedOriginal, function(err) {
+          if (err) {
+            return callback(err);
+          }
+          context.info.originalWidth = originalWidth;
+          context.info.originalHeight = originalHeight;
+          return callback(null);
+        });
       },
 
       copySizes: function(callback) {
@@ -364,10 +309,10 @@ function Uploadfs() {
       },
 
       copyAdjustedOriginal: function(callback) {
-        if (!adjustedOriginal) {
+        if (!context.adjustedOriginal) {
           return callback(null);
         }
-        return self.copyIn(adjustedOriginal, originalPath, options, callback);
+        return self.copyIn(context.adjustedOriginal, originalPath, options, callback);
       }
     }, function (err) {
       // Try to clean up the temp folder. This can fail if its creation
@@ -388,15 +333,15 @@ function Uploadfs() {
   };
 
   self.getUrl = function (options, callback) {
-    return backend.getUrl(options, callback);
+    return self._storage.getUrl(options, callback);
   };
 
   self.remove = function (path, callback) {
-    return backend.remove(path, callback);
+    return self._storage.remove(path, callback);
   };
 
   /**
-   * Use ImageMagick to identify a local image file. Normally you don't need to call
+   * Identify a local image file. Normally you don't need to call
    * this yourself, it is mostly used by copyImageIn. But you may find it
    * useful in certain migration situations, so we have exported it.
    *
@@ -409,56 +354,23 @@ function Uploadfs() {
    * extension. width and height are automatically rotated to TopLeft orientation while
    * originalWidth and originalHeight are not.
    *
-   * Any other properties returned are dependent on the version of ImageMagick used and
-   * are not guaranteed.
-   *
    * If the orientation property is not explicitly set in the file it will be set to
    * 'Undefined'.
    *
+   * Alternative backends such as "sip" that do not support orientation detection
+   * will not set this property at all.
+   *
+   * Any other properties returned are dependent on the version of ImageMagick (or
+   * other backend) used and are not guaranteed.
+   *
    * @param {String} path Local filesystem path to image file
-   * @param {Function} callback Receives the usual err argument, followed by an object with extension, width, height, orientation, originalWidth and originalHeight properties. Any other properties depend on the version of ImageMagick in use and are not guaranteed
+   * @param {Function} callback Receives the usual err argument, followed by an object with extension, width, height, orientation, originalWidth and originalHeight properties. Any other properties depend on the backend in use and are not guaranteed
    *
    * @see Uploadfs#copyImageIn
    */
 
   self.identifyLocalImage = function(path, callback) {
-    // Identify the file type, size, etc. Stuff them into context.info and
-    // context.extension
-    im(path).identify(function (err, info) {
-      if (err) {
-        return callback(err);
-      }
-
-      // Imagemagick gives us the raw width and height, but we're
-      // going to orient the scaled images and, in most cases, the
-      // original image so that they actually display properly in
-      // web browsers. So return the oriented width and height
-      // to the developer. Also return the original width and
-      // height just to be thorough, but use the obvious names
-      // for the obvious thing
-
-      // Copy certain properties to match the way
-      // node-imagemagick returned them to minimize changes
-      // to the rest of our code
-      info.width = info.size.width;
-      info.height = info.size.height;
-      info.orientation = info.Orientation;
-
-      info.originalWidth = info.width;
-      info.originalHeight = info.height;
-      var o = info.orientation, t;
-      if ((o === 'LeftTop') || (o === 'RightTop') || (o === 'RightBottom') || (o === 'LeftBottom')) {
-        t = info.width;
-        info.width = info.height;
-        info.height = t;
-      }
-      // File extension from format, which is GIF, JPEG, PNG
-      info.extension = info.format.toLowerCase();
-      if (info.extension === 'jpeg') {
-        info.extension = 'jpg';
-      }
-      return callback(null, info);
-    });
+    return self._image.identify(path, callback);
   };
 }
 

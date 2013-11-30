@@ -3,19 +3,25 @@ uploadfs
 
 <a href="http://apostrophenow.org/"><img src="https://raw.github.com/punkave/uploadfs/master/logos/logo-box-madefor.png" align="right" /></a>
 
-uploadfs copies files to a web-accessible location and provides a consistent way to get the URLs that correspond to those files. uploadfs can also resize, crop and autorotate uploaded images. uploadfs includes both S3-based and local filesystem-based backends. The API offers the same conveniences with both backends, avoiding the most frustrating features of each:
+uploadfs copies files to a web-accessible location and provides a consistent way to get the URLs that correspond to those files. uploadfs can also resize, crop and autorotate uploaded images. uploadfs includes both S3-based and local filesystem-based backends and you may supply others. The API offers the same conveniences with both backends, avoiding the most frustrating features of each:
 
 * Parent directories are created automatically as needed (like S3)
 * Content types are inferred from file extensions (like the filesystem)
 * Files are always marked as readable via the web (like a filesystem + web server)
 * Images can be automatically scaled to multiple sizes
 * Images can be cropped
-* Images are automatically rotated if necessary for proper display on the web (i.e. iPhone photos with rotation hints are right side up)
+* Images are automatically rotated if necessary for proper display on the web (i.e. iPhone photos with rotation hints are right side up) when imagemagick is in use
 * Image width, image height and correct file extension are made available to the developer
 
 You can also remove a file if needed.
 
 It is possible to copy a file back from uploadfs, but there is no API to retrieve information about files in uploadfs. This is intentional. Constantly manipulating directory information is much slower in the cloud than on a local filesystem and you should not become reliant on it. Your code should maintain its own database of file information if needed, for instance in a MongoDB collection. Copying the actual contents of the file back may occasionally be needed however and this is supported.
+
+## CHANGES IN 0.3.14
+
+In addition to storage backends, you may also supply alternate image processing backends. The `backend` option has been renamed to `storage`, however `backend` is accepted for backwards compatibility. The `image` option has been introduced for specifying an image processing backend. In addition to the existing `imagemagick` backend, there is now an `imagecrunch` backend based on the Mac-specific [imagecrunch](http://github.com/punkave/imagecrunch) utility.
+
+If you do not specify an `image` backend, uploadfs will look for imagecrunch and imagemagick in your PATH, stopping as soon as it finds either the `imagecrunch` command or the `identify` command.
 
 ## CHANGES IN 0.3.13
 
@@ -74,13 +80,13 @@ If you use uploadfs in multiple source code files, you'll need to pass your `upl
 
 You need:
 
-* A "normal" filesystem in which files stay put forever (i.e. typical VPS or dedicated server hosting), OR Amazon S3, OR a willingness to write a backend for something else (look at `s3.js` and `local.js` for examples)
+* A "normal" filesystem in which files stay put forever, *OR* Amazon S3, OR a willingness to write a backend for something else (look at `s3.js` and `local.js` for examples).
 
-* [Imagemagick](http://www.imagemagick.org/script/index.php), if you want to use `copyImageIn` to automatically scale images
+* [Imagemagick](http://www.imagemagick.org/script/index.php), if you want to use `copyImageIn` to automatically scale images; OR, on Macs, the [imagecrunch](http://github.com/punkave/imagecrunch) utility; OR a willingness to write a backend for something else (look at `imagemagick.js` and `imagecrunch.js` for examples).
 
-* A local filesystem in which files stay put at least during the current request, to hold temporary files for Imagemagick's conversions. Heroku and most other cloud environments can keep a file alive at least that long, and of course so does any normal, boring VPS or dedicated server
+* A local filesystem in which files stay put at least during the current request, to hold temporary files for Imagemagick's conversions. Heroku and most other cloud environments can keep a file alive at least that long, and of course so does any normal, boring VPS or dedicated server.
 
-Note that Heroku includes Imagemagick. You can also install it with `apt-get install imagemagick` on Ubuntu servers.
+Note that Heroku includes Imagemagick. You can also install it with `apt-get install imagemagick` on Ubuntu servers. The official Imagemagick binaries for the Mac are a bit busted as of this writing, but macports or homebrew can install it. Or, you can use [imagecrunch](http://github.com/punkave/imagecrunch), a fast, tiny utility that uses native MacOS APIs.
 
 ## API Overview
 
@@ -156,8 +162,8 @@ Here's how to remove a file:
 
 Here's are the options I pass to `init()` in `sample.js`. Note that I define the image sizes I want the `copyImageIn` function to produce. No image will be wider or taller than the limits specified. The aspect ratio is always maintained, so one axis will often be smaller than the limits specified. Here's a hint: specify the width you really want, and the maximum height you can put up with. That way only obnoxiously tall images will get a smaller width, as a safeguard.
 
-    { 
-      backend: 'local', 
+    {
+      backend: 'local',
       uploadsPath: __dirname + '/public/uploads',
       uploadsUrl: 'http://localhost:3000' + uploadsLocalUrl,
       // Required if you use copyImageIn
@@ -235,13 +241,13 @@ Two good reasons:
 
 ## Less Frequently Used Options
 
-* By default, even the "original" is rotated for you if it is not oriented "top left," as with some iPhone photos. This is necessary for the original to be of any use on the web. But it does modify the original. So if you really don't want this, you can set the `orientOriginals` option to `false`.
+* In backends like imagemagick that support it, even the "original" is rotated for you if it is not oriented "top left," as with some iPhone photos. This is necessary for the original to be of any use on the web. But it does modify the original. So if you really don't want this, you can set the `orientOriginals` option to `false`.
 
-* It is possible to pass your own custom backend module instead of `local` or `s3`. Follow `local.js` or `s3.js` as a model, and specify your backend like this:
+* It is possible to pass your own custom storage module instead of `local` or `s3`. Follow `local.js` or `s3.js` as a model, and specify your backend like this:
 
-    backend: require('mybackend.js')
+    storage: require('mystorage.js')
 
-* The `parallel` option lets you specify how many image sizes should be rendered simultaneously when using `copyImageIn`. Setting this higher than the number of cores available to you does not make sense. Setting it higher than the number of sizes you have configured has no effect. Be aware that each image pipeline uses quite a lot of memory if the original image dimensions are large (5000x5000x4 is a big number). Also be aware that there is no throttling of multiple, unrelated calls to `copyImageIn`. If you expect a lot of uploads by different users at the same time, we suggest not setting `parallel`, allowing it to default to `1`.
+* You may specify an alternate image processing backend via the `image` option. Two backends, `imagemagick` and `sip`, are built in. `sip` is available only on Macs (it is a standard MacOS utility, available out of the box). `sip` is fast but it can't auto-orient rotated iPhone photos for you. You may also supply an object instead of a string to use your own image processor.
 
 ## Important Concerns With S3
 
