@@ -83,7 +83,9 @@ function Uploadfs() {
               self._image = require('./lib/image/imagecrunch.js');
               return true;
             }
-            if (fs.existsSync(p + '/identify')) {
+            // Allow for Windows and Unix filenames for identify. Silly oversight
+            // after getting delimiter right (:
+            if (fs.existsSync(p + '/identify') || fs.existsSync(p + '/identify.exe')) {
               self._image = require('./lib/image/imagemagick.js');
               return true;
             }
