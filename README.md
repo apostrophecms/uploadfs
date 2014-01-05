@@ -10,12 +10,17 @@ uploadfs copies files to a web-accessible location and provides a consistent way
 * Files are always marked as readable via the web (like a filesystem + web server)
 * Images can be automatically scaled to multiple sizes
 * Images can be cropped
-* Images are automatically rotated if necessary for proper display on the web (i.e. iPhone photos with rotation hints are right side up) when imagemagick is in use
+* Images are automatically rotated if necessary for proper display on the web (i.e. iPhone photos with rotation hints are right side up)
 * Image width, image height and correct file extension are made available to the developer
+* Non-image files are also supported
 
 You can also remove a file if needed.
 
-It is possible to copy a file back from uploadfs, but there is no API to retrieve information about files in uploadfs. This is intentional. Constantly manipulating directory information is much slower in the cloud than on a local filesystem and you should not become reliant on it. Your code should maintain its own database of file information if needed, for instance in a MongoDB collection. Copying the actual contents of the file back may occasionally be needed however and this is supported.
+It is possible to copy a file back from uploadfs, but there is no API to retrieve information about files in uploadfs. This is intentional. *Constantly manipulating directory information is much slower in the cloud than on a local filesystem and you should not become reliant on it.* Your code should maintain its own database of file information if needed, for instance in a MongoDB collection. Copying the actual contents of the file back may occasionally be needed however and this is supported.
+
+## CHANGES IN 1.0.0
+
+None! Since the additions in version 0.3.14 we've had no real problems. We now support both alternate storage backends and alternate image rendering backends. Test coverage is thorough and everything's passing. What more could you want? It's time to declare it stable.
 
 ## CHANGES IN 0.3.15
 
