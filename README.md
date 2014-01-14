@@ -13,77 +13,11 @@ uploadfs copies files to a web-accessible location and provides a consistent way
 * Images are automatically rotated if necessary for proper display on the web (i.e. iPhone photos with rotation hints are right side up)
 * Image width, image height and correct file extension are made available to the developer
 * Non-image files are also supported
+* Web access to files can be disabled and reenabled
 
 You can also remove a file if needed.
 
 It is possible to copy a file back from uploadfs, but there is no API to retrieve information about files in uploadfs. This is intentional. *Constantly manipulating directory information is much slower in the cloud than on a local filesystem and you should not become reliant on it.* Your code should maintain its own database of file information if needed, for instance in a MongoDB collection. Copying the actual contents of the file back may occasionally be needed however and this is supported.
-
-## CHANGES IN 1.0.0
-
-None! Since the additions in version 0.3.14 we've had no real problems. We now support both alternate storage backends and alternate image rendering backends. Test coverage is thorough and everything's passing. What more could you want? It's time to declare it stable.
-
-## CHANGES IN 0.3.15
-
-Decided that imagecrunch should output JSON, so that's now what the backend expects.
-
-## CHANGES IN 0.3.14
-
-In addition to storage backends, you may also supply alternate image processing backends. The `backend` option has been renamed to `storage`, however `backend` is accepted for backwards compatibility. The `image` option has been introduced for specifying an image processing backend. In addition to the existing `imagemagick` backend, there is now an `imagecrunch` backend based on the Mac-specific [imagecrunch](http://github.com/punkave/imagecrunch) utility.
-
-If you do not specify an `image` backend, uploadfs will look for imagecrunch and imagemagick in your PATH, stopping as soon as it finds either the `imagecrunch` command or the `identify` command.
-
-## CHANGES IN 0.3.13
-
-`copyImageIn` has been rewritten to run more than 4x faster! We now generate our own imagemagick `convert` pipeline which takes advantage of two big optimizations:
-
-* Load, orient and crop the original image only once, then output it at several sizes in the same pipeline. This yields a 2x speedup.
-* First scale the image to the largest size desired, then scale to smaller sizes based on that as part of the same pipeline, without creating any lossy intermediate files. This yields another 2x speedup and a helvetica of designers were unable to see any difference in quality. ("Helvetica" is the collective noun for a group of designers.)
-
-The new `parallel` option allows you to specify the maximum number of image sizes to render simultaneously. This defaults to 1, to avoid using a lot of memory and CPU, but if you are under the gun to render a lot of images in a hurry, you can set this as high as the number of image sizes you have. Currently there is no throttling mechanism for multiple unrelated calls to `uploadfs.copyImageIn`, this option relates to the rendering of the various sizes for a single call.
-
-## CHANGES IN 0.3.11
-
-The new `parallel` option allows you to specify the maximum number of image sizes to render simultaneously. This defaults to 1, to avoid using a lot of memory and CPU, but if you are under the gun to render a lot of images in a hurry, you can set this as high as the number of image sizes you have. Currently there is no throttling mechanism for multiple unrelated calls to `uploadfs.copyImageIn`, this option relates to the rendering of the various sizes for a single call.
-
-## CHANGES IN 0.3.7-0.3.10
-
-Just packaging and documentation. Now a P'unk Avenue project.
-
-## CHANGES IN 0.3.6
-
-The `uploadfs` functionality for identifying a local image file via ImageMagick has been refactored and made available as the `identifyLocalImage` method. This method is primarily used internally but is occasionally helpful in migration situations (e.g. "I forgot to save the metadata for any of my images before").
-
-## CHANGES IN 0.3.5
-
-Starting in version 0.3.5, you can set the quality level for scaled JPEGs via the scaledJpegQuality option, which defaults to 80. You can pass this option either when initializing `uploadfs` or on individual calls to `copyImageIn`. This option applies only to scaled versions of the image. If uploadfs modifies the "original" image to scale or orient it, Imagemagick's default behavior stays in effect, which is to attempt to maintain the same quality level as the original file. That makes sense for images that will be the basis for further cropping and scaling but results in impractically large files for web deployment of scaled images. Thus the new option and the new default behavior.
-
-## CHANGES IN 0.3.4
-
-Starting in version 0.3.4, the getTempPath() method is available. This returns the same `tempPath` that was supplied to uploadfs at initialization time. Note that at this point the folder is guaranteed to exist. This is useful when you need a good place to `copyOut` something to, for instance in preparation to `copyImageIn` once more to carry out a cropping operation.
-
-## CHANGES IN 0.3.3
-
-Starting in version 0.3.3, cropping is available. Pass an options object as the third parameter to `copyImageIn`. Set the `crop` property to an object with `top`, `left`, `width` and `height` properties, all specified in pixels. These coordinates are relative to the original image. **When you specify the `crop` property, both the "full size" image copied into uploadfs and any scaled images are cropped.** The uncropped original is NOT copied into uploadfs. If you want the uncropped original, be sure to copy it in separately. The `width` and `height` properties of the `info` object passed to your callback will be the cropped dimensions.
-
-Also starting in version 0.3.3, `uploadfs` uses the `gm` module rather than the `node-imagemagick` module for image manipulation, but configures `gm` to use imagemagick. This change was made because `node-imagemagick` has been abandoned and `gm` is being actively maintained. This change has not affected the `uploadfs` API in any way. Isn't separation of concerns wonderful?
-
-## CHANGES IN 0.3.2
-
-Starting in version 0.3.2, you can copy files back out of uploadfs with `copyOut`. You should not rely heavily on this method, but it is occasionally unavoidable, for instance if you need to crop an image differently. When possible, cache files locally if you may need them locally soon.
-
-## CHANGES IN 0.3.0
-
-Starting in version 0.3.0, you must explicitly create an instance of uploadfs. This allows you to have more than one, separately configured instance, and it also avoids serious issues with modules not seeing the same instance automatically as they might expect. For more information see [Singletons in #node.js modules cannot be trusted, or why you can't just do var foo = require('baz').init()](http://justjs.com/posts/singletons-in-node-js-modules-cannot-be-trusted-or-why-you-can-t-just-do-var-foo-require-baz-init).
-
-Existing code that isn't concerned with sharing uploadfs between multiple modules will only need a two line change to be fully compatible:
-
-    // CHANGE THIS
-    var uploadfs = require('uploadfs');
-
-    // TO THIS (note the extra parens)
-    var uploadfs = require('uploadfs')();
-
-If you use uploadfs in multiple source code files, you'll need to pass your `uploadfs` object explicitly, much as you pass your Express `app` object when you want to add routes to it via another file.
 
 ## Requirements
 
@@ -116,6 +50,12 @@ Here's the entire API:
 * The `remove` method removes a file from uploadfs.
 
 * The `getUrl` method returns the URL to which you should append uploadfs paths to fetch them with a web browser.
+
+* The `disable` method shuts off web access to a file. Depending on the storage backend it may also block the `copyOut` method, so you should be sure to call `enable` before attempting any further access to the file.
+
+* The `enable` method restores web access to a file.
+
+* The `getImageSize` method returns the currently configured image sizes.
 
 * The `identifyLocalImage` method provides direct access to the `uploadfs` functionality for determining the extension, width, height and orientation of images. Normally `copyIn` does everything you need in one step, but this method is occasionally useful for migration purposes.
 
@@ -166,6 +106,18 @@ The same information is available via `identifyLocalImage` if you want to examin
 Here's how to remove a file:
 
     uploadfs.remove('/profiles/me.jpg', function(e) { ... });
+
+## Disabling Access To Files
+
+This call shuts off web access to a file:
+
+    uploadfs.disable('/profiles/me.jpg', function(e) { ... });
+
+And this call restores it:
+
+    uploadfs.enable('/profiles/me.jpg', function(e) { ... });
+
+*Depending on the backend, `disable` may also block the copyOut method*, so be sure to call `enable` before attempting any further access to the file. (Unfortunately S3 does not offer an ACL that acts exactly like `chmod 000`, thus this slight inconsistency.)
 
 ## Configuration Options
 
@@ -282,6 +234,79 @@ Feel free to open issues on [github](http://github.com/punkave/uploadfs).
 
 <a href="http://punkave.com/"><img src="https://raw.github.com/punkave/uploadfs/master/logos/logo-box-builtby.png" /></a>
 
+## Changelog
 
+### CHANGES IN 1.1.0
+
+The new `disable` and `enable` methods turn web access to the specified path off and on again, respectively. The new `getImageSizes` method simply gives you access to the image sizes that are currently configured.
+
+There are no changes elsewhere in the code.
+
+### CHANGES IN 1.0.0
+
+None! Since the additions in version 0.3.14 we've had no real problems. We now support both alternate storage backends and alternate image rendering backends. Test coverage is thorough and everything's passing. What more could you want? It's time to declare it stable.
+
+### CHANGES IN 0.3.15
+
+Decided that imagecrunch should output JSON, so that's now what the backend expects.
+
+### CHANGES IN 0.3.14
+
+In addition to storage backends, you may also supply alternate image processing backends. The `backend` option has been renamed to `storage`, however `backend` is accepted for backwards compatibility. The `image` option has been introduced for specifying an image processing backend. In addition to the existing `imagemagick` backend, there is now an `imagecrunch` backend based on the Mac-specific [imagecrunch](http://github.com/punkave/imagecrunch) utility.
+
+If you do not specify an `image` backend, uploadfs will look for imagecrunch and imagemagick in your PATH, stopping as soon as it finds either the `imagecrunch` command or the `identify` command.
+
+### CHANGES IN 0.3.13
+
+`copyImageIn` has been rewritten to run more than 4x faster! We now generate our own imagemagick `convert` pipeline which takes advantage of two big optimizations:
+
+* Load, orient and crop the original image only once, then output it at several sizes in the same pipeline. This yields a 2x speedup.
+* First scale the image to the largest size desired, then scale to smaller sizes based on that as part of the same pipeline, without creating any lossy intermediate files. This yields another 2x speedup and a helvetica of designers were unable to see any difference in quality. ("Helvetica" is the collective noun for a group of designers.)
+
+The new `parallel` option allows you to specify the maximum number of image sizes to render simultaneously. This defaults to 1, to avoid using a lot of memory and CPU, but if you are under the gun to render a lot of images in a hurry, you can set this as high as the number of image sizes you have. Currently there is no throttling mechanism for multiple unrelated calls to `uploadfs.copyImageIn`, this option relates to the rendering of the various sizes for a single call.
+
+### CHANGES IN 0.3.11
+
+The new `parallel` option allows you to specify the maximum number of image sizes to render simultaneously. This defaults to 1, to avoid using a lot of memory and CPU, but if you are under the gun to render a lot of images in a hurry, you can set this as high as the number of image sizes you have. Currently there is no throttling mechanism for multiple unrelated calls to `uploadfs.copyImageIn`, this option relates to the rendering of the various sizes for a single call.
+
+### CHANGES IN 0.3.7-0.3.10
+
+Just packaging and documentation. Now a P'unk Avenue project.
+
+### CHANGES IN 0.3.6
+
+The `uploadfs` functionality for identifying a local image file via ImageMagick has been refactored and made available as the `identifyLocalImage` method. This method is primarily used internally but is occasionally helpful in migration situations (e.g. "I forgot to save the metadata for any of my images before").
+
+### CHANGES IN 0.3.5
+
+Starting in version 0.3.5, you can set the quality level for scaled JPEGs via the scaledJpegQuality option, which defaults to 80. You can pass this option either when initializing `uploadfs` or on individual calls to `copyImageIn`. This option applies only to scaled versions of the image. If uploadfs modifies the "original" image to scale or orient it, Imagemagick's default behavior stays in effect, which is to attempt to maintain the same quality level as the original file. That makes sense for images that will be the basis for further cropping and scaling but results in impractically large files for web deployment of scaled images. Thus the new option and the new default behavior.
+
+### CHANGES IN 0.3.4
+
+Starting in version 0.3.4, the getTempPath() method is available. This returns the same `tempPath` that was supplied to uploadfs at initialization time. Note that at this point the folder is guaranteed to exist. This is useful when you need a good place to `copyOut` something to, for instance in preparation to `copyImageIn` once more to carry out a cropping operation.
+
+### CHANGES IN 0.3.3
+
+Starting in version 0.3.3, cropping is available. Pass an options object as the third parameter to `copyImageIn`. Set the `crop` property to an object with `top`, `left`, `width` and `height` properties, all specified in pixels. These coordinates are relative to the original image. **When you specify the `crop` property, both the "full size" image copied into uploadfs and any scaled images are cropped.** The uncropped original is NOT copied into uploadfs. If you want the uncropped original, be sure to copy it in separately. The `width` and `height` properties of the `info` object passed to your callback will be the cropped dimensions.
+
+Also starting in version 0.3.3, `uploadfs` uses the `gm` module rather than the `node-imagemagick` module for image manipulation, but configures `gm` to use imagemagick. This change was made because `node-imagemagick` has been abandoned and `gm` is being actively maintained. This change has not affected the `uploadfs` API in any way. Isn't separation of concerns wonderful?
+
+### CHANGES IN 0.3.2
+
+Starting in version 0.3.2, you can copy files back out of uploadfs with `copyOut`. You should not rely heavily on this method, but it is occasionally unavoidable, for instance if you need to crop an image differently. When possible, cache files locally if you may need them locally soon.
+
+### CHANGES IN 0.3.0
+
+Starting in version 0.3.0, you must explicitly create an instance of uploadfs. This allows you to have more than one, separately configured instance, and it also avoids serious issues with modules not seeing the same instance automatically as they might expect. For more information see [Singletons in #node.js modules cannot be trusted, or why you can't just do var foo = require('baz').init()](http://justjs.com/posts/singletons-in-node-js-modules-cannot-be-trusted-or-why-you-can-t-just-do-var-foo-require-baz-init).
+
+Existing code that isn't concerned with sharing uploadfs between multiple modules will only need a two line change to be fully compatible:
+
+    // CHANGE THIS
+    var uploadfs = require('uploadfs');
+
+    // TO THIS (note the extra parens)
+    var uploadfs = require('uploadfs')();
+
+If you use uploadfs in multiple source code files, you'll need to pass your `uploadfs` object explicitly, much as you pass your Express `app` object when you want to add routes to it via another file.
 
 

@@ -82,6 +82,65 @@ function localTestStart() {
       }
       // Don't confuse the next test
       fs.unlinkSync('copy-out-test.txt');
+      testDisableAndEnable();
+    });
+  }
+
+  function testDisableAndEnable() {
+    console.log('testing disable and enable');
+    return async.series({
+      disable: function(callback) {
+        uploadfs.disable('/one/two/three/test.txt', function(err) {
+          if (err) {
+            console.log('uploadfs.disable failed:');
+            console.log(err);
+            process.exit(1);
+          }
+          return callback(null);
+        });
+      },
+      copyShouldFail: function(callback) {
+        uploadfs.copyOut('/one/two/three/test.txt', 'copy-out-test.txt', function(e) {
+          if (!e) {
+            console.log('uploadfs.disable allowed access when it should not have');
+            process.exit(1);
+          }
+          return callback(null);
+        });
+      },
+      enable: function(callback) {
+        uploadfs.enable('/one/two/three/test.txt', function(err) {
+          if (err) {
+            console.log('uploadfs.enable failed:');
+            console.log(err);
+            process.exit(1);
+          }
+          return callback(null);
+        });
+      },
+      copyShouldWork: function(callback) {
+        uploadfs.copyOut('/one/two/three/test.txt', 'copy-out-test.txt', function(e) {
+          if (e) {
+            console.log('uploadfs.enable did not restore access');
+            process.exit(1);
+          }
+
+          var content = fs.readFileSync('copy-out-test.txt', 'utf8');
+          var original = fs.readFileSync('test.txt', 'utf8');
+          if (content !== original) {
+            console.log('testCopyOut did not copy the file faithfully.');
+            process.exit(1);
+          }
+          return callback(null);
+        });
+      }
+    }, function(err) {
+      if (err) {
+        console.log('Unexpected error');
+        process.exit(1);
+      }
+      // Don't confuse the next test
+      fs.unlinkSync('copy-out-test.txt');
       testRemove();
     });
   }
@@ -235,7 +294,7 @@ function localTestStart() {
 
 function s3TestStart() {
   options = s3Options;
-  console.log('Initializing uploadfs for the ' + options.backend + ' backend');
+  console.log('Initializing uploadfs for the ' + options.storage + ' backend');
   uploadfs.init(options, function(e) {
     if (e) {
       console.log('uploadfs.init failed:');
@@ -293,6 +352,73 @@ function s3TestStart() {
       }
       // Don't confuse the next test
       fs.unlinkSync('copy-out-test.txt');
+      testDisableAndEnable();
+    });
+  }
+
+  function testDisableAndEnable() {
+    console.log('s3 test of disable and enable');
+    return async.series({
+      disable: function(callback) {
+        return uploadfs.disable('/one/two/three/test.txt', function(err) {
+          if (err) {
+            console.log('uploadfs.disable failed:');
+            console.log(err);
+            process.exit(1);
+          }
+          return callback(null);
+        });
+      },
+      webShouldFail: function(callback) {
+        // With s3, copyOut always works, but web access will fail, which is
+        // all that uploadfs.disable actually promises.
+        var url = uploadfs.getUrl() + '/one/two/three/test.txt';
+        return request(url, function(err, response, body) {
+          if (response.statusCode >= 400) {
+            console.log(url);
+            console.log(response.statusCode);
+            return callback(null);
+          }
+          console.log('uploadfs.disable: web request should have failed, succeeded with status code ' + response.statusCode);
+          process.exit(1);
+        });
+      },
+      enable: function(callback) {
+        uploadfs.enable('/one/two/three/test.txt', function(err) {
+          if (err) {
+            console.log('uploadfs.enable failed:');
+            console.log(err);
+            process.exit(1);
+          }
+          return callback(null);
+        });
+      },
+      webShouldWork: function(callback) {
+        var url = uploadfs.getUrl() + '/one/two/three/test.txt';
+        return request(url, function(err, response, body) {
+          if (response.statusCode >= 400) {
+            console.log('uploadfs.enable: web request failed with status code ' + response.statusCode);
+            process.exit(1);
+          }
+          var content = response.body;
+          console.log(content);
+          var original = fs.readFileSync('test.txt', 'utf8');
+          if (content !== original) {
+            console.log('After uploadfs.enable, web request did not copy the file faithfully.');
+            process.exit(1);
+          }
+          if (response.headers['content-type'] !== 'text/plain') {
+            console.log("Content type is not text/plain");
+            process.exit(1);
+          }
+          return callback(null);
+        });
+      }
+    }, function(err) {
+      if (err) {
+        console.log('Unexpected error');
+        process.exit(1);
+      }
       testRemove();
     });
   }

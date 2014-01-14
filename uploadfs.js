@@ -342,6 +342,44 @@ function Uploadfs() {
   };
 
   /**
+   * Re-enable access to the file. By default newly uploaded
+   * files ARE web accessible, so you need not call this method
+   * unless uploadfs.disable has been previously called.
+   *
+   * Be aware that you MUST call this method to guarantee access
+   * to the file via copyOut, as well as via the web, even though
+   * some backends may only disable access via the web. Do not
+   * rely on this behavior. (Differences in behavior between
+   * local filesystems and S3 require we tolerate this difference.)
+   *
+   * @param  {string}   path     Path as stored in uploadfs (with extension)
+   * @param  {Function} callback Receives error if any, otherwise null
+   */
+
+  self.enable = function (path, callback) {
+    return self._storage.enable(path, callback);
+  };
+
+  /**
+   * Disable web access to the file. By default new uploads ARE
+   * accessible; however this method is useful when implementing a
+   * "recycle bin" or other undo-able delete feature.
+   *
+   * The implementation MUST block web access to the file. The
+   * implementation MAY also block read access via copyOut, so be
+   * aware that you MUST call uploadfs.enable to reenable access to
+   * the file to guarantee you have access to it again across all
+   * storage backends, even if you are using copyOut to access it.
+   *
+   * @param  {string}   path     Path as stored in uploadfs (with extension)
+   * @param  {Function} callback Receives error if any, otherwise null
+   */
+
+  self.disable = function (path, callback) {
+    return self._storage.disable(path, callback);
+  };
+
+  /**
    * Identify a local image file. Normally you don't need to call
    * this yourself, it is mostly used by copyImageIn. But you may find it
    * useful in certain migration situations, so we have exported it.
@@ -372,6 +410,20 @@ function Uploadfs() {
 
   self.identifyLocalImage = function(path, callback) {
     return self._image.identify(path, callback);
+  };
+
+  /**
+   * Returns the image sizes array with which uploadfs was configured.
+   * This may be of use if you must iterate over the various generated
+   * images later.
+   *
+   * However note that a best practice is to retain information about the sizes
+   * that were expected when each image was actually uploaded, because you might
+   * change your mind and add or remove sizes later.
+   * @return {array} [Image size objects]
+   */
+  self.getImageSizes = function() {
+    return imageSizes;
   };
 }
 
