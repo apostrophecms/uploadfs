@@ -1,7 +1,7 @@
 var uploadfs = require('./uploadfs.js')();
 var fs = require('fs');
 var request = require('request');
-var _ = require('underscore');
+var _ = require('lodash');
 var async = require('async');
 
 // Test the imagecrunch image backend, written specifically for Macs

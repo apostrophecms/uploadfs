@@ -1,7 +1,7 @@
 var uploadfs = require('./uploadfs.js')();
 var fs = require('fs');
 var request = require('request');
-var _ = require('underscore');
+var _ = require('lodash');
 var async = require('async');
 
 var localOptions = { storage: 'local', uploadsPath: __dirname + '/test', uploadsUrl: 'http://localhost:3000/test' };
