@@ -236,6 +236,10 @@ Feel free to open issues on [github](http://github.com/punkave/uploadfs).
 
 ## Changelog
 
+### CHANGES IN 1.1.3
+
+The imagecrunch backend now sets `adjustedOriginal` correctly when it does a simple copy of the original of a PNG or JPEG.
+
 ### CHANGES IN 1.1.0
 
 The new `disable` and `enable` methods turn web access to the specified path off and on again, respectively. The new `getImageSizes` method simply gives you access to the image sizes that are currently configured.
