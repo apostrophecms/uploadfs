@@ -375,8 +375,6 @@ function s3TestStart() {
         var url = uploadfs.getUrl() + '/one/two/three/test.txt';
         return request(url, function(err, response, body) {
           if (response.statusCode >= 400) {
-            console.log(url);
-            console.log(response.statusCode);
             return callback(null);
           }
           console.log('uploadfs.disable: web request should have failed, succeeded with status code ' + response.statusCode);

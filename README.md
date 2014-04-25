@@ -237,6 +237,10 @@ Feel free to open issues on [github](http://github.com/punkave/uploadfs).
 
 ## Changelog
 
+### CHANGES IN 1.1.5
+
+GIF animations have been merged back into the main pipeline thanks to `-clone 0--1` which preserves all frames of the animation. It's a little faster, but it's also less code to maintain.
+
 ### CHANGES IN 1.1.4
 
 GIF animations are preserved in the imagemagick backend, with full support for resizing and cropping. A separate, slower pipeline is used due to limitations of the `+clone` mechanism in imagemagick. The API has not changed.
