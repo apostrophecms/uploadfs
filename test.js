@@ -1,3 +1,5 @@
+/* jshint node:true */
+
 var uploadfs = require('./uploadfs.js')();
 var fs = require('fs');
 var request = require('request');

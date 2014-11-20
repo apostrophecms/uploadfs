@@ -1,3 +1,5 @@
+/* jshint node:true */
+
 var _ = require('lodash');
 var async = require('async');
 var crypto = require('crypto');
@@ -15,7 +17,7 @@ function generateId() {
  */
 
 function Uploadfs() {
-  var tempPath, backend, imageSizes, orientOriginals = true, scaledJpegQuality, self = this;
+  var tempPath, imageSizes, orientOriginals = true, scaledJpegQuality, self = this;
   /**
    * Initialize uploadfs. The init method passes options to the backend and invokes a callback when the backend is ready.
    * @param  {Object}   options: backend, imageSizes, orientOriginals, tempPath, copyOriginal, scaledJpegQuality, contentTypes. backend is the only mandatory option. See the README and individual methods for details.
@@ -30,13 +32,13 @@ function Uploadfs() {
     // Load standard storage backends, by name. You can also pass an object
     // with your own implementation
     if (typeof (self._storage) === 'string') {
-      self._storage = require('./lib/storage/' + self._storage + '.js');
+      self._storage = require('./lib/storage/' + self._storage + '.js')();
     }
 
     // Load image backend
     self._image = options.image;
     if (typeof (self._image) === 'string') {
-      self._image = require('./lib/image/' + self._image + '.js');
+      self._image = require('./lib/image/' + self._image + '.js')();
     }
 
     // Reasonable default JPEG quality setting for scaled copies. Imagemagick's default
@@ -80,13 +82,13 @@ function Uploadfs() {
           var paths = (process.env.PATH || '').split(delimiter);
           if (!_.find(paths, function(p) {
             if (fs.existsSync(p + '/imagecrunch')) {
-              self._image = require('./lib/image/imagecrunch.js');
+              self._image = require('./lib/image/imagecrunch.js')();
               return true;
             }
             // Allow for Windows and Unix filenames for identify. Silly oversight
             // after getting delimiter right (:
             if (fs.existsSync(p + '/identify') || fs.existsSync(p + '/identify.exe')) {
-              self._image = require('./lib/image/imagemagick.js');
+              self._image = require('./lib/image/imagemagick.js')();
               return true;
             }
           })) {

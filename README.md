@@ -24,9 +24,9 @@ It is possible to copy a file back from uploadfs, but there is no API to retriev
 
 You need:
 
-* A "normal" filesystem in which files stay put forever, *OR* Amazon S3, OR a willingness to write a backend for something else (look at `s3.js` and `local.js` for examples).
+* A "normal" filesystem in which files stay put forever, *OR* Amazon S3, OR a willingness to write a backend for something else (look at `s3.js` and `local.js` for examples; just supply an object with the same methods, you don't have to supply a factory function).
 
-* [Imagemagick](http://www.imagemagick.org/script/index.php), if you want to use `copyImageIn` to automatically scale images and have full animated GIF support; OR, on Macs, the [imagecrunch](http://github.com/punkave/imagecrunch) utility; OR a willingness to write a backend for something else (look at `imagemagick.js` and `imagecrunch.js` for examples).
+* [Imagemagick](http://www.imagemagick.org/script/index.php), if you want to use `copyImageIn` to automatically scale images and have full animated GIF support; OR, on Macs, the [imagecrunch](http://github.com/punkave/imagecrunch) utility; OR a willingness to write a backend for something else (look at `imagemagick.js` and `imagecrunch.js` for examples; just supply an object with the same methods, you don't have to supply a factory function).
 
 * A local filesystem in which files stay put at least during the current request, to hold temporary files for Imagemagick's conversions. Heroku and most other cloud environments can keep a file alive at least that long, and of course so does any normal, boring VPS or dedicated server.
 
@@ -237,9 +237,13 @@ Feel free to open issues on [github](http://github.com/punkave/uploadfs).
 
 ## Changelog
 
-### CHANGES IN 1.1.5
+### CHANGES IN 1.1.7
 
-GIF animations have been merged back into the main pipeline thanks to `-clone 0--1` which preserves all frames of the animation. It's a little faster, but it's also less code to maintain.
+Supports multiple instances when using the default storage and image backends. Previously those backends only supported one instance. This was corrected without changing the public API for custom backends, which have always supported multiple instances.
+
+### CHANGES IN 1.1.5-1.1.6
+
+GIF animations have been merged back into the main pipeline thanks to `-clone 0--1` which preserves all frames of the animation. It's a little faster, and it's also less code to maintain.
 
 ### CHANGES IN 1.1.4
 
