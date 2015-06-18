@@ -237,7 +237,11 @@ Feel free to open issues on [github](http://github.com/punkave/uploadfs).
 
 ## Changelog
 
-### CHANGES IN 1.1.7
+### CHANGES IN 1.1.9
+
+Use latest knox. No functionality changes.
+
+### CHANGES IN 1.1.7-1.1.8
 
 Supports multiple instances when using the default storage and image backends. Previously those backends only supported one instance. This was corrected without changing the public API for custom backends, which have always supported multiple instances.
 
