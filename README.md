@@ -237,6 +237,10 @@ Feel free to open issues on [github](http://github.com/punkave/uploadfs).
 
 ## Changelog
 
+### CHANGES IN 1.1.10
+
+Error message when imagemagick is not installed is a little more informative about what you must do.
+
 ### CHANGES IN 1.1.9
 
 Use latest knox. No functionality changes.

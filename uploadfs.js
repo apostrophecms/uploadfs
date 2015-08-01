@@ -92,7 +92,7 @@ function Uploadfs() {
               return true;
             }
           })) {
-            return callback('no image backend specified and neither imagecrunch nor identify found in PATH');
+            return callback('no image backend specified and neither "imagecrunch" nor the imagemagick utility "identify" found in PATH. Install imagemagick');
           }
         }
         return callback(null);
