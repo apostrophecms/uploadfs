@@ -351,7 +351,7 @@ function Uploadfs() {
   };
 
   self.getUrl = function (options, callback) {
-    if (self.cdn.enabled) {
+    if (self.cdn && self.cdn.enabled) {
       return self.cdn.url;
     }
     return self._storage.getUrl(options, callback);
