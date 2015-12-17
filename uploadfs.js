@@ -35,6 +35,21 @@ function Uploadfs() {
       self._storage = require('./lib/storage/' + self._storage + '.js')();
     }
 
+    // If you want to deliver your images
+    // over a CDN then this could be set in options
+    if (options.cdn !== undefined) { 
+      if (  !_.isObject(options.cdn) || 
+            !_.isString(options.cdn.url) || 
+            (options.cdn.enabled !== undefined && !_.isBoolean(options.cdn.enabled))
+          ) {
+        return callback('CDN must be a valid object: {enabled: boolean, url: string}');
+      }
+      if (options.cdn.enabled === undefined) {
+        options.cdn.enabled = true;
+      }
+      self.cdn = options.cdn;
+    }
+
     // Load image backend
     self._image = options.image;
     if (typeof (self._image) === 'string') {
@@ -336,6 +351,9 @@ function Uploadfs() {
   };
 
   self.getUrl = function (options, callback) {
+    if (self.cdn && self.cdn.enabled) {
+      return self.cdn.url;
+    }
     return self._storage.getUrl(options, callback);
   };
 
