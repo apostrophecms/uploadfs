@@ -15,6 +15,7 @@ uploadfs copies files to a web-accessible location and provides a consistent way
 * Non-image files are also supported
 * Web access to files can be disabled and reenabled
 * Animated GIFs are preserved, with full support for scaling and cropping
+* Images and other files could be required over a CDN
 
 You can also remove a file if needed.
 
@@ -126,6 +127,10 @@ Here's are the options I pass to `init()` in `sample.js`. Note that I define the
 
     {
       backend: 'local',
+      cdn: {
+        enabled: true,
+        url: 'http://myAwesomeCDN'
+      },
       uploadsPath: __dirname + '/public/uploads',
       uploadsUrl: 'http://localhost:3000' + uploadsLocalUrl,
       // Required if you use copyImageIn
@@ -167,8 +172,15 @@ Here is an equivalent configuration for S3:
       // I recommend creating your buckets in a region with 
       // read-after-write consistency (not us-standard)
       region: 'us-west-2',
+      // 60*60*24*7 = 1 Week
+      // Images are delivered with cache-control-header
+      cachingTime: 604800
       // Required if you use copyImageIn
       tempPath: __dirname + '/temp',
+      cdn: {
+        enabled: true,
+        url: 'http://myAwesomeCDN'
+      },
       imageSizes: [
         {
           name: 'small',

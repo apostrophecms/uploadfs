@@ -20,8 +20,11 @@ function Uploadfs() {
   var tempPath, imageSizes, orientOriginals = true, scaledJpegQuality, self = this;
   /**
    * Initialize uploadfs. The init method passes options to the backend and invokes a callback when the backend is ready.
-   * @param  {Object}   options: backend, imageSizes, orientOriginals, tempPath, copyOriginal, scaledJpegQuality, contentTypes. backend is the only mandatory option. See the README and individual methods for details.
-   * @param  {Function} callback    Will receive the usual err argument
+   * @param  {Object}   options: backend, imageSizes, orientOriginals, tempPath, copyOriginal, scaledJpegQuality, contentType, cdn. backend is the only mandatory option. See the README and individual methods for details.
+   * @param  {Object}   options.cdn               - An object, that defines cdn settings
+   * @param  {Boolean}  options.cdn.enabled=true  - Whether the cdn should be anbled or not
+   * @param  {String}   options.cdn.url           - The cdn-url
+   * @param  {Function} callback                  - Will receive the usual err argument
    */
   self.init = function (options, callback) {
     // bc: support options.backend
