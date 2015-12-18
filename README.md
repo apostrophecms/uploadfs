@@ -7,7 +7,7 @@ uploadfs copies files to a web-accessible location and provides a consistent way
 
 * Parent directories are created automatically as needed (like S3)
 * Content types are inferred from file extensions (like the filesystem)
-* Files are always marked as readable via the web (like a filesystem + web server)
+* Files are by default marked as readable via the web (like a filesystem + web server)
 * Images can be automatically scaled to multiple sizes
 * Images can be cropped
 * Images are automatically rotated if necessary for proper display on the web (i.e. iPhone photos with rotation hints are right side up)
