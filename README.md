@@ -209,7 +209,7 @@ Two good reasons:
 
     storage: require('mystorage.js')
 
-* You may specify an alternate image processing backend via the `image` option. Two backends, `imagemagick` and `sip`, are built in. `sip` is available only on Macs (it is a standard MacOS utility, available out of the box). `sip` is fast but it can't auto-orient rotated iPhone photos for you. You may also supply an object instead of a string to use your own image processor.
+* You may specify an alternate image processing backend via the `image` option. Two backends, `imagemagick` and `imagecrunch`, are built in. [imagecrunch](http://github.com/punkave/imagecrunch) is a Mac-specific optional tulity that is much faster than `imagemagick`. You may also supply an object instead of a string to use your own image processor. Just follow the existing `imagecrunch.js` and `imagemagick.js` files as a model.
 
 ## Extra features for S3: caching and CDNs
 
