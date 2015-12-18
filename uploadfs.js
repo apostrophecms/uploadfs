@@ -20,8 +20,11 @@ function Uploadfs() {
   var tempPath, imageSizes, orientOriginals = true, scaledJpegQuality, self = this;
   /**
    * Initialize uploadfs. The init method passes options to the backend and invokes a callback when the backend is ready.
-   * @param  {Object}   options: backend, imageSizes, orientOriginals, tempPath, copyOriginal, scaledJpegQuality, contentTypes. backend is the only mandatory option. See the README and individual methods for details.
-   * @param  {Function} callback    Will receive the usual err argument
+   * @param  {Object}   options: backend, imageSizes, orientOriginals, tempPath, copyOriginal, scaledJpegQuality, contentType, cdn. backend is the only mandatory option. See the README and individual methods for details.
+   * @param  {Object}   options.cdn               - An object, that defines cdn settings
+   * @param  {Boolean}  options.cdn.enabled=true  - Whether the cdn should be anbled or not
+   * @param  {String}   options.cdn.url           - The cdn-url
+   * @param  {Function} callback                  - Will receive the usual err argument
    */
   self.init = function (options, callback) {
     // bc: support options.backend
@@ -33,6 +36,21 @@ function Uploadfs() {
     // with your own implementation
     if (typeof (self._storage) === 'string') {
       self._storage = require('./lib/storage/' + self._storage + '.js')();
+    }
+
+    // If you want to deliver your images
+    // over a CDN then this could be set in options
+    if (options.cdn !== undefined) { 
+      if (  !_.isObject(options.cdn) || 
+            !_.isString(options.cdn.url) || 
+            (options.cdn.enabled !== undefined && !_.isBoolean(options.cdn.enabled))
+          ) {
+        return callback('CDN must be a valid object: {enabled: boolean, url: string}');
+      }
+      if (options.cdn.enabled === undefined) {
+        options.cdn.enabled = true;
+      }
+      self.cdn = options.cdn;
     }
 
     // Load image backend
@@ -336,6 +354,9 @@ function Uploadfs() {
   };
 
   self.getUrl = function (options, callback) {
+    if (self.cdn && self.cdn.enabled) {
+      return self.cdn.url;
+    }
     return self._storage.getUrl(options, callback);
   };
 
