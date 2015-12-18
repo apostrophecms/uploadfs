@@ -15,7 +15,6 @@ uploadfs copies files to a web-accessible location and provides a consistent way
 * Non-image files are also supported
 * Web access to files can be disabled and reenabled
 * Animated GIFs are preserved, with full support for scaling and cropping
-* Images and other files could be required over a CDN
 
 You can also remove a file if needed.
 
@@ -65,7 +64,7 @@ Here's the entire API:
 
 For a complete, very simple and short working example in which a user uploads a profile photo, see `sample.js`.
 
-Here's the interesting bit. Note that I do not supply an extension for the final image file, because I want to let Imagemagick figure that out for me.
+Here's the interesting bit. Note that we do not supply an extension for the final image file, because we want to let Imagemagick figure that out for us.
 
     app.post('/', function(req, res) {
       uploadfs.copyImageIn(req.files.photo.path, '/profiles/me', function(e, info) {
@@ -123,14 +122,10 @@ And this call restores it:
 
 ## Configuration Options
 
-Here's are the options I pass to `init()` in `sample.js`. Note that I define the image sizes I want the `copyImageIn` function to produce. No image will be wider or taller than the limits specified. The aspect ratio is always maintained, so one axis will often be smaller than the limits specified. Here's a hint: specify the width you really want, and the maximum height you can put up with. That way only obnoxiously tall images will get a smaller width, as a safeguard.
+Here are the options we pass to `init()` in `sample.js`. Note that we define the image sizes we want the `copyImageIn` function to produce. No image will be wider or taller than the limits specified. The aspect ratio is always maintained, so one axis will often be smaller than the limits specified. Here's a hint: specify the width you really want, and the maximum height you can put up with. That way only obnoxiously tall images will get a smaller width, as a safeguard.
 
     {
       backend: 'local',
-      cdn: {
-        enabled: true,
-        url: 'http://myAwesomeCDN'
-      },
       uploadsPath: __dirname + '/public/uploads',
       uploadsUrl: 'http://localhost:3000' + uploadsLocalUrl,
       // Required if you use copyImageIn
@@ -169,18 +164,11 @@ Here is an equivalent configuration for S3:
       // You need to create your bucket first before using it here
       // Go to aws.amazon.com
       bucket: 'getyourownbucketplease',
-      // I recommend creating your buckets in a region with 
-      // read-after-write consistency (not us-standard)
-      region: 'us-west-2',
-      // 60*60*24*7 = 1 Week
-      // Images are delivered with cache-control-header
-      cachingTime: 604800
+      // For read-after-write consistency in the US East region.
+      // You could also use any other region name except us-standard
+      region: 'external-1',
       // Required if you use copyImageIn
       tempPath: __dirname + '/temp',
-      cdn: {
-        enabled: true,
-        url: 'http://myAwesomeCDN'
-      },
       imageSizes: [
         {
           name: 'small',
@@ -223,11 +211,38 @@ Two good reasons:
 
 * You may specify an alternate image processing backend via the `image` option. Two backends, `imagemagick` and `sip`, are built in. `sip` is available only on Macs (it is a standard MacOS utility, available out of the box). `sip` is fast but it can't auto-orient rotated iPhone photos for you. You may also supply an object instead of a string to use your own image processor.
 
+## Extra features for S3: caching and CDNs
+
+By default, when users fetch files from S3 via the web, the browser is instructed to cache them for 24 hours. This is reasonable, but you can change that cache lifetime by specifying the `cachingTime` option, in seconds:
+
+```javascript
+  // 60*60*24*7 = 1 Week
+  // Images are delivered with cache-control-header
+  cachingTime: 604800
+```
+
+Also, if you are using a CDN such as cloudfront that automatically mirrors the contents of your S3 bucket, you can specify that CDN so that the `getUrl` method of `uploadfs` returns the CDN's URL rather than a direct URL to Amazon S3:
+
+```javascript
+  cdn: {
+    enabled: true,
+    url: 'http://myAwesomeCDN'
+  }
+```
+
+Note that specifying a CDN in this way does not in any way activate that CDN for you. It just tells `uploadfs` to return a different result from `getUrl`. The rest is up to you. More CDN-related options may be added in the future.
+
 ## Important Concerns With S3
 
-**Be aware that uploads to Amazon S3's us-standard region are not guaranteed to be readable the moment you finish uploading them.** This is a big difference from how a regular filesystem behaves. One browser might see them right away while another does not. This is called "eventual consistency." To avoid this, you can use an alternate S3 region such as `us-west-2` (Oregon). However, also be aware that updates of an existing file or deletions of a file still won't be instantly seen everywhere, even if you don't use the `us-standard` region. To avoid this problem, include a version number or randomly generated ID in each filename.
+**Be aware that uploads to Amazon S3's us-standard region are not guaranteed to be readable the moment you finish uploading them.** This is a big difference from how a regular filesystem behaves. One browser might see them right away while another does not. This is called "eventual consistency."
 
-In `sample.js` I configure Express to actually serve the uploaded files when using the local backend. When using the s3 backend, you don't need to do this, because your files are served from S3. S3 URLs look like this:
+If you want your files served from the east coast of the US, set `region` to `external-1` instead. This causes uploadfs to use the `s3-external-1` endpoint, for which Amazon guarantees "read-after-write consistency."
+
+Currently `us-standard` is the only region where this is an issue.
+
+However, also be aware that no matter what region you choose, updates of an existing file or deletions of a file still won't always be instantly seen everywhere, even if you don't use the `us-standard` region. To avoid this problem, include a version number or randomly generated ID in each filename.
+
+In `sample.js` we configure Express to actually serve the uploaded files when using the local backend. When using the s3 backend, you don't need to do this, because your files are served from S3. S3 URLs look like this:
 
     http://yourbucketname.s3.amazonaws.com/your/path/to/something.jpg
 
@@ -248,6 +263,12 @@ Feel free to open issues on [github](http://github.com/punkave/uploadfs).
 <a href="http://punkave.com/"><img src="https://raw.github.com/punkave/uploadfs/master/logos/logo-box-builtby.png" /></a>
 
 ## Changelog
+
+### CHANGES IN 1.2.0
+
+* Added the `cachingTime` and `cdn` options. Thanks to Vispercept.
+
+* Fixed a bug where the local storage backend could invoke its callbacks twice, with both failure and success, when an error occurs reading from a local file in newer verisons of node (this bug did not appear in 0.10.x). The fix is backwards compatible.
 
 ### CHANGES IN 1.1.10
 
