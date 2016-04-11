@@ -264,6 +264,10 @@ Feel free to open issues on [github](http://github.com/punkave/uploadfs).
 
 ## Changelog
 
+### CHANGES IN 1.2.2
+
+* The very short-lived version 1.2.1 did not retain the originals of GIFs (when desired). This has been fixed.
+
 ### CHANGES IN 1.2.1
 
 * Animated GIF conversion strategy has been customized once again. We found cases in which the combined pipeline was 4x slower (!) and also needed to add in `-coalesce` to prevent bad frames in some cases.
