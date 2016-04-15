@@ -28,6 +28,8 @@ You need:
 
 * [Imagemagick](http://www.imagemagick.org/script/index.php), if you want to use `copyImageIn` to automatically scale images and have full animated GIF support; OR, on Macs, the [imagecrunch](http://github.com/punkave/imagecrunch) utility; OR a willingness to write a backend for something else (look at `imagemagick.js` and `imagecrunch.js` for examples; just supply an object with the same methods, you don't have to supply a factory function).
 
+* [gifsicle](https://www.lcdf.org/gifsicle/) is an optional tool that processes large animated GIFs much faster. Turn it on with the `gifsicle: true` option when calling `init`. Of course you must install `gifsicle` to use it. (Hint: your operating system probably has a package for it. Don't compile things.)
+
 * A local filesystem in which files stay put at least during the current request, to hold temporary files for Imagemagick's conversions. Heroku and most other cloud environments can keep a file alive at least that long, and of course so does any normal, boring VPS or dedicated server.
 
 Note that Heroku includes Imagemagick. You can also install it with `apt-get install imagemagick` on Ubuntu servers. The official Imagemagick binaries for the Mac are a bit busted as of this writing, but macports or homebrew can install it. Or, you can use [imagecrunch](http://github.com/punkave/imagecrunch), a fast, tiny utility that uses native MacOS APIs.
@@ -263,6 +265,10 @@ Feel free to open issues on [github](http://github.com/punkave/uploadfs).
 <a href="http://punkave.com/"><img src="https://raw.github.com/punkave/uploadfs/master/logos/logo-box-builtby.png" /></a>
 
 ## Changelog
+
+### CHANGES IN 1.3.0
+
+* The default `imagemagick` image conversion backend now optionally uses `gifsicle` to convert animated GIFs. Turn on this behavior with the `gifsicle: true` option. There are tradeoffs: `gifsicle` is much faster and uses much less RAM, but seems to produce slightly lower quality results. On a very large animation though, you're almost certain to run out of RAM with `imagemagick`. Of course you must install `gifsicle` to take advantage of this.
 
 ### CHANGES IN 1.2.2
 
