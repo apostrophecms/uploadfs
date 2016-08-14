@@ -266,6 +266,14 @@ Feel free to open issues on [github](http://github.com/punkave/uploadfs).
 
 ## Changelog
 
+### CHANGES IN 1.3.2
+
+* Updated dependency on `rimraf` module to eliminate deprecation warning for `graceful-fs`
+
+### CHANGES IN 1.3.1
+
+* Whoops, refer to original width and height properly for gifsicle
+
 ### CHANGES IN 1.3.0
 
 * The default `imagemagick` image conversion backend now optionally uses `gifsicle` to convert animated GIFs. Turn on this behavior with the `gifsicle: true` option. There are tradeoffs: `gifsicle` is much faster and uses much less RAM, but seems to produce slightly lower quality results. On a very large animation though, you're almost certain to run out of RAM with `imagemagick`. Of course you must install `gifsicle` to take advantage of this.
