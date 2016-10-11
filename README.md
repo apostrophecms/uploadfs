@@ -74,8 +74,8 @@ Here's the interesting bit. Note that we do not supply an extension for the fina
           res.send('An error occurred: ' + e);
         } else {
           res.send('<h1>All is well. Here is the image in three sizes plus the original.</h1>' +
-            '<div><img src="' + uploadfs.getUrl() + info.basePath + '.small.' + info.extension + '" /></div>' + 
-            '<div><img src="' + uploadfs.getUrl() + info.basePath + '.medium.' + info.extension + '" /></div>' + 
+            '<div><img src="' + uploadfs.getUrl() + info.basePath + '.small.' + info.extension + '" /></div>' +
+            '<div><img src="' + uploadfs.getUrl() + info.basePath + '.medium.' + info.extension + '" /></div>' +
             '<div><img src="' + uploadfs.getUrl() + info.basePath + '.large.' + info.extension + '" /></div>' +
             '<div><img src="' + uploadfs.getUrl() + info.basePath + '.' + info.extension + '" /></div>');       
         }
@@ -266,6 +266,10 @@ Feel free to open issues on [github](http://github.com/punkave/uploadfs).
 
 ## Changelog
 
+### CHANGES IN 1.3.3
+
+* Dependency on `request` is no longer locked down to a minor version, which was unnecessary and caused peer dependency failures in some projects (an npm design flaw IMHO, but never mind)
+
 ### CHANGES IN 1.3.2
 
 * Updated dependency on `rimraf` module to eliminate deprecation warning for `graceful-fs`
@@ -388,5 +392,3 @@ Existing code that isn't concerned with sharing uploadfs between multiple module
     var uploadfs = require('uploadfs')();
 
 If you use uploadfs in multiple source code files, you'll need to pass your `uploadfs` object explicitly, much as you pass your Express `app` object when you want to add routes to it via another file.
-
-
