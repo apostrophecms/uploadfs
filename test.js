@@ -1,5 +1,15 @@
 /* jshint node:true */
 
+var globalTunnel = require('global-tunnel-ng');
+
+globalTunnel.initialize({
+  host: 'localhost',
+  port: 8888,
+  // protocol: 'https:', // optional https transport between client and proxy
+  // proxyAuth: 'userId:password', // optional authentication
+  sockets: 50 // optional pool size for each http and https
+});
+
 var uploadfs = require('./uploadfs.js')();
 var fs = require('fs');
 var request = require('request');
