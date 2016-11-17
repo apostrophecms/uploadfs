@@ -266,6 +266,11 @@ Feel free to open issues on [github](http://github.com/punkave/uploadfs).
 
 ## Changelog
 
+### CHANGES IN 1.3.4
+
+* Bumped dependencies to newer, better maintained versions. All tests passing.
+* Removed accidental dependency on `global-tunnel-ng` and commented out a one-time test in `test.js`.
+
 ### CHANGES IN 1.3.3
 
 * Dependency on `request` is no longer locked down to a minor version, which was unnecessary and caused peer dependency failures in some projects (an npm design flaw IMHO, but never mind)
