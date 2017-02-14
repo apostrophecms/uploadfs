@@ -256,16 +256,16 @@ S3 support is based on the excellent [knox](https://npmjs.org/package/knox) modu
 
 ## Azure options
 required : 
-  account : Azure account
-  key: Azure key
-  container: name of container (will be created if not existing)
+* account : Azure account
+* key: Azure key
+* container: name of container (will be created if not existing)
   
 optionals:
-  allowedOrigins,  by default : ['*']
-  allowedMethods,  by default : ['GET', 'PUT', 'POST']
-  allowedHeaders,  by default : ['*']
-  exposedHeaders,  by default : ['*']
-  maxAgeInSeconds, by default : 500
+* allowedOrigins,  by default : ['*']
+* allowedMethods,  by default : ['GET', 'PUT', 'POST']
+* allowedHeaders,  by default : ['*']
+* exposedHeaders,  by default : ['*']
+* maxAgeInSeconds, by default : 500
 
 ## About P'unk Avenue and Apostrophe
 
