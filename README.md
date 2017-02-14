@@ -3,7 +3,7 @@ uploadfs
 
 <a href="http://apostrophenow.org/"><img src="https://raw.github.com/punkave/uploadfs/master/logos/logo-box-madefor.png" align="right" /></a>
 
-uploadfs copies files to a web-accessible location and provides a consistent way to get the URLs that correspond to those files. uploadfs can also resize, crop and autorotate uploaded images. uploadfs includes both S3-based and local filesystem-based backends and you may supply others. The API offers the same conveniences with both backends, avoiding the most frustrating features of each:
+uploadfs copies files to a web-accessible location and provides a consistent way to get the URLs that correspond to those files. uploadfs can also resize, crop and autorotate uploaded images. uploadfs includes both S3-based, azure-based and local filesystem-based backends and you may supply others. The API offers the same conveniences with both backends, avoiding the most frustrating features of each:
 
 * Parent directories are created automatically as needed (like S3)
 * Content types are inferred from file extensions (like the filesystem)
@@ -253,6 +253,19 @@ But your code doesn't need to worry about that. If you use `uploadfs.getUrl()` c
 It's up to you to create an Amazon S3 bucket and obtain your secret and key. See sample.js for details.
 
 S3 support is based on the excellent [knox](https://npmjs.org/package/knox) module.
+
+## Azure options
+required : 
+  account : Azure account
+  key: Azure key
+  container: name of container (will be created if not existing)
+  
+optionals:
+  allowedOrigins,  by default : ['*']
+  allowedMethods,  by default : ['GET', 'PUT', 'POST']
+  allowedHeaders,  by default : ['*']
+  exposedHeaders,  by default : ['*']
+  maxAgeInSeconds, by default : 500
 
 ## About P'unk Avenue and Apostrophe
 
