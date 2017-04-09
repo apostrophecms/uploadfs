@@ -266,6 +266,11 @@ Feel free to open issues on [github](http://github.com/punkave/uploadfs).
 
 ## Changelog
 
+### CHANGES IN 1.3.5
+
+* All tests passing.
+* Rewrote automatic directory cleanup mechanism of local storage to cope correctly with more complex directory structures. 
+
 ### CHANGES IN 1.3.4
 
 * Bumped dependencies to newer, better maintained versions. All tests passing.
