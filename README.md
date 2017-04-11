@@ -266,6 +266,10 @@ Feel free to open issues on [github](http://github.com/punkave/uploadfs).
 
 ## Changelog
 
+### CHANGES IN 1.3.6
+
+* Octal constants are forbidden in ES6 strict, use `parseInt(x, 8)`. No other changes.
+
 ### CHANGES IN 1.3.5
 
 * All tests passing.
