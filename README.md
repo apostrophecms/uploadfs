@@ -14,7 +14,7 @@ uploadfs copies files to a web-accessible location and provides a consistent way
 * Image width, image height and correct file extension are made available to the developer
 * Non-image files are also supported
 * Web access to files can be disabled and reenabled
-* Animated GIFs are preserved, with full support for scaling and cropping
+* Animated GIFs are preserved, with full support for scaling and cropping (if you have `imagemagick` or `imagecrunch`)
 
 You can also remove a file if needed.
 
@@ -26,11 +26,11 @@ You need:
 
 * A "normal" filesystem in which files stay put forever, *OR* Amazon S3, OR a willingness to write a backend for something else (look at `s3.js` and `local.js` for examples; just supply an object with the same methods, you don't have to supply a factory function).
 
-* [Imagemagick](http://www.imagemagick.org/script/index.php), if you want to use `copyImageIn` to automatically scale images and have full animated GIF support; OR, on Macs, the [imagecrunch](http://github.com/punkave/imagecrunch) utility. Alternatively, you can use the provided JavaScript-only [jimp](https://github.com/oliver-moran/jimp)-powered image processing backend. However, it lacks animated GIF support and is slower than other backends.  You can also write a backend for something else (look at `imagemagick.js`, `imagecrunch.js`, and `jimp.js` for examples; just supply an object with the same methods, you don't have to supply a factory function).
+* Patience, to wait for [Jimp](https://github.com/oliver-moran/jimp) to convert your images; or [Imagemagick](http://www.imagemagick.org/script/index.php), if you want much better speed and full animated GIF support; OR, on Macs, the very fast [imagecrunch](http://github.com/punkave/imagecrunch) utility. You can also write a backend for something else (look at `imagemagick.js`, `imagecrunch.js`, and `jimp.js` for examples; just supply an object with the same methods, you don't have to supply a factory function).
 
-* [gifsicle](https://www.lcdf.org/gifsicle/) is an optional tool that processes large animated GIFs much faster. Turn it on with the `gifsicle: true` option when calling `init`. Of course you must install `gifsicle` to use it. (Hint: your operating system probably has a package for it. Don't compile things.)
+* [gifsicle](https://www.lcdf.org/gifsicle/) is an optional tool that processes large animated GIFs much faster. Currently, Imagemagick is a prerequisite for using it. Turn it on with the `gifsicle: true` option when calling `init`. Of course you must install `gifsicle` to use it. (Hint: your operating system probably has a package for it. Don't compile things.)
 
-* A local filesystem in which files stay put at least during the current request, to hold temporary files for Imagemagick's conversions. Heroku and most other cloud environments can keep a file alive at least that long, and of course so does any normal, boring VPS or dedicated server.
+* A local filesystem in which files stay put at least during the current request, to hold temporary files for Imagemagick's conversions. This is no problem with Heroku and most other cloud servers. It's just long-term storage that needs to be in S3 for some of them.
 
 Note that Heroku includes Imagemagick. You can also install it with `apt-get install imagemagick` on Ubuntu servers. The official Imagemagick binaries for the Mac are a bit busted as of this writing, but macports or homebrew can install it. Or, you can use [imagecrunch](http://github.com/punkave/imagecrunch), a fast, tiny utility that uses native MacOS APIs.
 
@@ -269,6 +269,10 @@ Feel free to open issues on [github](http://github.com/punkave/uploadfs).
 
 ## Changelog
 
+### CHANGES IN 1.4.0
+
+* The new pure-JavaScript `jimp` image backend works "out of the box" even when ImageMagick is not installed. For faster operation and animated GIF support, you should still install ImageMagick. Thanks to Dave Ramirez for contributing this feature.
+
 ### CHANGES IN 1.3.6
 
 * Octal constants are forbidden in ES6 strict, use `parseInt(x, 8)`. No other changes.
@@ -297,7 +301,7 @@ Feel free to open issues on [github](http://github.com/punkave/uploadfs).
 
 ### CHANGES IN 1.3.0
 
-* The default `imagemagick` image conversion backend now optionally uses `gifsicle` to convert animated GIFs. Turn on this behavior with the `gifsicle: true` option. There are tradeoffs: `gifsicle` is much faster and uses much less RAM, but seems to produce slightly lower quality results. On a very large animation though, you're almost certain to run out of RAM with `imagemagick`. Of course you must install `gifsicle` to take advantage of this.
+* The `imagemagick` image conversion backend now optionally uses `gifsicle` to convert animated GIFs. Turn on this behavior with the `gifsicle: true` option. There are tradeoffs: `gifsicle` is much faster and uses much less RAM, but seems to produce slightly lower quality results. On a very large animation though, you're almost certain to run out of RAM with `imagemagick`. Of course you must install `gifsicle` to take advantage of this.
 
 ### CHANGES IN 1.2.2
 

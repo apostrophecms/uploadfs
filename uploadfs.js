@@ -110,7 +110,8 @@ function Uploadfs() {
               return true;
             }
           })) {
-            return callback('no image backend specified and neither "imagecrunch" nor the imagemagick utility "identify" found in PATH. Install imagemagick');
+            // Fall back to jimp, no need for an error
+            self._image = require('./lib/image/jimp.js')();
           }
         }
         return callback(null);
