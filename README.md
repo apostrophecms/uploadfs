@@ -255,7 +255,7 @@ But your code doesn't need to worry about that. If you use `uploadfs.getUrl()` c
 
 It's up to you to create an Amazon S3 bucket and obtain your secret and key. See sample.js for details.
 
-S3 support is based on the excellent [knox](https://npmjs.org/package/knox) module.
+S3 support is based on the official AWS SDK. 
 
 ## About P'unk Avenue and Apostrophe
 
@@ -268,6 +268,12 @@ Feel free to open issues on [github](http://github.com/punkave/uploadfs).
 <a href="http://punkave.com/"><img src="https://raw.github.com/punkave/uploadfs/master/logos/logo-box-builtby.png" /></a>
 
 ## Changelog
+
+### CHANGES IN 1.5.0
+
+* The s3 storage backend now uses the official AWS SDK for JavaScript. The knox module is no longer maintained and is missing basic request signature support that is mandatory for newer AWS regions. It is no longer a serious option.
+
+Every effort has been made to deliver 100% backwards compatibility with the documented options of knox, and the full test suite is passing with the new AWS SDK.
 
 ### CHANGES IN 1.4.0
 
