@@ -269,6 +269,10 @@ Feel free to open issues on [github](http://github.com/punkave/uploadfs).
 
 ## Changelog
 
+### CHANGES IN 1.5.1
+
+* The s3 storage backend now honors the `cachingTime` option properly again. Thanks to Matt Crider.
+
 ### CHANGES IN 1.5.0
 
 * The s3 storage backend now uses the official AWS SDK for JavaScript. The knox module is no longer maintained and is missing basic request signature support that is mandatory for newer AWS regions. It is no longer a serious option.
