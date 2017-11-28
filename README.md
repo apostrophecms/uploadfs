@@ -281,6 +281,10 @@ Feel free to open issues on [github](http://github.com/punkave/uploadfs).
 
 ## Changelog
 
+### CHANGES IN 1.6.0
+
+`enablePermissions` and `disablePermissions` options, for the `local` storage backend. By default `disable` sets permissions to `0000`. If you prefer to block group access but retain user access, you might set this to `0400`. Note that the use of octal constants in JavaScript is disabled, so it is better to write `parseInt('0400', 8)`.
+
 ### CHANGES IN 1.5.1
 
 * The s3 storage backend now honors the `cachingTime` option properly again. Thanks to Matt Crider.
