@@ -47,9 +47,26 @@ function localTestStart() {
       console.log(e);
       process.exit(1);
     }
-    testCopyIn();
+    testCopyFile();
   });
 
+  function testCopyFile() {
+    console.log('testing _copyFile (for internal use ONLY)');
+    var errors = 0;
+    uploadfs._storage._testCopyFile('nonexistent', 'bogus', {}, function(err) {
+      if (!err) {
+        console.error('Copying nonexistent file did not throw error');
+        process.exit(1);
+      }
+      errors++;
+      if (errors === 2) {
+        console.error('Copying nonexistent file threw error twice');
+        process.exit(1);
+      }
+      testCopyIn();
+    });
+  }
+    
   function testCopyIn() {
     console.log('testing copyIn');
     uploadfs.copyIn('test.txt', '/one/two/three/test.txt', function(e) {

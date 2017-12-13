@@ -281,6 +281,10 @@ Feel free to open issues on [github](http://github.com/punkave/uploadfs).
 
 ## Changelog
 
+### CHANGES IN 1.6.2
+
+Node 8.x added an official `stream.destroy` method with different semantics from the old unofficial one. This led to a callback being invoked twice in the event of an error when calling the internal `copyFile` mechanism. A unit test was added, the issue was fixed, and the fix was verified in all supported LTS versions of Node.js.
+
 ### CHANGES IN 1.6.1
 
 1.6.0 introduced a bug that broke `enable` and `disable` in some cases. This became apparent when Apostrophe began to invoke these methods. Fixed.
