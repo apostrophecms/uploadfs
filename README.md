@@ -231,7 +231,7 @@ You can also change the permissions set when `enable` is invoked via `enablePerm
 
 * You may specify an alternate image processing backend via the `image` option. Two backends, `imagemagick` and `imagecrunch`, are built in. [imagecrunch](http://github.com/punkave/imagecrunch) is a Mac-specific optional utility that is much faster than `imagemagick`. You may also supply an object instead of a string to use your own image processor. Just follow the existing `imagecrunch.js` and `imagemagick.js` files as a model.
 
-## Extra features for S3: caching and CDNs
+## Extra features for S3: caching, HTTPS, and CDNs
 
 By default, when users fetch files from S3 via the web, the browser is instructed to cache them for 24 hours. This is reasonable, but you can change that cache lifetime by specifying the `cachingTime` option, in seconds:
 
@@ -239,6 +239,12 @@ By default, when users fetch files from S3 via the web, the browser is instructe
   // 60*60*24*7 = 1 Week
   // Images are delivered with cache-control-header
   cachingTime: 604800
+```
+
+S3 file delivery can be set to use the HTTPS protocol with the `https` option. This is essentially necessary if used on a site that uses the secure protocol.
+
+```javascript
+  https: true
 ```
 
 Also, if you are using a CDN such as cloudfront that automatically mirrors the contents of your S3 bucket, you can specify that CDN so that the `getUrl` method of `uploadfs` returns the CDN's URL rather than a direct URL to Amazon S3:
