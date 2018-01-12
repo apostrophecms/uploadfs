@@ -1,5 +1,4 @@
-uploadfs
-========
+# uploadfs
 
 <a href="http://apostrophenow.org/"><img src="https://raw.github.com/punkave/uploadfs/master/logos/logo-box-madefor.png" align="right" /></a>
 
@@ -35,8 +34,6 @@ You need:
 Note that Heroku includes Imagemagick. You can also install it with `apt-get install imagemagick` on Ubuntu servers. The official Imagemagick binaries for the Mac are a bit busted as of this writing, but macports or homebrew can install it. Or, you can use [imagecrunch](http://github.com/punkave/imagecrunch), a fast, tiny utility that uses native MacOS APIs.
 
 ## API Overview
-
-Here's the entire API:
 
 * The `init` method passes options to the backend and invokes a callback when the backend is ready.
 
@@ -112,7 +109,7 @@ Here's how to remove a file:
 
 ## Disabling Access To Files
 
-This call shuts off web access to a file:
+This call shuts off **web access** to a file:
 
     uploadfs.disable('/profiles/me.jpg', function(e) { ... });
 
@@ -120,7 +117,11 @@ And this call restores it:
 
     uploadfs.enable('/profiles/me.jpg', function(e) { ... });
 
-*Depending on the backend, `disable` may also block the copyOut method*, so be sure to call `enable` before attempting any further access to the file. (Unfortunately S3 does not offer an ACL that acts exactly like `chmod 000`, thus this slight inconsistency.)
+*Depending on the backend, `disable` may also block the copyOut method*, so be sure to call `enable` before attempting any further access to the file.
+
+*With the local storage backend, `disable` uses permissions `000` by default.* This is a big hassle if you want to be able to easily use rsync to move the files outside of `uploadfs`. **As an alternative, you can set the `disabledFileKey` option to a random string.** If you do this, uploadfs will *rename* disabled files based on an HMAC digest of the filename and the `disabledFileKey`. This is secure from the webserver's point of view, **as long as your webserver is not configured to display automatic directory listings of files**. But from your local file system's point of view, the file is still completely accessible. And that makes it a lot easier to use `rsync`.
+
+For your convenience in the event you should lose your database, the filenames generated still begin with the original filename. The presence of a cryptographically un-guessable part is enough to make them secure.
 
 ## Configuration Options
 
@@ -156,7 +157,9 @@ Here are the options we pass to `init()` in `sample.js`. Note that we define the
       // Render up to 4 image sizes at once. Note this means 4 at once per call
       // to copyImageIn. There is currently no built-in throttling of multiple calls to
       // copyImageIn
-      parallel: 4
+      parallel: 4,
+      // Optional. See "disabling access to files," above
+      // disabledFileKey: 'this should be a unique, random string'
     }
 
 Here is an equivalent configuration for S3:
