@@ -433,6 +433,41 @@ function Uploadfs() {
    */
 
   self.identifyLocalImage = function(path, callback) {
+    if (self.options.svg) {
+      if (path.match(/\.svg$/i)) {
+        return fs.readFile(path, function(err, { encoding: 'utf8' }, svg) {
+          if (err) {
+            return callback(err);
+          }
+          var matches = svg.match(/\<svg(.*?)\>/i);
+          if (!matches) {
+            return callback('invalid SVG');
+          }
+          var pairs = matches[1];
+          matches = pairs.match(/viewBox\s*=\s*\"\s*(.*?)\s*\"/i); 
+          if (!matches) {
+            return callback('invalid SVG');
+          }
+          var values = matches.split(/\s+/);
+
+          }
+          pairs = attributes.split(/((\w+)\s*=\"(.*?)\"\s*)/);
+          var attributes = {};
+          console.log(pairs);
+          attributes.forEach(function(attribute) {
+
+          });
+          //   version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+          // width="500px" height="500px" viewBox="50 50 100 100" enable-background="new 0 0 500 500" xml:space="preserve">
+        });
+        * Otherwise the second argument to the callback is guaranteed to have extension,
+        * width, height, orientation, originalWidth and originalHeight properties.
+        * extension will be gif, jpg or png and is detected from the file's true contents,
+        * not the original file extension. Orientation is the string "Undefined" if
+        * the file does not specify it or is not a JPEG.
+           
+      }
+    }
     return self._image.identify(path, callback);
   };
 
