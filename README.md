@@ -1,5 +1,4 @@
-uploadfs
-========
+# uploadfs
 
 <a href="http://apostrophenow.org/"><img src="https://raw.github.com/punkave/uploadfs/master/logos/logo-box-madefor.png" align="right" /></a>
 
@@ -35,8 +34,6 @@ You need:
 Note that Heroku includes Imagemagick. You can also install it with `apt-get install imagemagick` on Ubuntu servers. The official Imagemagick binaries for the Mac are a bit busted as of this writing, but macports or homebrew can install it. Or, you can use [imagecrunch](http://github.com/punkave/imagecrunch), a fast, tiny utility that uses native MacOS APIs.
 
 ## API Overview
-
-Here's the entire API:
 
 * The `init` method passes options to the backend and invokes a callback when the backend is ready.
 
@@ -112,7 +109,7 @@ Here's how to remove a file:
 
 ## Disabling Access To Files
 
-This call shuts off web access to a file:
+This call shuts off **web access** to a file:
 
     uploadfs.disable('/profiles/me.jpg', function(e) { ... });
 
@@ -120,7 +117,11 @@ And this call restores it:
 
     uploadfs.enable('/profiles/me.jpg', function(e) { ... });
 
-*Depending on the backend, `disable` may also block the copyOut method*, so be sure to call `enable` before attempting any further access to the file. (Unfortunately S3 does not offer an ACL that acts exactly like `chmod 000`, thus this slight inconsistency.)
+*Depending on the backend, `disable` may also block the copyOut method*, so be sure to call `enable` before attempting any further access to the file.
+
+*With the local storage backend, `disable` uses permissions `000` by default.* This is a big hassle if you want to be able to easily use rsync to move the files outside of `uploadfs`. **As an alternative, you can set the `disabledFileKey` option to a random string.** If you do this, uploadfs will *rename* disabled files based on an HMAC digest of the filename and the `disabledFileKey`. This is secure from the webserver's point of view, **as long as your webserver is not configured to display automatic directory listings of files**. But from your local file system's point of view, the file is still completely accessible. And that makes it a lot easier to use `rsync`.
+
+For your convenience in the event you should lose your database, the filenames generated still begin with the original filename. The presence of a cryptographically un-guessable part is enough to make them secure.
 
 ## Configuration Options
 
@@ -156,7 +157,9 @@ Here are the options we pass to `init()` in `sample.js`. Note that we define the
       // Render up to 4 image sizes at once. Note this means 4 at once per call
       // to copyImageIn. There is currently no built-in throttling of multiple calls to
       // copyImageIn
-      parallel: 4
+      parallel: 4,
+      // Optional. See "disabling access to files," above
+      // disabledFileKey: 'this should be a unique, random string'
     }
 
 Here is an equivalent configuration for S3:
@@ -228,7 +231,7 @@ You can also change the permissions set when `enable` is invoked via `enablePerm
 
 * You may specify an alternate image processing backend via the `image` option. Two backends, `imagemagick` and `imagecrunch`, are built in. [imagecrunch](http://github.com/punkave/imagecrunch) is a Mac-specific optional utility that is much faster than `imagemagick`. You may also supply an object instead of a string to use your own image processor. Just follow the existing `imagecrunch.js` and `imagemagick.js` files as a model.
 
-## Extra features for S3: caching and CDNs
+## Extra features for S3: caching, HTTPS, and CDNs
 
 By default, when users fetch files from S3 via the web, the browser is instructed to cache them for 24 hours. This is reasonable, but you can change that cache lifetime by specifying the `cachingTime` option, in seconds:
 
@@ -236,6 +239,12 @@ By default, when users fetch files from S3 via the web, the browser is instructe
   // 60*60*24*7 = 1 Week
   // Images are delivered with cache-control-header
   cachingTime: 604800
+```
+
+S3 file delivery can be set to use the HTTPS protocol with the `https` option. This is essentially necessary if used on a site that uses the secure protocol.
+
+```javascript
+  https: true
 ```
 
 Also, if you are using a CDN such as cloudfront that automatically mirrors the contents of your S3 bucket, you can specify that CDN so that the `getUrl` method of `uploadfs` returns the CDN's URL rather than a direct URL to Amazon S3:
@@ -280,6 +289,20 @@ Feel free to open issues on [github](http://github.com/punkave/uploadfs).
 <a href="http://punkave.com/"><img src="https://raw.github.com/punkave/uploadfs/master/logos/logo-box-builtby.png" /></a>
 
 ## Changelog
+
+### CHANGES IN 1.7.0
+
+Introduced the `disabledFileKey` option, a feature of the local storage backend which substitutes filename obfuscation for file permissions when using `enable` and `disable`. This is useful when you wish to use `rsync` and other tools outside of uploadfs without the aggravation of permissions issues, but preserve the ability to effectively disable web access, as long as the webserver does not offer index listings for folders.
+
+Documented the need to set `https: true` when working with S3 if your site uses `https`.
+
+### CHANGES IN 1.6.2
+
+Node 8.x added an official `stream.destroy` method with different semantics from the old unofficial one. This led to a callback being invoked twice in the event of an error when calling the internal `copyFile` mechanism. A unit test was added, the issue was fixed, and the fix was verified in all supported LTS versions of Node.js.
+
+### CHANGES IN 1.6.1
+
+1.6.0 introduced a bug that broke `enable` and `disable` in some cases. This became apparent when Apostrophe began to invoke these methods. Fixed.
 
 ### CHANGES IN 1.6.0
 
