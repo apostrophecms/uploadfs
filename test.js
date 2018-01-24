@@ -7,6 +7,7 @@ var _ = require('lodash');
 var async = require('async');
 
 var localOptions = { storage: 'local', uploadsPath: __dirname + '/test', uploadsUrl: 'http://localhost:3000/test' };
+var localDisabledFileKeyOptions = { storage: 'local', disabledFileKey: 'testtesttest', uploadsPath: __dirname + '/test', uploadsUrl: 'http://localhost:3000/test' };
 
 // Supply your own. See s3TestOptions-sample.js
 var s3Options = require(__dirname + '/s3TestOptions.js');
@@ -33,6 +34,8 @@ var tempPath = __dirname + '/temp';
 
 localOptions.imageSizes = imageSizes;
 localOptions.tempPath = tempPath;
+localDisabledFileKeyOptions.imageSizes = imageSizes;
+localDisabledFileKeyOptions.tempPath = tempPath;
 s3Options.imageSizes = imageSizes;
 s3Options.tempPath = tempPath;
 
@@ -47,9 +50,26 @@ function localTestStart() {
       console.log(e);
       process.exit(1);
     }
-    testCopyIn();
+    testCopyFile();
   });
 
+  function testCopyFile() {
+    console.log('testing _copyFile (for internal use ONLY)');
+    var errors = 0;
+    uploadfs._storage._testCopyFile('nonexistent', 'bogus', {}, function(err) {
+      if (!err) {
+        console.error('Copying nonexistent file did not throw error');
+        process.exit(1);
+      }
+      errors++;
+      if (errors === 2) {
+        console.error('Copying nonexistent file threw error twice');
+        process.exit(1);
+      }
+      testCopyIn();
+    });
+  }
+    
   function testCopyIn() {
     console.log('testing copyIn');
     uploadfs.copyIn('test.txt', '/one/two/three/test.txt', function(e) {
@@ -290,9 +310,126 @@ function localTestStart() {
 
   function success() {
     console.log('All tests passing.');
-    s3TestStart();
+    localDisabledFileKeyStart();
   }
 }
+
+function localDisabledFileKeyStart() {
+  options = localDisabledFileKeyOptions;
+  console.log('Initializing uploadfs for the ' + options.storage + ' backend');
+  uploadfs.init(options, function(e) {
+    if (e) {
+      console.log('uploadfs.init failed:');
+      console.log(e);
+      process.exit(1);
+    }
+    localDisabledFileKeyTestCopyFile();
+  });
+
+  function localDisabledFileKeyTestCopyFile() {
+    console.log('testing copyIn');
+    uploadfs.copyIn('test.txt', '/one/two/three/test.txt', function(e) {
+      if (e) {
+        console.log('testCopyIn failed:');
+        console.log(e);
+        process.exit(1);
+      }
+      var content = fs.readFileSync('test/one/two/three/test.txt', 'utf8');
+      var original = fs.readFileSync('test.txt', 'utf8');
+      if (content !== original) {
+        console.log('testCopyIn did not copy the file faithfully.');
+        process.exit(1);
+      }
+      localDisabledFileKeyTestCopyOut();
+    });
+  }
+
+  function localDisabledFileKeyTestCopyOut() {
+    console.log('testing copyOut');
+    uploadfs.copyOut('/one/two/three/test.txt', 'copy-out-test.txt', function(e) {
+      if (e) {
+        console.log('testCopyOut failed:');
+        console.log(e);
+        process.exit(1);
+      }
+      var content = fs.readFileSync('copy-out-test.txt', 'utf8');
+      var original = fs.readFileSync('test.txt', 'utf8');
+      if (content !== original) {
+        console.log('testCopyOut did not copy the file faithfully.');
+        process.exit(1);
+      }
+      // Don't confuse the next test
+      fs.unlinkSync('copy-out-test.txt');
+      localDisabledFileKeyTestDisableAndEnable();
+    });
+  }
+
+  function localDisabledFileKeyTestDisableAndEnable() {
+    console.log('testing disable and enable');
+    return async.series({
+      disable: function(callback) {
+        uploadfs.disable('/one/two/three/test.txt', function(err) {
+          if (err) {
+            console.log('uploadfs.disable failed:');
+            console.log(err);
+            process.exit(1);
+          }
+          return callback(null);
+        });
+      },
+      copyShouldFail: function(callback) {
+        uploadfs.copyOut('/one/two/three/test.txt', 'copy-out-test.txt', function(e) {
+          if (!e) {
+            console.log('uploadfs.disable allowed access when it should not have');
+            process.exit(1);
+          }
+          // However, the file should exist under a suffixed name
+          if (!fs.existsSync(__dirname + '/test' + uploadfs._storage.getDisabledPath('/one/two/three/test.txt'))) {
+            console.log('uploadfs.disable should have renamed the file to an obfuscated path');
+            process.exit(1);
+          }
+          return callback(null);
+        });
+      },
+      enable: function(callback) {
+        uploadfs.enable('/one/two/three/test.txt', function(err) {
+          if (err) {
+            console.log('uploadfs.enable failed:');
+            console.log(err);
+            process.exit(1);
+          }
+          return callback(null);
+        });
+      },
+      copyShouldWork: function(callback) {
+        uploadfs.copyOut('/one/two/three/test.txt', 'copy-out-test.txt', function(e) {
+          if (e) {
+            console.log('uploadfs.enable did not restore access');
+            process.exit(1);
+          }
+
+          var content = fs.readFileSync('copy-out-test.txt', 'utf8');
+          var original = fs.readFileSync('test.txt', 'utf8');
+          if (content !== original) {
+            console.log('testCopyOut did not copy the file faithfully.');
+            process.exit(1);
+          }
+          return callback(null);
+        });
+      }
+    }, function(err) {
+      if (err) {
+        console.log('Unexpected error');
+        process.exit(1);
+      }
+      // Don't confuse the next test
+      fs.unlinkSync('copy-out-test.txt');
+      console.log('All disabledFileKey tests passing.');
+      s3TestStart();
+    });
+  }
+}
+
 
 function s3TestStart() {
   options = s3Options;
