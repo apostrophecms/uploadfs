@@ -258,6 +258,21 @@ Also, if you are using a CDN such as cloudfront that automatically mirrors the c
 
 Note that specifying a CDN in this way does not in any way activate that CDN for you. It just tells `uploadfs` to return a different result from `getUrl`. The rest is up to you. More CDN-related options may be added in the future.
 
+## Use with object storage services which implement the S3 api
+
+It is possible to use uploadfs with storage services that implement an api compatible with amazon AWS and S3. One example of this would be IBM Cloud's 'Object Storage'. To enable use of another storage service, simply provide the appropriate endpoint:
+
+```javascript
+  endpoint: 'api-domain.yourstorageprovider.com'
+```
+
+It is possible that if your storage provider and application are hosted on different domains, you will need to setup cross origin resource sharing (CORS) before everything will work perfectly. If you enable the CORS option most of the work should be done for you, but you will have to provide a list of domains you want accessing your stored images. Like so:
+
+```javascript
+  cors: true,
+  origins: ['localhost', 'yoursitedomain.com']
+```
+
 ## Important Concerns With S3
 
 **Be aware that uploads to Amazon S3's us-standard region are not guaranteed to be readable the moment you finish uploading them.** This is a big difference from how a regular filesystem behaves. One browser might see them right away while another does not. This is called "eventual consistency."
