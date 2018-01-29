@@ -305,6 +305,10 @@ Feel free to open issues on [github](http://github.com/punkave/uploadfs).
 
 ## Changelog
 
+### CHANGES IN 1.7.1
+
+The `s3` storage backend now respects the `endpoint`  option properly when asked to provide URLs. Thanks to tortilaman.
+
 ### CHANGES IN 1.7.0
 
 Introduced the `disabledFileKey` option, a feature of the local storage backend which substitutes filename obfuscation for file permissions when using `enable` and `disable`. This is useful when you wish to use `rsync` and other tools outside of uploadfs without the aggravation of permissions issues, but preserve the ability to effectively disable web access, as long as the webserver does not offer index listings for folders.
