@@ -290,6 +290,13 @@ Feel free to open issues on [github](http://github.com/punkave/uploadfs).
 
 ## Changelog
 
+### CHANGES IN 1.7.2
+
+* Added mime type for `svg` as standard equipment.
+* User-configured mime types now merge with the standard set, making it easy to add a few without starting from scratch.
+
+Thanks to tortilaman.
+
 ### CHANGES IN 1.7.1
 
 The `s3` storage backend now respects the `endpoint`  option properly when asked to provide URLs. Thanks to tortilaman.
