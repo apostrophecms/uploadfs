@@ -5,6 +5,7 @@ var fs = require('fs');
 var request = require('request');
 var _ = require('lodash');
 var async = require('async');
+var zlib = require('zlib');
 
 var localOptions = { storage: 'local', uploadsPath: __dirname + '/test', uploadsUrl: 'http://localhost:3000/test' };
 
@@ -323,6 +324,40 @@ function azureTestCopyIn() {
     }
 
     console.log("azure copy in - nominnal success");
+    azureTestCopyOut();
+  });
+}
+
+function azureTestCopyOut() {
+  var ogFile = fs.readFileSync('test.txt', {encoding: 'utf8'});
+  var cmpFile;
+  var tmpFileName = new Date().getTime() + '_text.txt';
+  console.log("Test azure copy out", tmpFileName);
+  uploadfs.copyOut('one/two/three/test.txt', tmpFileName, {}, function (e, val) {  
+    console.log('az copyOut 2', e, val)
+    if (e) {
+      console.log("azure uploadfs.copyOut fail:", e);
+      process.exit(1);
+    }
+      
+    // assert, check for undefined
+    console.log('File names match', tmpFileName, val.response.localPath, tmpFileName === val.response.localPath);
+    const read = fs.createReadStream(tmpFileName)
+    const unzip = zlib.createGunzip()
+    const write = fs.createWriteStream("utput.txt")
+    var buffer = [];
+    var val;
+
+    read.pipe(unzip);
+    unzip.on('data', function(chunk) {
+      buffer.push(chunk)		
+    });
+
+    unzip.on('end', function() {
+      val = buffer.join("");
+      console.log("Val", val, ogFile, val === ogFile);
+      
+    });
   });
 }
 
