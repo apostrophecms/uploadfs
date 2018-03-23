@@ -309,8 +309,21 @@ function azureTestStart() {
       process.exit(1);
     }
 
-    console.log("Init success")
-  })
+    console.log("Init success");
+    azureTestCopyIn();
+  });
+}
+
+function azureTestCopyIn() {
+  console.log("Test azure copy in")
+  uploadfs.copyIn('test.txt', '/one/two/three/test.txt', function(e) {
+    if (e) {
+      console.log("azure uploadfs.copyIn fail:", e);
+      process.exit(1);
+    }
+
+    console.log("azure copy in - nominnal success");
+  });
 }
 
 function s3TestStart() {
