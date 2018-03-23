@@ -10,6 +10,7 @@ var localOptions = { storage: 'local', uploadsPath: __dirname + '/test', uploads
 
 // Supply your own. See s3TestOptions-sample.js
 var s3Options = require(__dirname + '/s3TestOptions.js');
+var azureOptions = require(__dirname + '/azureTestOptions.js');
 
 var imageSizes = [
   {
@@ -35,8 +36,11 @@ localOptions.imageSizes = imageSizes;
 localOptions.tempPath = tempPath;
 s3Options.imageSizes = imageSizes;
 s3Options.tempPath = tempPath;
+azureOptions.imageSizes = imageSizes;
+azureOptions.tempPath = tempPath;
 
-localTestStart();
+//localTestStart();
+azureTestStart();
 
 function localTestStart() {
   options = localOptions;
@@ -292,6 +296,21 @@ function localTestStart() {
     console.log('All tests passing.');
     s3TestStart();
   }
+}
+
+
+function azureTestStart() {
+  options = azureOptions;
+
+  uploadfs.init(options, function (e) {
+    if (e) {
+      console.log('azure uploadfs.init failed:');
+      console.log(e);
+      process.exit(1);
+    }
+
+    console.log("Init success")
+  })
 }
 
 function s3TestStart() {
