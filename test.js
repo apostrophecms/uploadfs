@@ -333,6 +333,7 @@ function azureTestCopyOut() {
   var cmpFile;
   var tmpFileName = new Date().getTime() + '_text.txt';
   console.log("Test azure copy out", tmpFileName);
+  
   uploadfs.copyOut('one/two/three/test.txt', tmpFileName, {}, function (e, val) {  
     console.log('az copyOut 2', e, val)
     if (e) {
@@ -342,23 +343,35 @@ function azureTestCopyOut() {
       
     // assert, check for undefined
     console.log('File names match', tmpFileName, val.response.localPath, tmpFileName === val.response.localPath);
-    const read = fs.createReadStream(tmpFileName)
-    const unzip = zlib.createGunzip()
-    const write = fs.createWriteStream("utput.txt")
+    var read = fs.createReadStream(tmpFileName)
+    var gunzip = zlib.createGunzip()
+    var write = fs.createWriteStream("utput.txt")
     var buffer = [];
     var val;
 
-    read.pipe(unzip);
-    unzip.on('data', function(chunk) {
+    read.pipe(gunzip);
+    gunzip.on('data', function(chunk) {
       buffer.push(chunk)		
     });
 
-    unzip.on('end', function() {
+    gunzip.on('end', function() {
       val = buffer.join("");
+      // assert, copyOut value should equal local value
       console.log("Val", val, ogFile, val === ogFile);
-      
+     // azureTestRemove();
     });
   });
+}
+
+function azureTestRemove() {
+  var azurePath = '/one/two/three/test.txt';
+  uploadfs.remove(azurePath, function(err) {
+    if (err) {
+      console.log('azureTestRemove error', err);
+    } else {
+      console.log('azureTestRemove sucess');
+    }
+  })
 }
 
 function s3TestStart() {

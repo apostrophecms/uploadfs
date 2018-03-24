@@ -4,5 +4,7 @@ node_modules
 s3TestOptions.js
 public/uploads
 temp
-
+test/files
+copy-out-test.txt
 .jshintrc
+*.sw*
