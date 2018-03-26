@@ -1,5 +1,4 @@
-uploadfs
-========
+# uploadfs
 
 <a href="http://apostrophenow.org/"><img src="https://raw.github.com/punkave/uploadfs/master/logos/logo-box-madefor.png" align="right" /></a>
 
@@ -14,7 +13,7 @@ uploadfs copies files to a web-accessible location and provides a consistent way
 * Image width, image height and correct file extension are made available to the developer
 * Non-image files are also supported
 * Web access to files can be disabled and reenabled
-* Animated GIFs are preserved, with full support for scaling and cropping
+* Animated GIFs are preserved, with full support for scaling and cropping (if you have `imagemagick` or `imagecrunch`)
 
 You can also remove a file if needed.
 
@@ -26,17 +25,15 @@ You need:
 
 * A "normal" filesystem in which files stay put forever, *OR* Amazon S3, OR a willingness to write a backend for something else (look at `s3.js` and `local.js` for examples; just supply an object with the same methods, you don't have to supply a factory function).
 
-* [Imagemagick](http://www.imagemagick.org/script/index.php), if you want to use `copyImageIn` to automatically scale images and have full animated GIF support; OR, on Macs, the [imagecrunch](http://github.com/punkave/imagecrunch) utility; OR a willingness to write a backend for something else (look at `imagemagick.js` and `imagecrunch.js` for examples; just supply an object with the same methods, you don't have to supply a factory function).
+* Patience, to wait for [Jimp](https://github.com/oliver-moran/jimp) to convert your images; or [Imagemagick](http://www.imagemagick.org/script/index.php), if you want much better speed and full animated GIF support; OR, on Macs, the very fast [imagecrunch](http://github.com/punkave/imagecrunch) utility. You can also write a backend for something else (look at `imagemagick.js`, `imagecrunch.js`, and `jimp.js` for examples; just supply an object with the same methods, you don't have to supply a factory function).
 
-* [gifsicle](https://www.lcdf.org/gifsicle/) is an optional tool that processes large animated GIFs much faster. Turn it on with the `gifsicle: true` option when calling `init`. Of course you must install `gifsicle` to use it. (Hint: your operating system probably has a package for it. Don't compile things.)
+* [gifsicle](https://www.lcdf.org/gifsicle/) is an optional tool that processes large animated GIFs much faster. Currently, Imagemagick is a prerequisite for using it. Turn it on with the `gifsicle: true` option when calling `init`. Of course you must install `gifsicle` to use it. (Hint: your operating system probably has a package for it. Don't compile things.)
 
-* A local filesystem in which files stay put at least during the current request, to hold temporary files for Imagemagick's conversions. Heroku and most other cloud environments can keep a file alive at least that long, and of course so does any normal, boring VPS or dedicated server.
+* A local filesystem in which files stay put at least during the current request, to hold temporary files for Imagemagick's conversions. This is no problem with Heroku and most other cloud servers. It's just long-term storage that needs to be in S3 for some of them.
 
 Note that Heroku includes Imagemagick. You can also install it with `apt-get install imagemagick` on Ubuntu servers. The official Imagemagick binaries for the Mac are a bit busted as of this writing, but macports or homebrew can install it. Or, you can use [imagecrunch](http://github.com/punkave/imagecrunch), a fast, tiny utility that uses native MacOS APIs.
 
 ## API Overview
-
-Here's the entire API:
 
 * The `init` method passes options to the backend and invokes a callback when the backend is ready.
 
@@ -112,7 +109,7 @@ Here's how to remove a file:
 
 ## Disabling Access To Files
 
-This call shuts off web access to a file:
+This call shuts off **web access** to a file:
 
     uploadfs.disable('/profiles/me.jpg', function(e) { ... });
 
@@ -120,7 +117,11 @@ And this call restores it:
 
     uploadfs.enable('/profiles/me.jpg', function(e) { ... });
 
-*Depending on the backend, `disable` may also block the copyOut method*, so be sure to call `enable` before attempting any further access to the file. (Unfortunately S3 does not offer an ACL that acts exactly like `chmod 000`, thus this slight inconsistency.)
+*Depending on the backend, `disable` may also block the copyOut method*, so be sure to call `enable` before attempting any further access to the file.
+
+*With the local storage backend, `disable` uses permissions `000` by default.* This is a big hassle if you want to be able to easily use rsync to move the files outside of `uploadfs`. **As an alternative, you can set the `disabledFileKey` option to a random string.** If you do this, uploadfs will *rename* disabled files based on an HMAC digest of the filename and the `disabledFileKey`. This is secure from the webserver's point of view, **as long as your webserver is not configured to display automatic directory listings of files**. But from your local file system's point of view, the file is still completely accessible. And that makes it a lot easier to use `rsync`.
+
+For your convenience in the event you should lose your database, the filenames generated still begin with the original filename. The presence of a cryptographically un-guessable part is enough to make them secure.
 
 ## Configuration Options
 
@@ -128,6 +129,9 @@ Here are the options we pass to `init()` in `sample.js`. Note that we define the
 
     {
       backend: 'local',
+      image: 'imagemagick',
+      // Optional. If not specified, ImageMagick or imagecrunch will be used.
+      // Options are 'imagemagick', 'imagecrunch', 'jimp', or a custom image processing backend
       uploadsPath: __dirname + '/public/uploads',
       uploadsUrl: 'http://localhost:3000' + uploadsLocalUrl,
       // Required if you use copyImageIn
@@ -153,7 +157,9 @@ Here are the options we pass to `init()` in `sample.js`. Note that we define the
       // Render up to 4 image sizes at once. Note this means 4 at once per call
       // to copyImageIn. There is currently no built-in throttling of multiple calls to
       // copyImageIn
-      parallel: 4
+      parallel: 4,
+      // Optional. See "disabling access to files," above
+      // disabledFileKey: 'this should be a unique, random string'
     }
 
 Here is an equivalent configuration for S3:
@@ -205,15 +211,27 @@ Two good reasons:
 
 ## Less Frequently Used Options
 
+* If you are using the `local` backend (files on your server's drive), you might not like that when `disable` is called, the permissions of a file are set to `000` (no one has access). If you wish, you can pass the `disablePermissions` option. As usual with Unix permissions, this is an OCTAL NUMBER, not a decimal one. Octal constants have been deprecated, so in modern JavaScript it is best to write it like this:
+
+    // Only the owner can read. This is handy if
+    // your proxy server serves static files for you and
+    // shares a group but does not run as the same user
+    disablePermissions: parseInt("0400", 8)
+
+You can also change the permissions set when `enable` is invoked via `enablePermissions`. Keep in mind that `enable()` is not invoked for a brand new file (it receives the default permissions). You might choose to write:
+
+    // Only the owner and group can read.
+    enablePermissions: parseInt("0440", 8)
+
 * In backends like imagemagick that support it, even the "original" is rotated for you if it is not oriented "top left," as with some iPhone photos. This is necessary for the original to be of any use on the web. But it does modify the original. So if you really don't want this, you can set the `orientOriginals` option to `false`.
 
 * It is possible to pass your own custom storage module instead of `local` or `s3`. Follow `local.js` or `s3.js` as a model, and specify your backend like this:
 
     storage: require('mystorage.js')
 
-* You may specify an alternate image processing backend via the `image` option. Two backends, `imagemagick` and `imagecrunch`, are built in. [imagecrunch](http://github.com/punkave/imagecrunch) is a Mac-specific optional tulity that is much faster than `imagemagick`. You may also supply an object instead of a string to use your own image processor. Just follow the existing `imagecrunch.js` and `imagemagick.js` files as a model.
+* You may specify an alternate image processing backend via the `image` option. Two backends, `imagemagick` and `imagecrunch`, are built in. [imagecrunch](http://github.com/punkave/imagecrunch) is a Mac-specific optional utility that is much faster than `imagemagick`. You may also supply an object instead of a string to use your own image processor. Just follow the existing `imagecrunch.js` and `imagemagick.js` files as a model.
 
-## Extra features for S3: caching and CDNs
+## Extra features for S3: caching, HTTPS, and CDNs
 
 By default, when users fetch files from S3 via the web, the browser is instructed to cache them for 24 hours. This is reasonable, but you can change that cache lifetime by specifying the `cachingTime` option, in seconds:
 
@@ -221,6 +239,12 @@ By default, when users fetch files from S3 via the web, the browser is instructe
   // 60*60*24*7 = 1 Week
   // Images are delivered with cache-control-header
   cachingTime: 604800
+```
+
+S3 file delivery can be set to use the HTTPS protocol with the `https` option. This is essentially necessary if used on a site that uses the secure protocol.
+
+```javascript
+  https: true
 ```
 
 Also, if you are using a CDN such as cloudfront that automatically mirrors the contents of your S3 bucket, you can specify that CDN so that the `getUrl` method of `uploadfs` returns the CDN's URL rather than a direct URL to Amazon S3:
@@ -252,7 +276,7 @@ But your code doesn't need to worry about that. If you use `uploadfs.getUrl()` c
 
 It's up to you to create an Amazon S3 bucket and obtain your secret and key. See sample.js for details.
 
-S3 support is based on the excellent [knox](https://npmjs.org/package/knox) module.
+S3 support is based on the official AWS SDK. 
 
 ## Azure options
 required : 
@@ -279,6 +303,58 @@ Feel free to open issues on [github](http://github.com/punkave/uploadfs).
 
 ## Changelog
 
+### CHANGES IN 1.7.2
+
+* Added mime type for `svg` as standard equipment.
+* User-configured mime types now merge with the standard set, making it easy to add a few without starting from scratch.
+
+Thanks to tortilaman.
+
+### CHANGES IN 1.7.1
+
+The `s3` storage backend now respects the `endpoint`  option properly when asked to provide URLs. Thanks to tortilaman.
+
+### CHANGES IN 1.7.0
+
+Introduced the `disabledFileKey` option, a feature of the local storage backend which substitutes filename obfuscation for file permissions when using `enable` and `disable`. This is useful when you wish to use `rsync` and other tools outside of uploadfs without the aggravation of permissions issues, but preserve the ability to effectively disable web access, as long as the webserver does not offer index listings for folders.
+
+Documented the need to set `https: true` when working with S3 if your site uses `https`.
+
+### CHANGES IN 1.6.2
+
+Node 8.x added an official `stream.destroy` method with different semantics from the old unofficial one. This led to a callback being invoked twice in the event of an error when calling the internal `copyFile` mechanism. A unit test was added, the issue was fixed, and the fix was verified in all supported LTS versions of Node.js.
+
+### CHANGES IN 1.6.1
+
+1.6.0 introduced a bug that broke `enable` and `disable` in some cases. This became apparent when Apostrophe began to invoke these methods. Fixed.
+
+### CHANGES IN 1.6.0
+
+`enablePermissions` and `disablePermissions` options, for the `local` storage backend. By default `disable` sets permissions to `0000`. If you prefer to block group access but retain user access, you might set this to `0400`. Note that the use of octal constants in JavaScript is disabled, so it is better to write `parseInt('0400', 8)`.
+
+### CHANGES IN 1.5.1
+
+* The s3 storage backend now honors the `cachingTime` option properly again. Thanks to Matt Crider.
+
+### CHANGES IN 1.5.0
+
+* The s3 storage backend now uses the official AWS SDK for JavaScript. The knox module is no longer maintained and is missing basic request signature support that is mandatory for newer AWS regions. It is no longer a serious option.
+
+Every effort has been made to deliver 100% backwards compatibility with the documented options of knox, and the full test suite is passing with the new AWS SDK.
+
+### CHANGES IN 1.4.0
+
+* The new pure-JavaScript `jimp` image backend works "out of the box" even when ImageMagick is not installed. For faster operation and animated GIF support, you should still install ImageMagick. Thanks to Dave Ramirez for contributing this feature.
+
+### CHANGES IN 1.3.6
+
+* Octal constants are forbidden in ES6 strict, use `parseInt(x, 8)`. No other changes.
+
+### CHANGES IN 1.3.5
+
+* All tests passing.
+* Rewrote automatic directory cleanup mechanism of local storage to cope correctly with more complex directory structures. 
+
 ### CHANGES IN 1.3.4
 
 * Bumped dependencies to newer, better maintained versions. All tests passing.
@@ -298,7 +374,7 @@ Feel free to open issues on [github](http://github.com/punkave/uploadfs).
 
 ### CHANGES IN 1.3.0
 
-* The default `imagemagick` image conversion backend now optionally uses `gifsicle` to convert animated GIFs. Turn on this behavior with the `gifsicle: true` option. There are tradeoffs: `gifsicle` is much faster and uses much less RAM, but seems to produce slightly lower quality results. On a very large animation though, you're almost certain to run out of RAM with `imagemagick`. Of course you must install `gifsicle` to take advantage of this.
+* The `imagemagick` image conversion backend now optionally uses `gifsicle` to convert animated GIFs. Turn on this behavior with the `gifsicle: true` option. There are tradeoffs: `gifsicle` is much faster and uses much less RAM, but seems to produce slightly lower quality results. On a very large animation though, you're almost certain to run out of RAM with `imagemagick`. Of course you must install `gifsicle` to take advantage of this.
 
 ### CHANGES IN 1.2.2
 
