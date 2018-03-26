@@ -1,3 +1,4 @@
+/* global describe, it */
 var Mode = require('stat-mode');
 var assert = require('assert');
 
@@ -25,21 +26,19 @@ describe('Upload FS', function () {
       height: 1140
     }
   ];
-  
+
   localOptions.imageSizes = imageSizes;
   localOptions.tempPath = tempPath;
 
   it('Should instantiate uploadfs module without errors', () => {
     return uploadfs.init(localOptions, e => {
       assert(!e);
-      if (e) console.log("Error instantiating uploadfs", e);
     });
   });
 
   it('copyIn should work for local filesystem', () => {
     uploadfs.copyIn('./test/test.txt', '/test_copy.txt', e => {
       assert(!e);
-      if (e) console.log('Error on copyIn', e);
       var og = fs.readFileSync('./test/test.txt', 'utf8');
       var next = fs.readFileSync('./test/files/test_copy.txt', 'utf8');
       assert(og.length, 'lengthy');
@@ -51,7 +50,6 @@ describe('Upload FS', function () {
   it('copyOut should work for local filesystem', () => {
     uploadfs.copyOut('/test_copy.txt', 'copy-out-test.txt', e => {
       assert(!e);
-      if (e) console.log('Error on copyOut', e);
       var og = fs.readFileSync('./test/test.txt', 'utf8');
       var next = fs.readFileSync('./copy-out-test.txt', 'utf8');
       assert(og.length, 'lengthy');
@@ -59,7 +57,7 @@ describe('Upload FS', function () {
       assert(og === next, 'Copied files are equal');
     });
   });
-  
+
   it('Test disable / enable functionality', () => {
     var srcFile = '/test_copy.txt';
     var infile = './test/files/test_copy.txt';
@@ -71,25 +69,16 @@ describe('Upload FS', function () {
         uploadfs.disable(srcFile, e => {
           var stats = fs.statSync(infile);
           var mode = new Mode(stats);
-          console.log("Disabled mode:", mode.toString());
           assert(!e, 'uploadfs disable success!');
-          if (e) {
-            console.log('uploadfs disable failed', e);
-          }
           assert(mode.toString() === '----------', 'File permissions locked down');
           return cb(null);
         });
       },
       enable: cb => {
-        console.log("B");
         uploadfs.enable(srcFile, e => {
           var stats = fs.statSync(infile);
           var mode = new Mode(stats);
-          console.log("Enabled mode:", mode.toString());
           assert(!e, 'uploadfs disable success!');
-          if (e) {
-            console.log('uploadfs disable failed', e);
-          }
           assert(mode.toString() === '-rw-r--r--', 'Enabled file has expected permissions');
           assert(fs.existsSync(infile), 'copyIn visible to fs');
           return cb(null);
@@ -104,17 +93,15 @@ describe('Upload FS', function () {
       },
       testDelete: cb => {
         uploadfs.delete(srcFile, e => {
-          if (e) console.log(e);
           assert(!e, 'Delete file succeeds');
-          assert(!fs.existsSync(infile), 'uploadfs delete file is gone from local fs')
+          assert(!fs.existsSync(infile), 'uploadfs delete file is gone from local fs');
           return cb(null);
         });
       }
     }, function (e) {
-      fs.unlinkSync('./test/files/test_copy.txt')
+      fs.unlinkSync('./test/files/test_copy.txt');
       fs.unlinkSync('copy-out-test.txt');
       assert(!e);
-      if (e) console.log('Test disable fails:', e);
     });
   });
 });

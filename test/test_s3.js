@@ -1,5 +1,6 @@
+/* global describe, it */
 const assert = require('assert');
-const async = require('async');
+const request = require('request');
 
 describe('Upload S3', function () {
   this.timeout(4500);
@@ -25,21 +26,19 @@ describe('Upload S3', function () {
       height: 1140
     }
   ];
-      
+
   let s3Options = require('../s3TestOptions.js');
-  
+
   s3Options.imageSizes = imageSizes;
   s3Options.tempPath = tempPath;
 
-  it('Should instantiate uploadfs module without errors', () => {
-    console.log('s3Options', s3Options);
-    assert(true, 'Module loads'); 
+  it('S3 Should instantiate uploadfs module without errors', () => {
+    assert(true, 'Module loads');
   });
 
-  it('Should init s3 connection without error', done => {
-    uploadfs.init(options, function(e) {
+  it('S3 Should init s3 connection without error', done => {
+    uploadfs.init(s3Options, function(e) {
       assert(!e, 'S3 init without error');
-      if (e) console.log(e);
       done();
     });
   });
@@ -49,9 +48,7 @@ describe('Upload S3', function () {
       const url = uploadfs.getUrl() + '/one/two/three/test.txt';
       const og = fs.readFileSync('test.txt', 'utf8');
       assert(!e, 'S3 copyIn without error');
-      if (e) console.log(e);
-      console.log('Wait five seconds for S3 consistency.');
-      setTimout(() => {
+      setTimeout(() => {
         request(url, (e, res, body) => {
           assert(!e, 'Request success');
           assert(res.statusCode === 200, 'Request status 200');
@@ -62,23 +59,21 @@ describe('Upload S3', function () {
     });
   });
 
-  it('CopyOut should work', done => {
+  it('S3 CopyOut should work', done => {
     const cpOutPath = 'copy-out-test.txt';
     uploadfs.copyOut(dstPath, cpOutPath, e => {
       assert(!e, 'S3 copyOut without error');
-      if (e) console.log(e);
       const dl = fs.readFileSync(cpOutPath, 'utf8');
       const og = fs.readFileSync('test.txt', 'utf8');
       assert(dl === og, 'Downloaded file is equal to previous upload');
-    }); 
+    });
   });
 
-  it('Disable / Enable should work as expected', done => {
+  it('S3 Disable / Enable should work as expected', done => {
     async.series({
       disable: cb => {
         uploadfs.disable(dstPath, e => {
           assert(!e, 'uploadfs disable no err');
-          if (e) console.log(e);
           cb(null);
         });
       },
@@ -107,8 +102,56 @@ describe('Upload S3', function () {
       }
     }, e => {
       assert(!e, 'Series should succeed');
-      if (e) console.log(e);
       done();
+    });
+  });
+
+  it('S3 uploadfs Remove should work', done => {
+    uploadfs.remove(dstPath, e => {
+      assert(!e, 'Remove should succeed');
+
+      setTimeout(() => {
+        const url = uploadfs.getUrl() + dstPath;
+        request(url, (e, res, body) => {
+          assert(!e);
+          assert(res.statusCode >= 400, 'Removed file is gone from s3');
+        });
+      }, 5000);
+    });
+  });
+
+  it('S3 uploadfs copyImageIn should work', done => {
+    const imgDstPath = '/images/profiles/me';
+
+    uploadfs.copyImageIn('test.jpg', imgDstPath, (e, info) => {
+      assert(!e, 'S3 copyImageIn works');
+
+      setTimeout(() => {
+        const url = uploadfs.getUrl();
+        let paths = [ info.basePath + '.jpg' ];
+
+        paths.push(info.basePath + '.small.jpg');
+        paths.push(info.basePath + '.medium.jpg');
+        paths.push(info.basePath + '.large.jpg');
+
+        async.map(paths, (path, cb) => {
+          const imgPath = url + path;
+          request(imgPath, (e, res, body) => {
+            assert(!e);
+            assert(res.statusCode === 200);
+            /* @@TODO we should test the correctness of uploaded images */
+
+            // clean up
+            uploadfs.remove(path, e => {
+              assert(!e, 'Remove uploaded file after testing');
+            });
+          });
+        }, e => {
+          assert(!e, 'Can request all copyImageInned images');
+          done();
+        });
+        // end async.each
+      }, 5000);
     });
   });
 });
