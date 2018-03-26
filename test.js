@@ -6,6 +6,7 @@ var request = require('request');
 var _ = require('lodash');
 var async = require('async');
 var zlib = require('zlib');
+var utils = require('./lib/utils.js');
 
 var localOptions = { storage: 'local', uploadsPath: __dirname + '/test', uploadsUrl: 'http://localhost:3000/test' };
 var localDisabledFileKeyOptions = { storage: 'local', disabledFileKey: 'testtesttest', uploadsPath: __dirname + '/test', uploadsUrl: 'http://localhost:3000/test' };
@@ -463,7 +464,7 @@ function localDisabledFileKeyStart() {
             process.exit(1);
           }
           // However, the file should exist under a suffixed name
-          if (!fs.existsSync(__dirname + '/test' + uploadfs._storage.getDisabledPath('/one/two/three/test.txt'))) {
+          if (!fs.existsSync(__dirname + '/test' + utils.getDisabledPath('/one/two/three/test.txt'))) {
             console.log('uploadfs.disable should have renamed the file to an obfuscated path');
             process.exit(1);
           }
