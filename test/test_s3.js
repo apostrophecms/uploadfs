@@ -3,7 +3,7 @@ const assert = require('assert');
 const request = require('request');
 
 describe('UploadFS S3', function () {
-  this.timeout(4500);
+  this.timeout(10000);
   const uploadfs = require('../uploadfs.js')();
   const fs = require('fs');
   const async = require('async');
@@ -36,14 +36,14 @@ describe('UploadFS S3', function () {
     assert(true, 'Module loads');
   });
 
-  it('S3 Should init s3 connection without error', done => {
+  it('S3 Should init s3 connection without error', function(done) {
     uploadfs.init(s3Options, function(e) {
       assert(!e, 'S3 init without error');
       done();
     });
   });
 
-  it('CopyIn should work', done => {
+  it('CopyIn should work', function(done) {
     uploadfs.copyIn('test.txt', dstPath, function(e) {
       const url = uploadfs.getUrl() + '/one/two/three/test.txt';
       const og = fs.readFileSync('test.txt', 'utf8');
@@ -66,6 +66,7 @@ describe('UploadFS S3', function () {
       const dl = fs.readFileSync(cpOutPath, 'utf8');
       const og = fs.readFileSync('test.txt', 'utf8');
       assert(dl === og, 'Downloaded file is equal to previous upload');
+      done();
     });
   });
 
@@ -98,6 +99,7 @@ describe('UploadFS S3', function () {
           assert(res.statusCode < 400, 'Request for enabled resource should not fail');
           assert(og === res.body, 'Downloaded content should be equal to previous upload');
           assert(res.headers['content-type'] === 'text/plain', 'Check content-type header');
+          cb(null);
         });
       }
     }, e => {
