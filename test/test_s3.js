@@ -2,7 +2,7 @@
 const assert = require('assert');
 const request = require('request');
 
-describe('Upload S3', function () {
+describe('UploadFS S3', function () {
   this.timeout(4500);
   const uploadfs = require('../uploadfs.js')();
   const fs = require('fs');

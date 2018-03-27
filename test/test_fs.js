@@ -2,7 +2,7 @@
 var Mode = require('stat-mode');
 var assert = require('assert');
 
-describe('Upload FS', function () {
+describe('UploadFS Local', function () {
   this.timeout(4500);
   var uploadfs = require('../uploadfs.js')();
   var fs = require('fs');

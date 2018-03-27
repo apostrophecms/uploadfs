@@ -2,7 +2,7 @@ const assert = require('assert');
 const utils = require('../lib/utils');
 
 /* globals describe, it */
-describe('Test utility functions', () => {
+describe('UploadFS Unit', () => {
   const disabledFileKey = 'This is my disabled file key';
   const testPath = '/path/to/foo.js';
   let hiddenPath;
@@ -10,7 +10,7 @@ describe('Test utility functions', () => {
   it('getDisabledPath should work', done => {
     assert(typeof utils.getDisabledPath === 'function', 'Get disabledPath is a function');
     hiddenPath = utils.getDisabledPath(testPath, disabledFileKey);
-    assert(hiddenPath != testPath, 'test path and hidden path are different');
+    assert(hiddenPath !== testPath, 'test path and hidden path are different');
     done();
   });
 
