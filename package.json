@@ -4,7 +4,7 @@
   "description": "Store files in a web-accessible location via a simplified API. Can automatically scale and rotate images. Includes both S3-based and local filesystem-based backends with the most convenient features of each.",
   "main": "uploadfs.js",
   "scripts": {
-    "test": "node test.js"
+    "test": "mocha test/ && node test.js && eslint"
   },
   "repository": {
     "type": "git",
