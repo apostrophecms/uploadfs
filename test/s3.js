@@ -50,7 +50,6 @@ describe('UploadFS S3', function () {
 
   it('CopyIn should work', function (done) {
     return uploadfs.copyIn('test.txt', dstPath, function(e) {
-      console.log("CB0000");
       assert(!e, 'S3 copyIn without error');
       done();
     });
@@ -59,10 +58,8 @@ describe('UploadFS S3', function () {
   it('CopyIn file should be available via s3', function (done) {
     const url = uploadfs.getUrl() + '/one/two/three/test.txt';
     const og = fs.readFileSync('test.txt', 'utf8');
-    console.log("UU", url);
 
     request(url, (e, res, body) => {
-      console.log("ARGS", arguments);
       assert(!e, 'Request success');
       assert(res.statusCode === 200, 'Request status 200');
       assert(res.body === og, 'Res body equals uploaded file');
