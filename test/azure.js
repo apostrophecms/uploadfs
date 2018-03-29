@@ -9,7 +9,8 @@ const infile = 'one/two/three/test.txt';
 /* helper to automate scraping files from blob svc */
 const _getOutfile = (infile, tmpFileName, done) => {
   const ogFile = fs.readFileSync(srcFile, {encoding: 'utf8'});
-  uploadfs.copyOut(infile, tmpFileName, {}, (e, res) => {
+  return uploadfs.copyOut(infile, tmpFileName, {}, (e, res) => {
+    assert(!e, 'Azure copy out nominal success');
     if (e) return console.error("copyOut Error", e);
     const read = fs.createReadStream(tmpFileName);
     const gunzip = zlib.createGunzip();
@@ -25,6 +26,7 @@ const _getOutfile = (infile, tmpFileName, done) => {
       str = buffer.join('');
 
       assert(!e, 'Azure copy out - nominal success');
+      if (e) console.log(e);
       // make sure we have actual values not null or undefined
       assert(str.length, 'copOutFile has length');
       assert(ogFile.length, 'original textfile body has length');
