@@ -2,6 +2,7 @@ npm-debug.log
 .DS_Store
 node_modules
 s3TestOptions.js
+azureTestOptions.js
 public/uploads
 temp
 
