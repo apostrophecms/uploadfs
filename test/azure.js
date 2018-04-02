@@ -60,6 +60,18 @@ describe('UploadFS Azure', function() {
     });
   });
 
+  it('CopyIn file should be available via azure on the web', function (done) {
+    const url = uploadfs.getUrl() + '/one/two/three/test.txt';
+    const og = fs.readFileSync('test.txt', 'utf8');
+
+    request(url, (e, res, body) => {
+      assert(!e, 'Request success');
+      assert(res.statusCode === 200, 'Request status 200');
+      assert(res.body === og, 'Res body equals uploaded file');
+      done();
+    });
+  });
+
   it('Azure test copyOut should work', done => {
     const tmpFileName = new Date().getTime() + '_text.txt';
     _getOutfile(infile, tmpFileName, done);
