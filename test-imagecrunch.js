@@ -1,8 +1,6 @@
 var uploadfs = require('./uploadfs.js')();
 var fs = require('fs');
-var request = require('request');
 var _ = require('lodash');
-var async = require('async');
 
 // Test the imagecrunch image backend, written specifically for Macs
 
@@ -34,7 +32,7 @@ localOptions.tempPath = tempPath;
 localTestStart();
 
 function localTestStart() {
-  options = localOptions;
+  var options = localOptions;
   console.log('Initializing uploadfs for the ' + options.backend + ' storage backend with the imagecrunch image backend');
   uploadfs.init(options, function(e) {
     if (e) {
@@ -149,4 +147,3 @@ function localTestStart() {
     process.exit(0);
   }
 }
-
