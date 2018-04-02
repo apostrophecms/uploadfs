@@ -2,6 +2,7 @@
 const assert = require('assert');
 const fs = require('fs');
 const zlib = require('zlib');
+const rp = require('request-promise');
 const uploadfs = require('../uploadfs.js')();
 const srcFile = 'test.txt';
 const infile = 'one/two/three/test.txt';
@@ -94,6 +95,16 @@ describe('UploadFS Azure', function() {
   it('Azure test copyOut after enable should succeed', done => {
     const tmpFileName = new Date().getTime() + '_text.txt';
     _getOutfile(infile, tmpFileName, done);
+  });
+
+  it('Uploadfs should return valid web-servable url pointing to uploaded file', () => {
+    const url = uploadfs.getUrl(infile);
+    const ogFile = fs.readFileSync(srcFile, {encoding: 'utf8'});
+    
+    return rp({uri: url, gzip: true})
+      .then(res => {
+        assert(ogFile === res, "Web servable file contents equal original text file contents");
+      });
   });
 
   it('Azure test remove should work', done => {
