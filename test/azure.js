@@ -2,6 +2,7 @@
 const assert = require('assert');
 const fs = require('fs');
 const zlib = require('zlib');
+const rp = require('request-promise');
 const uploadfs = require('../uploadfs.js')();
 const srcFile = 'test.txt';
 const infile = 'one/two/three/test.txt';
@@ -60,18 +61,6 @@ describe('UploadFS Azure', function() {
     });
   });
 
-  it('CopyIn file should be available via azure on the web', function (done) {
-    const url = uploadfs.getUrl() + '/one/two/three/test.txt';
-    const og = fs.readFileSync('test.txt', 'utf8');
-
-    request(url, (e, res, body) => {
-      assert(!e, 'Request success');
-      assert(res.statusCode === 200, 'Request status 200');
-      assert(res.body === og, 'Res body equals uploaded file');
-      done();
-    });
-  });
-
   it('Azure test copyOut should work', done => {
     const tmpFileName = new Date().getTime() + '_text.txt';
     _getOutfile(infile, tmpFileName, done);
@@ -106,6 +95,16 @@ describe('UploadFS Azure', function() {
   it('Azure test copyOut after enable should succeed', done => {
     const tmpFileName = new Date().getTime() + '_text.txt';
     _getOutfile(infile, tmpFileName, done);
+  });
+
+  it('Uploadfs should return valid web-servable url pointing to uploaded file', () => {
+    const url = uploadfs.getUrl(infile);
+    const ogFile = fs.readFileSync(srcFile, {encoding: 'utf8'});
+
+    return rp({uri: url, gzip: true})
+      .then(res => {
+        assert(ogFile === res, "Web servable file contents equal original text file contents");
+      });
   });
 
   it('Azure test remove should work', done => {
