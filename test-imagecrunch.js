@@ -1,7 +1,5 @@
 var uploadfs = require('./uploadfs.js')();
 var fs = require('fs');
-var request = require('request');
-var _ = require('lodash');
 var async = require('async');
 
 // Test the imagecrunch image backend, written specifically for Macs
@@ -46,7 +44,7 @@ localTestStart(function () {
 // run again with imagemin enabled
 
 function localTestStart(cb) {
-  options = localOptions;
+  var options = localOptions;
   console.log('Initializing uploadfs for the ' + options.backend + ' storage backend with the imagecrunch image backend');
   uploadfs.init(options, function(e) {
     if (e) {
@@ -87,17 +85,17 @@ function localTestStart(cb) {
         console.log(info);
         process.exit(1);
       }
-      
+
       var stats = fs.statSync('test/images/profiles/me.jpg');
 
       if (!stats.size) {
         console.log('Copied image is empty or missing');
         process.exit(1);
       }
-      
+
       // We already tested remove, just do it to mop up
       console.log('Removing files...');
-        uploadfs.remove('/images/profiles/me.jpg', function(e) { 
+      uploadfs.remove('/images/profiles/me.jpg', function(e) {
         async.each(imageSizes, function(size, callback) {
           var name = info.basePath + '.' + size.name + '.jpg';
           var stats = fs.statSync('test' + name);
@@ -110,7 +108,7 @@ function localTestStart(cb) {
           if (options.imagemin) {
             testFileSizes[size.name + '_min'] = stats.size;
           } else {
-            testFileSizes[size.name]  = stats.size;
+            testFileSizes[size.name] = stats.size;
           }
 
           console.log("SIZES", testFileSizes);
@@ -118,10 +116,10 @@ function localTestStart(cb) {
           if (testFileSizes[size.name + '_min'] >= testFileSizes[size.name]) {
             console.log('Test fails, minned file should be smaller than unminned');
             process.exit(1);
-          } 
-          
+          }
+
           // We already tested remove, just do it to mop up
-          uploadfs.remove(info.basePath + '.' + size.name + '.jpg', function(e)  {
+          uploadfs.remove(info.basePath + '.' + size.name + '.jpg', function(e) {
             callback();
           });
         }, function(err) {
@@ -131,7 +129,7 @@ function localTestStart(cb) {
           }
           testCopyImageInCrop(cb);
         });
-        }); // remove me.jpg
+      }); // remove me.jpg
     });
   }
 
@@ -147,8 +145,7 @@ function localTestStart(cb) {
         process.exit(1);
       }
 
-      if (info.basePath !== '/images/profiles/me-cropped')
-      {
+      if (info.basePath !== '/images/profiles/me-cropped') {
         console.log('info.basePath is incorrect');
         process.exit(1);
       }
@@ -162,7 +159,7 @@ function localTestStart(cb) {
       }
 
       var stats = fs.statSync('test/images/profiles/me-cropped.jpg');
-      
+
       if (!stats.size) {
         console.log('Copied image is empty or missing');
         process.exit(1);
@@ -170,7 +167,7 @@ function localTestStart(cb) {
 
       // We already tested remove, just do it to mop up
       console.log('Removing files...');
-      uploadfs.remove(`${basePath}-cropped.jpg`, function(e) { 
+      uploadfs.remove(`${basePath}-cropped.jpg`, function(e) {
         async.each(imageSizes, function(size, callback) {
           var name = info.basePath + '.' + size.name + '.jpg';
           var stats = fs.statSync('test' + name);
@@ -180,7 +177,7 @@ function localTestStart(cb) {
           }
           // We already tested remove, just do it to mop up
           uploadfs.remove(info.basePath + '.' + size.name + '.jpg', function(e) {
-            callback(e);  
+            callback(e);
           });
         }, function (err) {
           if (err) {
@@ -193,9 +190,4 @@ function localTestStart(cb) {
       });
     });
   }
-
-  function testCopyImageInWithImagemin() {
-    console.log('testing copyImageIn with Imagemin');
-  }
 }
-
