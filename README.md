@@ -37,6 +37,8 @@ Note that Heroku includes Imagemagick. You can also install it with `apt-get ins
 
 * The `init` method passes options to the backend and invokes a callback when the backend is ready.
 
+* The optional `destroy(callback)` method releases any resources such as file descriptors and timeouts held by `uploadfs`.
+
 * The `copyIn` method takes a local filename and copies it to a path in uploadfs. (Note that Express conveniently sets us up for this by dropping file uploads in a temporary local file for the duration of the request.)
 
 * The `copyImageIn` method works like `copyIn`. In addition, it also copies in scaled versions of the image, corresponding to the sizes you specify when calling `init()`. Information about the image is returned in the second argument to the callback.
@@ -58,6 +60,8 @@ Note that Heroku includes Imagemagick. You can also install it with `apt-get ins
 * The `getImageSize` method returns the currently configured image sizes.
 
 * The `identifyLocalImage` method provides direct access to the `uploadfs` functionality for determining the extension, width, height and orientation of images. Normally `copyIn` does everything you need in one step, but this method is occasionally useful for migration purposes.
+
+The `destroy` method releases any resources such as file descriptors or timeouts that may be held by the backends, and then invokes its callback. Its use is optional, but command line Node apps might never exit without it.
 
 ## Working Example
 
@@ -289,6 +293,10 @@ Feel free to open issues on [github](http://github.com/punkave/uploadfs).
 <a href="http://punkave.com/"><img src="https://raw.github.com/punkave/uploadfs/master/logos/logo-box-builtby.png" /></a>
 
 ## Changelog
+
+### CHANGES IN 1.8.0
+
+* Added the optional `destroy` method, which allows for graceful release of resources such as file descriptors or timeouts that may belong to backends.
 
 ### CHANGES IN 1.7.2
 
