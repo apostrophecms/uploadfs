@@ -4,7 +4,7 @@ var _ = require('lodash');
 
 // Test the imagecrunch image backend, written specifically for Macs
 
-var localOptions = { storage: 'local', image: 'imagecrunch', uploadsPath: __dirname + '/test', uploadsUrl: 'http://localhost:3000/test' };
+var localOptions = { storage: 'local', backend: 'imagecrunch', uploadsPath: __dirname + '/test', uploadsUrl: 'http://localhost:3000/test' };
 
 var imageSizes = [
   {
