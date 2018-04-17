@@ -59,6 +59,8 @@ Note that Heroku includes Imagemagick. You can also install it with `apt-get ins
 
 * The `identifyLocalImage` method provides direct access to the `uploadfs` functionality for determining the extension, width, height and orientation of images. Normally `copyIn` does everything you need in one step, but this method is occasionally useful for migration purposes.
 
+The `destroy` method releases any resources such as file descriptors or timeouts that may be held by the backends, and then invokes its callback. Its use is optional, but command line Node apps might never exit without it.
+
 ## Working Example
 
 For a complete, very simple and short working example in which a user uploads a profile photo, see `sample.js`.
@@ -289,6 +291,12 @@ Feel free to open issues on [github](http://github.com/punkave/uploadfs).
 <a href="http://punkave.com/"><img src="https://raw.github.com/punkave/uploadfs/master/logos/logo-box-builtby.png" /></a>
 
 ## Changelog
+
+### CHANGES IN 1.8.0
+
+* Added support for `azurefs` blob storage. 
+* Tests reimplemented with `mocha`.
+* Added the optional `destroy` method, which allows for graceful release of resources such as file descriptors or timeouts that may belong to backends.
 
 ### CHANGES IN 1.7.2
 
