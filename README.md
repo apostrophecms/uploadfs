@@ -2,9 +2,9 @@
 
 <a href="http://apostrophenow.org/"><img src="https://raw.github.com/punkave/uploadfs/master/logos/logo-box-madefor.png" align="right" /></a>
 
-uploadfs copies files to a web-accessible location and provides a consistent way to get the URLs that correspond to those files. uploadfs can also resize, crop and autorotate uploaded images. uploadfs includes both S3-based and local filesystem-based backends and you may supply others. The API offers the same conveniences with both backends, avoiding the most frustrating features of each:
+uploadfs copies files to a web-accessible location and provides a consistent way to get the URLs that correspond to those files. uploadfs can also resize, crop and autorotate uploaded images. uploadfs includes S3-based, Azure-based and local filesystem-based backends and you may supply others. The API offers the same conveniences with both backends, avoiding the most frustrating features of each:
 
-* Parent directories are created automatically as needed (like S3)
+* Parent directories are created automatically as needed (like S3 and Azure)
 * Content types are inferred from file extensions (like the filesystem)
 * Files are by default marked as readable via the web (like a filesystem + web server)
 * Images can be automatically scaled to multiple sizes
@@ -23,15 +23,15 @@ It is possible to copy a file back from uploadfs, but there is no API to retriev
 
 You need:
 
-* A "normal" filesystem in which files stay put forever, *OR* Amazon S3, OR a willingness to write a backend for something else (look at `s3.js` and `local.js` for examples; just supply an object with the same methods, you don't have to supply a factory function).
+* A "normal" filesystem in which files stay put forever, *OR* Amazon S3, *OR* Microsoft Azure, OR a willingness to write a backend for something else (look at `s3.js`, `azure.js` and `local.js` for examples; just supply an object with the same methods, you don't have to supply a factory function).
 
 * Patience, to wait for [Jimp](https://github.com/oliver-moran/jimp) to convert your images; or [Imagemagick](http://www.imagemagick.org/script/index.php), if you want much better speed and full animated GIF support; OR, on Macs, the very fast [imagecrunch](http://github.com/punkave/imagecrunch) utility. You can also write a backend for something else (look at `imagemagick.js`, `imagecrunch.js`, and `jimp.js` for examples; just supply an object with the same methods, you don't have to supply a factory function).
 
 * [gifsicle](https://www.lcdf.org/gifsicle/) is an optional tool that processes large animated GIFs much faster. Currently, Imagemagick is a prerequisite for using it. Turn it on with the `gifsicle: true` option when calling `init`. Of course you must install `gifsicle` to use it. (Hint: your operating system probably has a package for it. Don't compile things.)
 
-* A local filesystem in which files stay put at least during the current request, to hold temporary files for Imagemagick's conversions. This is no problem with Heroku and most other cloud servers. It's just long-term storage that needs to be in S3 for some of them.
+* A local filesystem in which files stay put at least during the current request, to hold temporary files for Imagemagick's conversions. This is no problem with Heroku and most other cloud servers. It's just long-term storage that needs to be in S3 or Azure for some of them.
 
-Note that Heroku includes Imagemagick. You can also install it with `apt-get install imagemagick` on Ubuntu servers. The official Imagemagick binaries for the Mac are a bit busted as of this writing, but macports or homebrew can install it. Or, you can use [imagecrunch](http://github.com/punkave/imagecrunch), a fast, tiny utility that uses native MacOS APIs.
+Note that Heroku includes Imagemagick. You can also install it with `apt-get install imagemagick` on Ubuntu servers. Homebrew can install `imagemagick` on Macs, or you can use [imagecrunch](http://github.com/punkave/imagecrunch), a fast, tiny utility that uses native MacOS APIs.
 
 ## API Overview
 
@@ -45,7 +45,7 @@ Note that Heroku includes Imagemagick. You can also install it with `apt-get ins
 
 * The default JPEG quality setting for scaled-down versions of your image is `80`. This avoids unacceptably large file sizes for web deployment. You can adjust this via the `scaledJpegQuality` option, either when initializing uploadfs or when calling `copyImageIn`.
 
-* The `copyOut` method takes a path in uploadfs and a local filename and copies the file back from uploadfs to the local filesystem. This should be used only rarely. Heavy reliance on this method sets you up for poor performance in S3. However it may be necessary at times, for instance when you want to crop an image differently later. *Heavy reliance on copyOut is a recipe for bad S3 performance. Use it only for occasional operations like cropping.*
+* The `copyOut` method takes a path in uploadfs and a local filename and copies the file back from uploadfs to the local filesystem. This should be used only rarely. Heavy reliance on this method sets you up for poor performance in S3 and Azure. However it may be necessary at times, for instance when you want to crop an image differently later. *Heavy reliance on copyOut is a recipe for bad S3 and/or Azure performance. Use it only for occasional operations like cropping.*
 
 * The `remove` method removes a file from uploadfs.
 
@@ -123,6 +123,8 @@ And this call restores it:
 
 *With the local storage backend, `disable` uses permissions `000` by default.* This is a big hassle if you want to be able to easily use rsync to move the files outside of `uploadfs`. **As an alternative, you can set the `disabledFileKey` option to a random string.** If you do this, uploadfs will *rename* disabled files based on an HMAC digest of the filename and the `disabledFileKey`. This is secure from the webserver's point of view, **as long as your webserver is not configured to display automatic directory listings of files**. But from your local file system's point of view, the file is still completely accessible. And that makes it a lot easier to use `rsync`.
 
+*With the `azure` storage backend, you MUST set `disabledFileKey`.* This is because Azure provides no way to alter the permissions of a single blob (file). Our only option is to copy the blob to a new, cryptographically unguessable name and remove the old one while it is "disabled," then reverse the operation when it is enabled again.
+
 For your convenience in the event you should lose your database, the filenames generated still begin with the original filename. The presence of a cryptographically un-guessable part is enough to make them secure.
 
 ## Configuration Options
@@ -130,7 +132,7 @@ For your convenience in the event you should lose your database, the filenames g
 Here are the options we pass to `init()` in `sample.js`. Note that we define the image sizes we want the `copyImageIn` function to produce. No image will be wider or taller than the limits specified. The aspect ratio is always maintained, so one axis will often be smaller than the limits specified. Here's a hint: specify the width you really want, and the maximum height you can put up with. That way only obnoxiously tall images will get a smaller width, as a safeguard.
 
     {
-      backend: 'local',
+      storage: 'local',
       image: 'imagemagick',
       // Optional. If not specified, ImageMagick or imagecrunch will be used.
       // Options are 'imagemagick', 'imagecrunch', 'jimp', or a custom image processing backend
@@ -167,7 +169,7 @@ Here are the options we pass to `init()` in `sample.js`. Note that we define the
 Here is an equivalent configuration for S3:
 
     {
-      backend: 's3',
+      storage: 's3',
       // Get your credentials at aws.amazon.com
       secret: 'xxx',
       key: 'xxx',
@@ -203,13 +205,38 @@ Here is an equivalent configuration for S3:
 
     }
 
-"Why don't you put the temporary files for imagemagick in S3?"
+And, an equivalent configuration for Azure:
 
-Two good reasons:
-
-1. Imagemagick doesn't know how to write directly to S3.
-
-2. Constantly copying things to and from S3 is very slow compared to working with local temporary files. S3 is only fast when it comes to delivering your finished files to end users. Resist the temptation to use it for many little reads and writes.
+    {
+      storage: 'azure',
+      account: 'storageAccountName',
+      container: 'storageContainerName',
+      key: 'accessKey',
+      disabledFileKey: 'a random string of your choosing',
+      // Required if you use copyImageIn
+      tempPath: __dirname + '/temp',
+      imageSizes: [
+        {
+          name: 'small',
+          width: 320,
+          height: 320
+        },
+        {
+          name: 'medium',
+          width: 640,
+          height: 640
+        },
+        {
+          name: 'large',
+          width: 1140,
+          height: 1140
+        }
+      ],
+      // Render up to 4 image sizes at once. Note this means 4 at once per call
+      // to copyImageIn. There is currently no built-in throttling of multiple calls to
+      // copyImageIn
+      parallel: 4
+    }
 
 ## Less Frequently Used Options
 
@@ -249,7 +276,7 @@ S3 file delivery can be set to use the HTTPS protocol with the `https` option. T
   https: true
 ```
 
-Also, if you are using a CDN such as cloudfront that automatically mirrors the contents of your S3 bucket, you can specify that CDN so that the `getUrl` method of `uploadfs` returns the CDN's URL rather than a direct URL to Amazon S3:
+Also, if you are using a CDN such as cloudfront that automatically mirrors the contents of your S3 bucket, you can specify that CDN so that the `getUrl` method of `uploadfs` returns the CDN's URL rather than a direct URL to Amazon S3 or Azure:
 
 ```javascript
   cdn: {
@@ -294,7 +321,7 @@ Feel free to open issues on [github](http://github.com/punkave/uploadfs).
 
 ### CHANGES IN 1.8.0
 
-* Added support for `azurefs` blob storage. 
+* Added support for `azure` blob storage. 
 * Tests reimplemented with `mocha`.
 * Added the optional `destroy` method, which allows for graceful release of resources such as file descriptors or timeouts that may belong to backends.
 
