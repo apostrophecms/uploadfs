@@ -4,7 +4,7 @@ var _ = require('lodash');
 
 // Test the imagecrunch image backend, written specifically for Macs
 
-var localOptions = { storage: 'local', backend: 'imagecrunch', uploadsPath: __dirname + '/test', uploadsUrl: 'http://localhost:3000/test' };
+var localOptions = { storage: 'local', local: 'imagecrunch', uploadsPath: __dirname + '/test', uploadsUrl: 'http://localhost:3000/test' };
 
 var imageSizes = [
   {
@@ -33,7 +33,7 @@ localTestStart();
 
 function localTestStart() {
   var options = localOptions;
-  console.log('Initializing uploadfs for the ' + options.backend + ' storage backend with the imagecrunch image backend');
+  console.log('Initializing uploadfs for the ' + options.storage + ' storage backend with the imagecrunch image backend');
   uploadfs.init(options, function(e) {
     if (e) {
       console.log('uploadfs.init failed:');
