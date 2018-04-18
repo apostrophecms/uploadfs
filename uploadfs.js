@@ -446,6 +446,26 @@ function Uploadfs() {
   self.getImageSizes = function() {
     return imageSizes;
   };
+
+  /**
+   * Destroys the uploadfs instance, allowing the backends to release any
+   * resources they may be holding, such as file descriptors or interval timers.
+   * Backends that hold such resources should implement their own `destroy` method,
+   * also accepting a callback. The callback will receive an error if anything
+   * goes awry during the cleanup process. This method does NOT remove any
+   * content, it just releases system resources.
+   * @param {function} callback
+   */
+  self.destroy = function(callback) {
+    var callbacks = [
+      self._storage.destroy || noOperation,
+      self._image.destroy || noOperation
+    ];
+    return async.parallel(callbacks, callback);
+    function noOperation(callback) {
+      return callback(null);
+    }
+  };
 }
 
 module.exports = function () {

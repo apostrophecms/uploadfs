@@ -107,4 +107,12 @@ describe('UploadFS Local', function () {
       done();
     });
   });
+
+  it('Should destroy uploadfs module without errors', done => {
+    return uploadfs.destroy(e => {
+      assert(!e);
+      done();
+    });
+  });
+
 });
