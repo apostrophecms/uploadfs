@@ -77,7 +77,7 @@ function Uploadfs() {
           return callback();
         }
 
-        tempPath = options.tempPath || 'tmp';
+        tempPath = options.tempPath;
 
         if (!fs.existsSync(options.tempPath)) {
           fs.mkdirSync(options.tempPath);
