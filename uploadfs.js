@@ -76,10 +76,9 @@ function Uploadfs() {
         if (!imageSizes.length) {
           return callback();
         }
-        if (!options.tempPath) {
-          return callback("options.tempPath not set");
-        }
-        tempPath = options.tempPath;
+
+        tempPath = options.tempPath || 'tmp';
+
         if (!fs.existsSync(options.tempPath)) {
           fs.mkdirSync(options.tempPath);
         }
