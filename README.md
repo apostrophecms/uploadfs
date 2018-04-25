@@ -14,6 +14,7 @@ uploadfs copies files to a web-accessible location and provides a consistent way
 * Non-image files are also supported
 * Web access to files can be disabled and reenabled
 * Animated GIFs are preserved, with full support for scaling and cropping (if you have `imagemagick` or `imagecrunch`)
+* On fire about file sizes? Images can be compressed even further with the `imagemin: true` option, if you are using `imagemagick` and you have [`jpegtrans`](http://sharadchhetri.com/2014/01/06/install-libjpegtran-using-yum-command-centos-6-x/), [`jpeg-recompress`](https://github.com/danielgtaylor/jpeg-archive#jpeg-recompress), [`mozjpeg`](https://nystudio107.com/blog/installing-mozjpeg-on-ubuntu-16-04-forge), [`optipng`](https://www.linuxhelp.com/install-jpegoptim-optipng-linux/) and `pngquant` available in your `PATH` (this is entirely optional). Note that `pngquant` is technically a lossy compression tool, your PNG's pixels will differ slightly from the original if you use `imagemin: true`.
 
 You can also remove a file if needed.
 
@@ -67,7 +68,7 @@ The `destroy` method releases any resources such as file descriptors or timeouts
 
 For a complete, very simple and short working example in which a user uploads a profile photo, see `sample.js`.
 
-Here's the interesting bit. Note that we do not supply an extension for the final image file, because we want to let Imagemagick figure that out for us.
+Here's the interesting bit. Note that we do not supply an extension for the final image file, because we want to var Imagemagick figure that out for us.
 
     app.post('/', function(req, res) {
       uploadfs.copyImageIn(req.files.photo.path, '/profiles/me', function(e, info) {
@@ -181,7 +182,7 @@ Here is an equivalent configuration for S3:
       // For read-after-write consistency in the US East region.
       // You could also use any other region name except us-standard
       region: 'external-1',
-      // Required if you use copyImageIn
+      // Required if you use copyImageIn, or use Azure at all
       tempPath: __dirname + '/temp',
       imageSizes: [
         {
@@ -215,7 +216,7 @@ And, an equivalent configuration for Azure:
       container: 'storageContainerName',
       key: 'accessKey',
       disabledFileKey: 'a random string of your choosing',
-      // Required if you use copyImageIn
+      // Always required for Azure
       tempPath: __dirname + '/temp',
       imageSizes: [
         {

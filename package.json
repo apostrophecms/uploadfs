@@ -4,7 +4,7 @@
   "description": "Store files in a web-accessible location via a simplified API. Can automatically scale and rotate images. Includes both S3-based and local filesystem-based backends with the most convenient features of each.",
   "main": "uploadfs.js",
   "scripts": {
-    "test": "node test-imagecrunch.js && node test-imagemagick.js && eslint ."
+    "test": "mocha test/ && node test-imagecrunch.js && node test-imagemagick.js && eslint ."
   },
   "repository": {
     "type": "git",
@@ -23,8 +23,15 @@
     "aws-sdk": "^2.81.0",
     "azure-storage": "^2.8.1",
     "es6-promise": "^4.1.0",
+    "fs-extra": "^5.0.0",
     "gm": "^1.9.0",
     "gzipme": "^0.1.1",
+    "imagemin": "^5.3.1",
+    "imagemin-jpeg-recompress": "^5.1.0",
+    "imagemin-mozjpeg": "^7.0.0",
+    "imagemin-optipng": "^5.2.1",
+    "imagemin-pngquant": "^5.1.0",
+    "imagemin-svgo": "^6.0.0",
     "jimp": "^0.2.27",
     "lodash": "^3.0.0",
     "mkdirp": "~0.3.4",
