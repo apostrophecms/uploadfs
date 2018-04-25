@@ -45,8 +45,6 @@ describe('UploadFS Azure', function() {
 
   let azureOptions = require('../azureTestOptions.js');
 
-  azureOptions.tempPath = '../tmp';
-
   it('Should connect to Azure cloud successfully', done => {
     uploadfs.init(azureOptions, e => {
       assert(!e, 'Successfully initialize azure service');
