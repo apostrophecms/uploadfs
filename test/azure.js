@@ -6,14 +6,14 @@ var rp = require('request-promise');
 var uploadfs = require('../uploadfs.js')();
 var srcFile = 'test.txt';
 var infile = 'one/two/three/test.txt';
-debugger;
+
 /* helper to automate scraping files from blob svc */
 var _getOutfile = function(infile, tmpFileName, done) {
   var ogFile = fs.readFileSync(srcFile, {encoding: 'utf8'});
   return uploadfs.copyOut(infile, tmpFileName, {}, function(e, res) {
     assert(!e, 'Azure copy out nominal success');
     if (e) {
-      return console.error("copyOut Error", e);
+      return console.log("copyOut Error", e);
     }
     var read = fs.createReadStream(tmpFileName);
     var gunzip = zlib.createGunzip();
