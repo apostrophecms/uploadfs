@@ -310,6 +310,15 @@ It's up to you to create an Amazon S3 bucket and obtain your secret and key. See
 
 S3 support is based on the official AWS SDK. 
 
+## Azure
+`uploadfs` allows users to use Azure file system backend for file storage. You can also configure replicates - multiple storage services and/or storage containers - to use as a backend. This could allow you to store files in different regions, for instance.
+
+If you are using replicates, all of the `uploadfs` operations will be applied against all of the configured containers. 
+
+For basic Azure file storage configuration see `azureTestOptions-sample.js` in the root directory of this project. To test against your Azure service, copy to `azureTestOptions.js` and add your settings.  For replicate storage containers copy `azureReplicateTestOptions-sample.js` to `azureReplicateTestOptions.js` and add your settings. 
+
+Once configured properly `npm run test` should succeeed against the configured service(s).
+
 ## About P'unk Avenue and Apostrophe
 
 `uploadfs` was created at [P'unk Avenue](http://punkave.com) for use in many projects built with Apostrophe, an open-source content management system built on node.js. Appy isn't mandatory for Apostrophe and vice versa, but they play very well together. If you like `uploadfs` you should definitely [check out apostrophenow.org](http://apostrophenow.org). Also be sure to visit us on [github](http://github.com/punkave).
