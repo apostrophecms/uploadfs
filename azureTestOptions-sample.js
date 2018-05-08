@@ -1,7 +1,7 @@
 module.exports = {
   storage: 'azure',
-  account: 'storageAccountName',
-  container: 'storageContainerName',
-  key: 'accessKey',
-  disabledFileKey: 'Any string is ok, probably longer is better'
+  disabledFileKey: 'Any string is ok, probably longer is better',
+  account: 'foo',
+  container: 'bar',
+  key: 'b@z'
 };
