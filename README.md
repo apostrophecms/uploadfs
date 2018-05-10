@@ -266,13 +266,6 @@ It is possible to use uploadfs with storage services that implement an api compa
   endpoint: 'api-domain.yourstorageprovider.com'
 ```
 
-It is possible that if your storage provider and application are hosted on different domains, you will need to setup cross origin resource sharing (CORS) before everything will work perfectly. If you enable the CORS option most of the work should be done for you, but you will have to provide a list of domains you want accessing your stored images. Like so:
-
-```javascript
-  cors: true,
-  origins: ['localhost', 'yoursitedomain.com']
-```
-
 ## Important Concerns With S3
 
 **Be aware that uploads to Amazon S3's us-standard region are not guaranteed to be readable the moment you finish uploading them.** This is a big difference from how a regular filesystem behaves. One browser might see them right away while another does not. This is called "eventual consistency."
