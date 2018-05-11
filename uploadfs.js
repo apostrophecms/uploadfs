@@ -465,6 +465,25 @@ function Uploadfs() {
       return callback(null);
     }
   };
+
+  self.migrateToDisabledFileKey = function(callback) {
+    var method = self._storage.migrateToDisabledFileKey;
+    if (!method) {
+      // Not relevant for this backend
+      return callback(null);
+    }
+    return self._storage.migrateToDisabledFileKey(callback);
+  };
+
+  self.migrateFromDisabledFileKey = function(callback) {
+    var method = self._storage.migrateFromDisabledFileKey;
+    if (!method) {
+      // Not relevant for this backend
+      return callback(null);
+    }
+    return self._storage.migrateFromDisabledFileKey(callback);
+  };
+
 }
 
 module.exports = function () {

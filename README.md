@@ -322,6 +322,10 @@ Feel free to open issues on [github](http://github.com/punkave/uploadfs).
 
 ## Changelog
 
+### CHANGES IN 1.9.0
+
+* Added `migrateToDisabledFileKey` and `migrateFromDisabledFileKey` methods for use when switching to the option of renaming files in a cryptographically secure way rather than changing their permissions. These files change the approach for all existing disabled files.
+
 ### CHANGES IN 1.8.0
 
 * Added the optional `destroy` method, which allows for graceful release of resources such as file descriptors or timeouts that may belong to backends.
