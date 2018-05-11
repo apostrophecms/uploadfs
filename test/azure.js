@@ -12,7 +12,9 @@ var _getOutfile = function(infile, tmpFileName, done) {
   var ogFile = fs.readFileSync(srcFile, {encoding: 'utf8'});
   return uploadfs.copyOut(infile, tmpFileName, {}, function(e, res) {
     assert(!e, 'Azure copy out nominal success');
-    if (e) return console.error("copyOut Error", e);
+    if (e) {
+      return console.log("copyOut Error", e);
+    }
     var read = fs.createReadStream(tmpFileName);
     var gunzip = zlib.createGunzip();
     var buffer = [];
@@ -27,7 +29,9 @@ var _getOutfile = function(infile, tmpFileName, done) {
       str = buffer.join('');
 
       assert(!e, 'Azure copy out - nominal success');
-      if (e) console.log(e);
+      if (e) {
+        return console.log(e);
+      }
       // make sure we have actual values not null or undefined
       assert(str.length, 'copOutFile has length');
       assert(ogFile.length, 'original textfile body has length');
@@ -50,6 +54,9 @@ describe('UploadFS Azure', function() {
 
   it('Should connect to Azure cloud successfully', function(done) {
     uploadfs.init(azureOptions, function(e) {
+      if (e) {
+        console.log("error", e);
+      }
       assert(!e, 'Successfully initialize azure service');
       done();
     });
@@ -57,6 +64,9 @@ describe('UploadFS Azure', function() {
 
   it('Azure test copyIn should work', function(done) {
     uploadfs.copyIn(srcFile, infile, function(e) {
+      if (e) {
+        console.log("test copyIn ERR", e);
+      }
       assert(!e, 'Azure copy in - nominal success');
       done();
     });
@@ -69,6 +79,9 @@ describe('UploadFS Azure', function() {
 
   it('Azure disable should work', function(done) {
     uploadfs.disable(infile, function(e, val) {
+      if (e) {
+        console.log("error", e);
+      }
       assert(!e, 'Azure disable, nominal success');
       done();
     });
@@ -78,6 +91,9 @@ describe('UploadFS Azure', function() {
     var tmpFileName = new Date().getTime() + '_text.txt';
     setTimeout(function() {
       uploadfs.copyOut(infile, tmpFileName, {}, function(e, res) {
+        if (e) {
+          console.log("error", e);
+        }
         assert(e);
         assert(e.name === 'StorageError');
         assert(e.message === 'NotFound');
@@ -88,6 +104,9 @@ describe('UploadFS Azure', function() {
 
   it('Azure enable should work', function(done) {
     uploadfs.enable(infile, function(e, val) {
+      if (e) {
+        console.log("error", e);
+      }
       assert(!e, 'Azure enable , nominal success');
       done();
     });
@@ -110,6 +129,9 @@ describe('UploadFS Azure', function() {
 
   it('Azure test remove should work', function(done) {
     uploadfs.remove(infile, function(e) {
+      if (e) {
+        console.log("error", e);
+      }
       assert(!e, 'Azure remove, nominal success');
       done();
     });
