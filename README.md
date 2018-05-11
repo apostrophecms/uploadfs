@@ -130,6 +130,8 @@ And this call restores it:
 
 For your convenience in the event you should lose your database, the filenames generated still begin with the original filename. The presence of a cryptographically un-guessable part is enough to make them secure.
 
+Those using `local` storage can change their minds about using `disabledFileKey`. use `uploadfs.migrateToDisabledFileKey(callback)` to migrate your existing disabled files to this approach, and `uploadfs.migrateFromDisabledFileKey(callback)` to migrate back. Before calling the former, add the option to your configuration. Before calling the latter, remove it.
+
 ## Configuration Options
 
 Here are the options we pass to `init()` in `sample.js`. Note that we define the image sizes we want the `copyImageIn` function to produce. No image will be wider or taller than the limits specified. The aspect ratio is always maintained, so one axis will often be smaller than the limits specified. Here's a hint: specify the width you really want, and the maximum height you can put up with. That way only obnoxiously tall images will get a smaller width, as a safeguard.
