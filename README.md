@@ -241,9 +241,28 @@ And, an equivalent configuration for Azure:
       parallel: 4
     }
 
+With Azure you may optionally replicate the content across a cluster:
+
+    {
+      storage: 'azure',
+      replicateClusters: [
+        {
+          account: 'storageAccountName1',
+          container: 'storageContainerName1',
+          key: 'accessKey1',
+        },
+        {
+          account: 'storageAccountName2',
+          container: 'storageContainerName2',
+          key: 'accessKey2',
+        },
+      ],
+      ...
+    }
+
 ## Less Frequently Used Options
 
-* If you are using the `local` backend (files on your server's drive), you might not like that when `disable` is called, the permissions of a file are set to `000` (no one has access). If you wish, you can pass the `disablePermissions` option. As usual with Unix permissions, this is an OCTAL NUMBER, not a decimal one. Octal constants have been deprecated, so in modern JavaScript it is best to write it like this:
+* If you are using the `local` backend (files on your server's drive), you might not like that when `disable` is called, the permissions of a file are set to `000` (no one has access). We suggest using the `disableFileKey` option to completely avoid this issue. However, if you wish, you can pass the `disablePermissions` option. As usual with Unix permissions, this is an OCTAL NUMBER, not a decimal one. Octal constants have been deprecated, so in modern JavaScript it is best to write it like this:
 
     // Only the owner can read. This is handy if
     // your proxy server serves static files for you and
@@ -324,6 +343,7 @@ Feel free to open issues on [github](http://github.com/punkave/uploadfs).
 
 ### CHANGES IN 1.9.0
 
+* Azure support.
 * Added `migrateToDisabledFileKey` and `migrateFromDisabledFileKey` methods for use when switching to the option of renaming files in a cryptographically secure way rather than changing their permissions. These files change the approach for all existing disabled files.
 
 ### CHANGES IN 1.8.0
