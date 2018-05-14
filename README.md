@@ -343,6 +343,10 @@ Feel free to open issues on [github](http://github.com/punkave/uploadfs).
 
 ## Changelog
 
+### CHANGES IN 1.9.1
+
+* All `imagemin-` plugin modules are now `optionalDependencies` and uploadfs can print a warning at startup and continue without any one of them. This is necessary because [`imagemin-pngquant` fails on CentOS 7 without sysadmin intervention to install additional system packages outside of npm.](https://github.com/imagemin/pngquant-bin/issues/77)
+
 ### CHANGES IN 1.9.0
 
 * Azure support.
