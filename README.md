@@ -345,7 +345,7 @@ Feel free to open issues on [github](http://github.com/punkave/uploadfs).
 
 ### CHANGES IN 1.9.1
 
-* All `imagemin-` plugin modules are now `optionalDependencies` and uploadfs can print a warning at startup and continue without any one of them. This is necessary because [`imagemin-pngquant` fails on CentOS 7 without sysadmin intervention to install additional system packages outside of npm.](https://github.com/imagemin/pngquant-bin/issues/77)
+* All `imagemin-` plugin modules are now `optionalDependencies` and uploadfs can print a warning at startup and continue without any one of them. In addition, if `imagemin` fails, this situation is tolerated with a warning printed and the images are still transformed as they would be without `imagemin`. This is necessary because [`imagemin-pngquant` fails on CentOS 7 without sysadmin intervention to install additional system packages outside of npm](https://github.com/imagemin/pngquant-bin/issues/77), and `cjpeg` fails to run without extra libraries even though it does `npm install`, etc.
 
 ### CHANGES IN 1.9.0
 
