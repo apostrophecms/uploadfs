@@ -3,7 +3,9 @@
 // depending on which backend you choose.
 
 var express = require('express');
-var uploadfs = require('./uploadfs.js')();
+var uploadfs = require('uploadfs')();
+var multipart = require('connect-multiparty');
+var multipartMiddleware = multipart();
 
 // For the local backend
 var uploadsPath = __dirname + '/public/uploads';
@@ -33,39 +35,6 @@ var options = {
   ]
 };
 
-// Or use the S3 backend
-// var options = {
-//   backend: 's3',
-//   // Get your credentials at aws.amazon.com
-//   secret: 'xxx',
-//   key: 'xxx',
-//   // You need to create your bucket first before using it here
-//   // Go to aws.amazon.com
-//   bucket: 'getyourownbucketplease',
-//   // I recommend creating your buckets in a region with
-//   // read-after-write consistency (not us-standard)
-//   region: 'us-west-2',
-//   // Required if you use imageSizes and copyImageIn
-//   tempPath: __dirname + '/temp',
-//   imageSizes: [
-//     {
-//       name: 'small',
-//       width: 320,
-//       height: 320
-//     },
-//     {
-//       name: 'medium',
-//       width: 640,
-//       height: 640
-//     },
-//     {
-//       name: 'large',
-//       width: 1140,
-//       height: 1140
-//     }
-//   ]
-// };
-
 uploadfs.init(options, createApp);
 
 function createApp(err) {
@@ -81,16 +50,13 @@ function createApp(err) {
 
   app.use(uploadsLocalUrl, express.static(uploadsPath));
 
-  app.use(express.bodyParser());
-  app.use(express.cookieParser());
-
   app.get('/', function(req, res) {
     res.send('<form method="POST" enctype="multipart/form-data">' +
       '<input type="file" name="photo" /> <input type="submit" value="Upload Photo" />' +
       '</form>');
   });
 
-  app.post('/', function(req, res) {
+  app.post('/', multipartMiddleware, function(req, res) {
     uploadfs.copyImageIn(req.files.photo.path, '/profiles/me', function(e, info) {
       if (e) {
         res.send('An error occurred: ' + e);

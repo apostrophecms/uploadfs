@@ -14,7 +14,7 @@ uploadfs copies files to a web-accessible location and provides a consistent way
 * Non-image files are also supported
 * Web access to files can be disabled and reenabled
 * Animated GIFs are preserved, with full support for scaling and cropping (if you have `imagemagick` or `imagecrunch`)
-* On fire about file sizes? Images can be compressed even further with the `imagemin: true` option, if you are using `imagemagick` and you have [`jpegtrans`](http://sharadchhetri.com/2014/01/06/install-libjpegtran-using-yum-command-centos-6-x/), [`jpeg-recompress`](https://github.com/danielgtaylor/jpeg-archive#jpeg-recompress), [`mozjpeg`](https://nystudio107.com/blog/installing-mozjpeg-on-ubuntu-16-04-forge), [`optipng`](https://www.linuxhelp.com/install-jpegoptim-optipng-linux/) and `pngquant` available in your `PATH` (this is entirely optional). Note that `pngquant` is technically a lossy compression tool, your PNG's pixels will differ slightly from the original if you use `imagemin: true`.
+* On fire about minimizing file sizes for your resized images? You can plug in `imagemin` and compatible tools using the `postprocessors` option. 
 
 You can also remove a file if needed.
 
@@ -28,11 +28,13 @@ You need:
 
 * Patience, to wait for [Jimp](https://github.com/oliver-moran/jimp) to convert your images; or [Imagemagick](http://www.imagemagick.org/script/index.php), if you want much better speed and full animated GIF support; OR, on Macs, the very fast [imagecrunch](http://github.com/punkave/imagecrunch) utility. You can also write a backend for something else (look at `imagemagick.js`, `imagecrunch.js`, and `jimp.js` for examples; just supply an object with the same methods, you don't have to supply a factory function).
 
+* If you want GIF support: [Imagemagick](http://www.imagemagick.org/script/index.php) or (Mac-specific) [imagecrunch](http://github.com/punkave/imagecrunch). `jimp` requires no installation of system packages, but it does not yet support GIF.
+
 * [gifsicle](https://www.lcdf.org/gifsicle/) is an optional tool that processes large animated GIFs much faster. Currently, Imagemagick is a prerequisite for using it. Turn it on with the `gifsicle: true` option when calling `init`. Of course you must install `gifsicle` to use it. (Hint: your operating system probably has a package for it. Don't compile things.)
 
 * A local filesystem in which files stay put at least during the current request, to hold temporary files for Imagemagick's conversions. This is no problem with Heroku and most other cloud servers. It's just long-term storage that needs to be in S3 or Azure for some of them.
 
-Note that Heroku includes Imagemagick. You can also install it with `apt-get install imagemagick` on Ubuntu servers. Homebrew can install `imagemagick` on Macs, or you can use [imagecrunch](http://github.com/punkave/imagecrunch), a fast, tiny utility that uses native MacOS APIs.
+> Note that Heroku includes Imagemagick. You can also install it with `apt-get install imagemagick` on Ubuntu servers. Homebrew can install `imagemagick` on Macs, or you can use [imagecrunch](http://github.com/punkave/imagecrunch), a fast, tiny utility that uses native MacOS APIs.
 
 ## API Overview
 
@@ -70,7 +72,7 @@ For a complete, very simple and short working example in which a user uploads a 
 
 Here's the interesting bit. Note that we do not supply an extension for the final image file, because we want to var Imagemagick figure that out for us.
 
-    app.post('/', function(req, res) {
+    app.post('/', multipartMiddleware, function(req, res) {
       uploadfs.copyImageIn(req.files.photo.path, '/profiles/me', function(e, info) {
         if (e) {
           res.send('An error occurred: ' + e);
@@ -331,6 +333,71 @@ It's up to you to create an Amazon S3 bucket and obtain your secret and key. See
 
 S3 support is based on the official AWS SDK. 
 
+## Postprocessing images: extra compression, watermarking, etc.
+
+It is possible to configure `uploadfs` to run a postprocessor such as `imagemin` on every custom-sized image that it generates. This is intended for file size optimization tools like `imagemin`.
+
+Here is an example based on the `imagemin` documentation:
+
+```
+const imagemin = require('imagemin');
+const imageminJpegtran = require('imagemin-jpegtran');
+const imageminPngquant = require('imagemin-pngquant');
+
+uploadfs.init({
+  storage: 'local',
+  image: 'imagemagick',
+  tempPath: __dirname + '/temp',
+  imageSizes: [
+    {
+      name: 'small',
+      width: 320,
+      height: 320
+    },
+    {
+      name: 'medium',
+      width: 640,
+      height: 640
+    }
+  ],
+  postprocessors: [
+    {
+      postprocessor: imagemin,
+      extensions: [ 'gif', 'jpg', 'png' ],
+      options: {
+        plugins: [
+          imageminJpegtran(),
+          imageminPngquant({quality: '65-80'})
+        ]
+      }
+    }
+  ]
+});
+```
+
+A file will not be passed to a postprocessor unless it is configured for the file's true extension as determined by the image backend (`gif`, `jpg`, `png` etc., never `GIF` or `JPEG`).
+
+The above code will invoke `imagemin` like this:
+
+```
+imagemin([ '/temp/folder/file1-small.jpg', '/temp/folder/file2-medium.jpg', ... ], '/temp/folder', {
+  plugins: [
+    imageminJpegtran(),
+    imageminPngquant({quality: '65-80'})
+  ]
+}).then(function() {
+  // All finished
+}).catch(function() {
+  // An error occurred
+});
+```
+
+You may write and use other postprocessors, as long as they expect to be called the same way.
+
+> Note that the second argument is always the folder that contains all of the files in the first argument's array. `uploadfs` expects your postprocessor to be able to update the files "in place." All of the files in the first argument will have the same extension.
+
+If your postprocessor expects four arguments, uploadfs will pass a callback, rather than expecting a promise to be returned.
+
 ## About P'unk Avenue and Apostrophe
 
 `uploadfs` was created at [P'unk Avenue](http://punkave.com) for use in many projects built with Apostrophe, an open-source content management system built on node.js. Appy isn't mandatory for Apostrophe and vice versa, but they play very well together. If you like `uploadfs` you should definitely [check out apostrophenow.org](http://apostrophenow.org). Also be sure to visit us on [github](http://github.com/punkave).
@@ -342,6 +409,12 @@ Feel free to open issues on [github](http://github.com/punkave/uploadfs).
 <a href="http://punkave.com/"><img src="https://raw.github.com/punkave/uploadfs/master/logos/logo-box-builtby.png" /></a>
 
 ## Changelog
+
+### CHANGES IN 1.10.0
+
+`imagemin` is no longer a dependency. Instead the new `postprocessors` option allows you to optionally pass it in. `imagemin` and its plugins have complicated dependencies that don't build smoothly on all systems, and it makes sense to leave the specifics of this step up to the users who want it.
+
+Since setting the `imagemin: true` option doesn't hurt anything in 1.10.0 (you still get your images, just not squeezed quite as small), this is not a bc break.
 
 ### CHANGES IN 1.9.2
 
@@ -401,7 +474,7 @@ Every effort has been made to deliver 100% backwards compatibility with the docu
 
 ### CHANGES IN 1.4.0
 
-* The new pure-JavaScript `jimp` image backend works "out of the box" even when ImageMagick is not installed. For faster operation and animated GIF support, you should still install ImageMagick. Thanks to Dave Ramirez for contributing this feature.
+* The new pure-JavaScript `jimp` image backend works "out of the box" even when ImageMagick is not installed. For faster operation and GIF support, you should still install ImageMagick. Thanks to Dave Ramirez for contributing this feature.
 
 ### CHANGES IN 1.3.6
 
