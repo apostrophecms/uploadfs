@@ -28,7 +28,6 @@ var imageSizes = [
 
 var tempPath = __dirname + '/temp';
 var basePath = '/images/profiles/me';
-var testFileSizes = {};
 
 localOptions.imageSizes = imageSizes;
 localOptions.tempPath = tempPath;
