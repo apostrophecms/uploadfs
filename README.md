@@ -2,9 +2,9 @@
 
 <a href="http://apostrophenow.org/"><img src="https://raw.github.com/punkave/uploadfs/master/logos/logo-box-madefor.png" align="right" /></a>
 
-uploadfs copies files to a web-accessible location and provides a consistent way to get the URLs that correspond to those files. uploadfs can also resize, crop and autorotate uploaded images. uploadfs includes both S3-based and local filesystem-based backends and you may supply others. The API offers the same conveniences with both backends, avoiding the most frustrating features of each:
+uploadfs copies files to a web-accessible location and provides a consistent way to get the URLs that correspond to those files. uploadfs can also resize, crop and autorotate uploaded images. uploadfs includes S3-based, Azure-based and local filesystem-based backends and you may supply others. The API offers the same conveniences with both backends, avoiding the most frustrating features of each:
 
-* Parent directories are created automatically as needed (like S3)
+* Parent directories are created automatically as needed (like S3 and Azure)
 * Content types are inferred from file extensions (like the filesystem)
 * Files are by default marked as readable via the web (like a filesystem + web server)
 * Images can be automatically scaled to multiple sizes
@@ -14,6 +14,7 @@ uploadfs copies files to a web-accessible location and provides a consistent way
 * Non-image files are also supported
 * Web access to files can be disabled and reenabled
 * Animated GIFs are preserved, with full support for scaling and cropping (if you have `imagemagick` or `imagecrunch`)
+* On fire about file sizes? Images can be compressed even further with the `imagemin: true` option, if you are using `imagemagick` and you have [`jpegtrans`](http://sharadchhetri.com/2014/01/06/install-libjpegtran-using-yum-command-centos-6-x/), [`jpeg-recompress`](https://github.com/danielgtaylor/jpeg-archive#jpeg-recompress), [`mozjpeg`](https://nystudio107.com/blog/installing-mozjpeg-on-ubuntu-16-04-forge), [`optipng`](https://www.linuxhelp.com/install-jpegoptim-optipng-linux/) and `pngquant` available in your `PATH` (this is entirely optional). Note that `pngquant` is technically a lossy compression tool, your PNG's pixels will differ slightly from the original if you use `imagemin: true`.
 
 You can also remove a file if needed.
 
@@ -23,19 +24,21 @@ It is possible to copy a file back from uploadfs, but there is no API to retriev
 
 You need:
 
-* A "normal" filesystem in which files stay put forever, *OR* Amazon S3, OR a willingness to write a backend for something else (look at `s3.js` and `local.js` for examples; just supply an object with the same methods, you don't have to supply a factory function).
+* A "normal" filesystem in which files stay put forever, *OR* Amazon S3, *OR* Microsoft Azure, OR a willingness to write a backend for something else (look at `s3.js`, `azure.js` and `local.js` for examples; just supply an object with the same methods, you don't have to supply a factory function).
 
 * Patience, to wait for [Jimp](https://github.com/oliver-moran/jimp) to convert your images; or [Imagemagick](http://www.imagemagick.org/script/index.php), if you want much better speed and full animated GIF support; OR, on Macs, the very fast [imagecrunch](http://github.com/punkave/imagecrunch) utility. You can also write a backend for something else (look at `imagemagick.js`, `imagecrunch.js`, and `jimp.js` for examples; just supply an object with the same methods, you don't have to supply a factory function).
 
 * [gifsicle](https://www.lcdf.org/gifsicle/) is an optional tool that processes large animated GIFs much faster. Currently, Imagemagick is a prerequisite for using it. Turn it on with the `gifsicle: true` option when calling `init`. Of course you must install `gifsicle` to use it. (Hint: your operating system probably has a package for it. Don't compile things.)
 
-* A local filesystem in which files stay put at least during the current request, to hold temporary files for Imagemagick's conversions. This is no problem with Heroku and most other cloud servers. It's just long-term storage that needs to be in S3 for some of them.
+* A local filesystem in which files stay put at least during the current request, to hold temporary files for Imagemagick's conversions. This is no problem with Heroku and most other cloud servers. It's just long-term storage that needs to be in S3 or Azure for some of them.
 
-Note that Heroku includes Imagemagick. You can also install it with `apt-get install imagemagick` on Ubuntu servers. The official Imagemagick binaries for the Mac are a bit busted as of this writing, but macports or homebrew can install it. Or, you can use [imagecrunch](http://github.com/punkave/imagecrunch), a fast, tiny utility that uses native MacOS APIs.
+Note that Heroku includes Imagemagick. You can also install it with `apt-get install imagemagick` on Ubuntu servers. Homebrew can install `imagemagick` on Macs, or you can use [imagecrunch](http://github.com/punkave/imagecrunch), a fast, tiny utility that uses native MacOS APIs.
 
 ## API Overview
 
 * The `init` method passes options to the backend and invokes a callback when the backend is ready.
+
+* The optional `destroy(callback)` method releases any resources such as file descriptors and timeouts held by `uploadfs`.
 
 * The `copyIn` method takes a local filename and copies it to a path in uploadfs. (Note that Express conveniently sets us up for this by dropping file uploads in a temporary local file for the duration of the request.)
 
@@ -45,7 +48,7 @@ Note that Heroku includes Imagemagick. You can also install it with `apt-get ins
 
 * The default JPEG quality setting for scaled-down versions of your image is `80`. This avoids unacceptably large file sizes for web deployment. You can adjust this via the `scaledJpegQuality` option, either when initializing uploadfs or when calling `copyImageIn`.
 
-* The `copyOut` method takes a path in uploadfs and a local filename and copies the file back from uploadfs to the local filesystem. This should be used only rarely. Heavy reliance on this method sets you up for poor performance in S3. However it may be necessary at times, for instance when you want to crop an image differently later. *Heavy reliance on copyOut is a recipe for bad S3 performance. Use it only for occasional operations like cropping.*
+* The `copyOut` method takes a path in uploadfs and a local filename and copies the file back from uploadfs to the local filesystem. This should be used only rarely. Heavy reliance on this method sets you up for poor performance in S3 and Azure. However it may be necessary at times, for instance when you want to crop an image differently later. *Heavy reliance on copyOut is a recipe for bad S3 and/or Azure performance. Use it only for occasional operations like cropping.*
 
 * The `remove` method removes a file from uploadfs.
 
@@ -59,11 +62,13 @@ Note that Heroku includes Imagemagick. You can also install it with `apt-get ins
 
 * The `identifyLocalImage` method provides direct access to the `uploadfs` functionality for determining the extension, width, height and orientation of images. Normally `copyIn` does everything you need in one step, but this method is occasionally useful for migration purposes.
 
+The `destroy` method releases any resources such as file descriptors or timeouts that may be held by the backends, and then invokes its callback. Its use is optional, but command line Node apps might never exit without it.
+
 ## Working Example
 
 For a complete, very simple and short working example in which a user uploads a profile photo, see `sample.js`.
 
-Here's the interesting bit. Note that we do not supply an extension for the final image file, because we want to let Imagemagick figure that out for us.
+Here's the interesting bit. Note that we do not supply an extension for the final image file, because we want to var Imagemagick figure that out for us.
 
     app.post('/', function(req, res) {
       uploadfs.copyImageIn(req.files.photo.path, '/profiles/me', function(e, info) {
@@ -121,14 +126,18 @@ And this call restores it:
 
 *With the local storage backend, `disable` uses permissions `000` by default.* This is a big hassle if you want to be able to easily use rsync to move the files outside of `uploadfs`. **As an alternative, you can set the `disabledFileKey` option to a random string.** If you do this, uploadfs will *rename* disabled files based on an HMAC digest of the filename and the `disabledFileKey`. This is secure from the webserver's point of view, **as long as your webserver is not configured to display automatic directory listings of files**. But from your local file system's point of view, the file is still completely accessible. And that makes it a lot easier to use `rsync`.
 
+*With the `azure` storage backend, you MUST set `disabledFileKey`.* This is because Azure provides no way to alter the permissions of a single blob (file). Our only option is to copy the blob to a new, cryptographically unguessable name and remove the old one while it is "disabled," then reverse the operation when it is enabled again.
+
 For your convenience in the event you should lose your database, the filenames generated still begin with the original filename. The presence of a cryptographically un-guessable part is enough to make them secure.
+
+Those using `local` storage can change their minds about using `disabledFileKey`. use `uploadfs.migrateToDisabledFileKey(callback)` to migrate your existing disabled files to this approach, and `uploadfs.migrateFromDisabledFileKey(callback)` to migrate back. Before calling the former, add the option to your configuration. Before calling the latter, remove it.
 
 ## Configuration Options
 
 Here are the options we pass to `init()` in `sample.js`. Note that we define the image sizes we want the `copyImageIn` function to produce. No image will be wider or taller than the limits specified. The aspect ratio is always maintained, so one axis will often be smaller than the limits specified. Here's a hint: specify the width you really want, and the maximum height you can put up with. That way only obnoxiously tall images will get a smaller width, as a safeguard.
 
     {
-      backend: 'local',
+      storage: 'local',
       image: 'imagemagick',
       // Optional. If not specified, ImageMagick or imagecrunch will be used.
       // Options are 'imagemagick', 'imagecrunch', 'jimp', or a custom image processing backend
@@ -165,7 +174,7 @@ Here are the options we pass to `init()` in `sample.js`. Note that we define the
 Here is an equivalent configuration for S3:
 
     {
-      backend: 's3',
+      storage: 's3',
       // Get your credentials at aws.amazon.com
       secret: 'xxx',
       key: 'xxx',
@@ -175,7 +184,7 @@ Here is an equivalent configuration for S3:
       // For read-after-write consistency in the US East region.
       // You could also use any other region name except us-standard
       region: 'external-1',
-      // Required if you use copyImageIn
+      // Required if you use copyImageIn, or use Azure at all
       tempPath: __dirname + '/temp',
       imageSizes: [
         {
@@ -201,17 +210,61 @@ Here is an equivalent configuration for S3:
 
     }
 
-"Why don't you put the temporary files for imagemagick in S3?"
+And, an equivalent configuration for Azure:
 
-Two good reasons:
+    {
+      storage: 'azure',
+      account: 'storageAccountName',
+      container: 'storageContainerName',
+      key: 'accessKey',
+      disabledFileKey: 'a random string of your choosing',
+      // Always required for Azure
+      tempPath: __dirname + '/temp',
+      imageSizes: [
+        {
+          name: 'small',
+          width: 320,
+          height: 320
+        },
+        {
+          name: 'medium',
+          width: 640,
+          height: 640
+        },
+        {
+          name: 'large',
+          width: 1140,
+          height: 1140
+        }
+      ],
+      // Render up to 4 image sizes at once. Note this means 4 at once per call
+      // to copyImageIn. There is currently no built-in throttling of multiple calls to
+      // copyImageIn
+      parallel: 4
+    }
 
-1. Imagemagick doesn't know how to write directly to S3.
+With Azure you may optionally replicate the content across a cluster:
 
-2. Constantly copying things to and from S3 is very slow compared to working with local temporary files. S3 is only fast when it comes to delivering your finished files to end users. Resist the temptation to use it for many little reads and writes.
+    {
+      storage: 'azure',
+      replicateClusters: [
+        {
+          account: 'storageAccountName1',
+          container: 'storageContainerName1',
+          key: 'accessKey1',
+        },
+        {
+          account: 'storageAccountName2',
+          container: 'storageContainerName2',
+          key: 'accessKey2',
+        },
+      ],
+      ...
+    }
 
 ## Less Frequently Used Options
 
-* If you are using the `local` backend (files on your server's drive), you might not like that when `disable` is called, the permissions of a file are set to `000` (no one has access). If you wish, you can pass the `disablePermissions` option. As usual with Unix permissions, this is an OCTAL NUMBER, not a decimal one. Octal constants have been deprecated, so in modern JavaScript it is best to write it like this:
+* If you are using the `local` backend (files on your server's drive), you might not like that when `disable` is called, the permissions of a file are set to `000` (no one has access). We suggest using the `disableFileKey` option to completely avoid this issue. However, if you wish, you can pass the `disablePermissions` option. As usual with Unix permissions, this is an OCTAL NUMBER, not a decimal one. Octal constants have been deprecated, so in modern JavaScript it is best to write it like this:
 
     // Only the owner can read. This is handy if
     // your proxy server serves static files for you and
@@ -247,7 +300,7 @@ S3 file delivery can be set to use the HTTPS protocol with the `https` option. T
   https: true
 ```
 
-Also, if you are using a CDN such as cloudfront that automatically mirrors the contents of your S3 bucket, you can specify that CDN so that the `getUrl` method of `uploadfs` returns the CDN's URL rather than a direct URL to Amazon S3:
+Also, if you are using a CDN such as cloudfront that automatically mirrors the contents of your S3 bucket, you can specify that CDN so that the `getUrl` method of `uploadfs` returns the CDN's URL rather than a direct URL to Amazon S3 or Azure:
 
 ```javascript
   cdn: {
@@ -297,6 +350,30 @@ Feel free to open issues on [github](http://github.com/punkave/uploadfs).
 <a href="http://punkave.com/"><img src="https://raw.github.com/punkave/uploadfs/master/logos/logo-box-builtby.png" /></a>
 
 ## Changelog
+
+### CHANGES IN 1.9.2
+
+`mocha` and `lodash` upgraded to satisfy `npm audit`.
+
+### CHANGES IN 1.9.1
+
+* All `imagemin-` plugin modules are now `optionalDependencies` and uploadfs can print a warning at startup and continue without any one of them. In addition, if `imagemin` fails, this situation is tolerated with a warning printed and the images are still transformed as they would be without `imagemin`. This is necessary because [`imagemin-pngquant` fails on CentOS 7 without sysadmin intervention to install additional system packages outside of npm](https://github.com/imagemin/pngquant-bin/issues/77), and `cjpeg` fails to run without extra libraries even though it does `npm install`, etc.
+
+### CHANGES IN 1.9.0
+
+* Azure support.
+* Added `migrateToDisabledFileKey` and `migrateFromDisabledFileKey` methods for use when switching to the option of renaming files in a cryptographically secure way rather than changing their permissions. These files change the approach for all existing disabled files.
+
+### CHANGES IN 1.8.0
+
+* Added the optional `destroy` method, which allows for graceful release of resources such as file descriptors or timeouts that may belong to backends.
+
+### CHANGES IN 1.7.2
+
+* Added mime type for `svg` as standard equipment.
+* User-configured mime types now merge with the standard set, making it easy to add a few without starting from scratch.
+
+Thanks to tortilaman.
 
 ### CHANGES IN 1.7.1
 

@@ -17,7 +17,9 @@ function generateId() {
  */
 
 function Uploadfs() {
-  var tempPath, imageSizes, orientOriginals = true, scaledJpegQuality, self = this;
+  var tempPath, imageSizes;
+  var scaledJpegQuality;
+  var self = this;
   /**
    * Initialize uploadfs. The init method passes options to the backend and invokes a callback when the backend is ready.
    * @param  {Object}   options: backend, imageSizes, orientOriginals, tempPath, copyOriginal, scaledJpegQuality, contentType, cdn. backend is the only mandatory option. See the README and individual methods for details.
@@ -40,11 +42,11 @@ function Uploadfs() {
 
     // If you want to deliver your images
     // over a CDN then this could be set in options
-    if (options.cdn !== undefined) { 
-      if (  !_.isObject(options.cdn) || 
-            !_.isString(options.cdn.url) || 
+    if (options.cdn !== undefined) {
+      if (!_.isObject(options.cdn) ||
+            !_.isString(options.cdn.url) ||
             (options.cdn.enabled !== undefined && !_.isBoolean(options.cdn.enabled))
-          ) {
+      ) {
         return callback('CDN must be a valid object: {enabled: boolean, url: string}');
       }
       if (options.cdn.enabled === undefined) {
@@ -67,9 +69,6 @@ function Uploadfs() {
     scaledJpegQuality = options.scaledJpegQuality || 80;
 
     imageSizes = options.imageSizes || [];
-    if (typeof (options.orientOriginals) !== 'undefined') {
-      orientOriginals = options.orientOriginals;
-    }
 
     async.series([
       // create temp folder if needed
@@ -77,16 +76,13 @@ function Uploadfs() {
         if (!imageSizes.length) {
           return callback();
         }
-        if (!options.tempPath) {
-          return callback("options.tempPath not set");
-        }
+
         tempPath = options.tempPath;
-        fs.exists(options.tempPath, function (exists) {
-          if (!exists) {
-            return fs.mkdir(options.tempPath, callback);
-          }
-          return callback(null);
-        });
+
+        if (!fs.existsSync(options.tempPath)) {
+          fs.mkdirSync(options.tempPath);
+        }
+        return callback(null);
       },
 
       // invoke storage backend init with options
@@ -449,6 +445,45 @@ function Uploadfs() {
   self.getImageSizes = function() {
     return imageSizes;
   };
+
+  /**
+   * Destroys the uploadfs instance, allowing the backends to release any
+   * resources they may be holding, such as file descriptors or interval timers.
+   * Backends that hold such resources should implement their own `destroy` method,
+   * also accepting a callback. The callback will receive an error if anything
+   * goes awry during the cleanup process. This method does NOT remove any
+   * content, it just releases system resources.
+   * @param {function} callback
+   */
+  self.destroy = function(callback) {
+    var callbacks = [
+      self._storage.destroy || noOperation,
+      self._image.destroy || noOperation
+    ];
+    return async.parallel(callbacks, callback);
+    function noOperation(callback) {
+      return callback(null);
+    }
+  };
+
+  self.migrateToDisabledFileKey = function(callback) {
+    var method = self._storage.migrateToDisabledFileKey;
+    if (!method) {
+      // Not relevant for this backend
+      return callback(null);
+    }
+    return self._storage.migrateToDisabledFileKey(callback);
+  };
+
+  self.migrateFromDisabledFileKey = function(callback) {
+    var method = self._storage.migrateFromDisabledFileKey;
+    if (!method) {
+      // Not relevant for this backend
+      return callback(null);
+    }
+    return self._storage.migrateFromDisabledFileKey(callback);
+  };
+
 }
 
 module.exports = function () {

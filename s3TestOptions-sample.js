@@ -5,5 +5,3 @@ module.exports = {
   bucket: 'yourownbucketnamefromamazons3',
   region: 'us-west-2'
 };
-
-
