@@ -72,7 +72,7 @@ For a complete, very simple and short working example in which a user uploads a 
 
 Here's the interesting bit. Note that we do not supply an extension for the final image file, because we want to var Imagemagick figure that out for us.
 
-    app.post('/', function(req, res) {
+    app.post('/', multipartMiddleware, function(req, res) {
       uploadfs.copyImageIn(req.files.photo.path, '/profiles/me', function(e, info) {
         if (e) {
           res.send('An error occurred: ' + e);
