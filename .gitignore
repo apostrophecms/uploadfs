@@ -7,5 +7,5 @@ s3TestOptions.js
 azureTestOptions.js
 public/uploads
 temp
-
+package-lock.json
 .jshintrc

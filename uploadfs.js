@@ -29,6 +29,7 @@ function Uploadfs() {
    * @param  {Function} callback                  - Will receive the usual err argument
    */
   self.init = function (options, callback) {
+    self.options = options;
     // bc: support options.backend
     self._storage = options.storage || options.backend;
     if (!self._storage) {
@@ -295,7 +296,23 @@ function Uploadfs() {
 
       convert: function (callback) {
         context.copyOriginal = copyOriginal && (!originalDone);
-        return self._image.convert(context, callback);
+        return async.series([
+          convert,
+          postprocess
+        ], callback);
+        function convert(callback) {
+          return self._image.convert(context, callback);
+        }
+        function postprocess(callback) {
+          if (!context.tempFolder) {
+            // Nowhere to do the work
+            return callback(null);
+          }
+          var filenames = _.map(imageSizes, function(size) {
+            return context.tempFolder + '/' + size.name + '.' + context.extension;
+          });
+          return self.postprocess(filenames, callback);
+        }
       },
 
       reidentify: function(callback) {
@@ -482,6 +499,36 @@ function Uploadfs() {
       return callback(null);
     }
     return self._storage.migrateFromDisabledFileKey(callback);
+  };
+
+  // Called by `convert` to postprocess resized/cropped images
+  // for optimal file size, etc.
+
+  self.postprocess = function(files, callback) {
+    var sample = files[0];
+    if (!sample) {
+      return callback(null);
+    }
+    var relevant = _.filter(self.options.postprocessors || [], function(postprocessor) {
+      var matches = sample.match(/\.(\w+)$/);
+      if (!matches) {
+        return false;
+      }
+      var extension = matches[1];
+      return _.includes(postprocessor.extensions, extension);
+    });
+    var folder = require('path').dirname(sample);
+    return async.eachSeries(relevant, function(postprocessor, callback) {
+      if (postprocessor.length === 4) {
+        return postprocessor.postprocessor(files, folder, postprocessor.options, callback);
+      } else {
+        return postprocessor.postprocessor(files, folder, postprocessor.options).then(function() {
+          return callback(null);
+        }).catch(function(err) {
+          return callback(err);
+        });
+      }
+    }, callback);
   };
 
 }
