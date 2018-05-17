@@ -25,6 +25,7 @@
     "bluebird": "^3.5.1",
     "es6-promise": "^4.1.0",
     "fs-extra": "^5.0.0",
+    "gifwrap": "^0.7.5",
     "gm": "^1.9.0",
     "gzipme": "^0.1.1",
     "imagemin": "^5.3.1",
