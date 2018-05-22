@@ -414,6 +414,7 @@ Feel free to open issues on [github](http://github.com/punkave/uploadfs).
 
 ### CHANGES IN 1.10.1
 
+* If `replicateClusters` exists but is an empty array, the credential options are used instead. This was not a bug fix, exactly, but it is a nice "do what I mean" feature.
 * A single `gzip` object was being reused, leading to failures on subsequent writes to Azure. Fixed.
 * The Azure backend contained a global array, thus limiting you to a single instance of `uploadfs` in your project. Fixed.
 
