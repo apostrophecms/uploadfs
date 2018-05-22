@@ -412,6 +412,11 @@ Feel free to open issues on [github](http://github.com/punkave/uploadfs).
 
 ## Changelog
 
+### CHANGES IN 1.10.1
+
+* A single `gzip` object was being reused, leading to failures on subsequent writes to Azure. Fixed.
+* The Azure backend contained a global array, thus limiting you to a single instance of `uploadfs` in your project. Fixed.
+
 ### CHANGES IN 1.10.0
 
 `imagemin` is no longer a dependency. Instead the new `postprocessors` option allows you to optionally pass it in. `imagemin` and its plugins have complicated dependencies that don't build smoothly on all systems, and it makes sense to leave the specifics of this step up to the users who want it.
