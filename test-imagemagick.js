@@ -159,13 +159,13 @@ function localTestStart(cb) {
             console.log("Test failed", err);
             process.exit(1);
           }
-          testCopyImageInCrop(cb);
+          testCopyImageInCrop();
         });
       }); // remove me.jpg
     });
   }
 
-  function testCopyImageInCrop(cb) {
+  function testCopyImageInCrop() {
     console.log('testing copyImageIn with cropping');
 
     // Note copyImageIn adds an extension for us
@@ -217,7 +217,64 @@ function localTestStart(cb) {
             process.exit(1);
           }
           console.log("Files removed");
-          cb();
+          testCopySvgInCrop();
+        });
+      });
+    });
+  }
+
+  function testCopySvgInCrop() {
+    console.log('testing copyImageIn on an svg with cropping');
+
+    // Grab a corner
+    uploadfs.copyImageIn('test.svg', '/images/profiles/me-cropped', { crop: { top: 800, left: 0, width: 1600, height: 800 } }, function(e, info) {
+      if (e) {
+        console.log('testCopyImageIn failed:');
+        console.log(e);
+        process.exit(1);
+      }
+
+      if (info.basePath !== '/images/profiles/me-cropped') {
+        console.log('info.basePath is incorrect');
+        process.exit(1);
+      }
+
+      if ((info.width !== 1600) || (info.height !== 800)) {
+        console.log('Reported size does not match crop');
+        console.log(info);
+        process.exit(1);
+      }
+
+      var stats = fs.statSync('test/images/profiles/me-cropped.svg');
+
+      if (!stats.size) {
+        console.log('Copied image is empty or missing');
+        process.exit(1);
+      }
+
+      fs.writeFileSync('test-crop-output.svg', fs.readFileSync('test/images/profiles/me-cropped.svg', 'utf8'));
+
+      // We already tested remove, just do it to mop up
+      console.log('Removing files...');
+      uploadfs.remove(`${basePath}-cropped.svg`, function(e) {
+        async.each(imageSizes, function(size, callback) {
+          var name = info.basePath + '.' + size.name + '.svg';
+          var stats = fs.statSync('test' + name);
+          if (!stats.size) {
+            console.log('Scaled and copied image is empty or missing (2)');
+            process.exit(1);
+          }
+          // We already tested remove, just do it to mop up
+          uploadfs.remove(info.basePath + '.' + size.name + '.svg', function(e) {
+            callback(e);
+          });
+        }, function (err) {
+          if (err) {
+            console.log("Remove file fails", err);
+            process.exit(1);
+          }
+          console.log("Files removed");
+          process.exit(0);
         });
       });
     });

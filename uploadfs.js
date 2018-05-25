@@ -1,5 +1,7 @@
 /* jshint node:true */
 
+console.log('awake');
+
 var _ = require('lodash');
 var async = require('async');
 var crypto = require('crypto');
@@ -94,20 +96,22 @@ function Uploadfs() {
       // Autodetect image backend if necessary
       function (callback) {
         if (!self._image) {
+          console.log('autodetecting');
           var paths = (process.env.PATH || '').split(delimiter);
           if (!_.find(paths, function(p) {
-            if (fs.existsSync(p + '/imagecrunch')) {
-              self._image = require('./lib/image/imagecrunch.js')();
-              return true;
-            }
             // Allow for Windows and Unix filenames for identify. Silly oversight
             // after getting delimiter right (:
             if (fs.existsSync(p + '/identify') || fs.existsSync(p + '/identify.exe')) {
               self._image = require('./lib/image/imagemagick.js')();
               return true;
             }
+            if (fs.existsSync(p + '/imagecrunch')) {
+              self._image = require('./lib/image/imagecrunch.js')();
+              return true;
+            }
           })) {
             // Fall back to jimp, no need for an error
+            console.log('fallback');
             self._image = require('./lib/image/jimp.js')();
           }
         }
@@ -296,6 +300,7 @@ function Uploadfs() {
 
       convert: function (callback) {
         context.copyOriginal = copyOriginal && (!originalDone);
+        console.log('copyOriginal is ' + context.copyOriginal);
         return async.series([
           convert,
           postprocess
@@ -316,9 +321,11 @@ function Uploadfs() {
       },
 
       reidentify: function(callback) {
+        console.log('must we reidentify?');
         if (!context.adjustedOriginal) {
           return callback(null);
         }
+        console.log('reidentifying');
         // Push and pop the original size properties as we determined
         // those on the first identify and don't want to return the values
         // for the cropped and/or reoriented version
