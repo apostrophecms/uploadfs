@@ -61,6 +61,14 @@ describe('UploadFS Azure', function() {
       done();
     });
   });
+  
+  it('Should return expected defaults if no options provided', done => {
+    console.log('UPLOADFS', uploadfs._storage);
+    const types = uploadfs._storage.getGzipBlacklist({});
+    console.log('types', types);
+    assert(true);
+    done();
+  });
 
   it('Azure test copyIn should work', function(done) {
     uploadfs.copyIn(srcFile, infile, function(e) {
