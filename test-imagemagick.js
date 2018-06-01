@@ -1,6 +1,8 @@
 var uploadfs = require('./uploadfs.js')();
 var fs = require('fs');
 var async = require('async');
+var Promise = require('bluebird');
+var _ = require('lodash');
 
 // Test the imagecrunch image backend, written specifically for Macs
 
@@ -26,22 +28,66 @@ var imageSizes = [
 
 var tempPath = __dirname + '/temp';
 var basePath = '/images/profiles/me';
-var testFileSizes = {};
 
 localOptions.imageSizes = imageSizes;
 localOptions.tempPath = tempPath;
 localOptions.backend = 'local';
 
 localTestStart(function () {
-  console.log("RERUN TESTS WITH IMAGEMIN OPTION ENABLED");
-  localOptions.imagemin = true;
+  var filesSeen = false;
+  console.log("RERUN TESTS WITH TEST OF POSTPROCESSORS");
+  localOptions.postprocessors = [
+    {
+      postprocessor: function(files, folder, options) {
+        console.log('in a postprocessor');
+        if (!(options && options.test)) {
+          console.error('postprocessor did not receive options');
+          process.exit(1);
+        }
+        if (!files) {
+          console.error('No files array passed to postprocessor');
+          process.exit(1);
+        }
+        if (!files.length) {
+          return Promise.resolve(true);
+        }
+        if (!files[0].match(/\.(gif|jpg|png)$/)) {
+          console.error('postprocessor invoked for inappropriate file extension');
+          process.exit(1);
+        }
+        if (!fs.existsSync(files[0])) {
+          console.error('postprocessor invoked for nonexistent file');
+          process.exit(1);
+        }
+        if (require('path').dirname(files[0]) !== folder) {
+          console.error('folder parameter to postprocessor is incorrect');
+        }
+        _.each(localOptions.imageSizes, function(size) {
+          if (!_.find(files, function(file) {
+            return file.match(size.name);
+          })) {
+            console.error('postprocessor saw no file for the size ' + size.name);
+            process.exit(1);
+          }
+        });
+        filesSeen = true;
+        return Promise.resolve(true);
+      },
+      extensions: [ 'gif', 'jpg', 'png' ],
+      options: {
+        test: true
+      }
+    }
+  ];
   localTestStart(function () {
+    if (!filesSeen) {
+      console.error('postprocessor saw no files');
+      process.exit(1);
+    }
     console.log("Tests, done");
     process.exit(0);
   });
 });
-
-// run again with imagemin enabled
 
 function localTestStart(cb) {
   var options = localOptions;
@@ -101,20 +147,6 @@ function localTestStart(cb) {
           var stats = fs.statSync('test' + name);
           if (!stats.size) {
             console.log('Scaled and copied image is empty or missing (2)');
-            process.exit(1);
-          }
-
-          // check minned versions again unminned
-          if (options.imagemin) {
-            testFileSizes[size.name + '_min'] = stats.size;
-          } else {
-            testFileSizes[size.name] = stats.size;
-          }
-
-          console.log("SIZES", testFileSizes);
-
-          if (testFileSizes[size.name + '_min'] >= testFileSizes[size.name]) {
-            console.log('Test fails, minned file should be smaller than unminned');
             process.exit(1);
           }
 

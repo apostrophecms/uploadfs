@@ -13,8 +13,8 @@ uploadfs copies files to a web-accessible location and provides a consistent way
 * Image width, image height and correct file extension are made available to the developer
 * Non-image files are also supported
 * Web access to files can be disabled and reenabled
-* Animated GIFs are preserved, with full support for scaling and cropping (if you have `imagemagick` or `imagecrunch`)
-* On fire about file sizes? Images can be compressed even further with the `imagemin: true` option, if you are using `imagemagick` and you have [`jpegtrans`](http://sharadchhetri.com/2014/01/06/install-libjpegtran-using-yum-command-centos-6-x/), [`jpeg-recompress`](https://github.com/danielgtaylor/jpeg-archive#jpeg-recompress), [`mozjpeg`](https://nystudio107.com/blog/installing-mozjpeg-on-ubuntu-16-04-forge), [`optipng`](https://www.linuxhelp.com/install-jpegoptim-optipng-linux/) and `pngquant` available in your `PATH` (this is entirely optional). Note that `pngquant` is technically a lossy compression tool, your PNG's pixels will differ slightly from the original if you use `imagemin: true`.
+* GIF is supported, including animation, with full support for scaling and cropping (if you have `imagemagick`)
+* On fire about minimizing file sizes for your resized images? You can plug in `imagemin` and compatible tools using the `postprocessors` option. 
 
 You can also remove a file if needed.
 
@@ -26,13 +26,15 @@ You need:
 
 * A "normal" filesystem in which files stay put forever, *OR* Amazon S3, *OR* Microsoft Azure, OR a willingness to write a backend for something else (look at `s3.js`, `azure.js` and `local.js` for examples; just supply an object with the same methods, you don't have to supply a factory function).
 
-* Patience, to wait for [Jimp](https://github.com/oliver-moran/jimp) to convert your images; or [Imagemagick](http://www.imagemagick.org/script/index.php), if you want much better speed and full animated GIF support; OR, on Macs, the very fast [imagecrunch](http://github.com/punkave/imagecrunch) utility. You can also write a backend for something else (look at `imagemagick.js`, `imagecrunch.js`, and `jimp.js` for examples; just supply an object with the same methods, you don't have to supply a factory function).
+* Patience, to wait for [Jimp](https://github.com/oliver-moran/jimp) to convert your images; or [Imagemagick](http://www.imagemagick.org/script/index.php), if you want much better speed and GIF support. You can also write a backend for something else (look at `imagemagick.js`, `imagecrunch.js`, and `jimp.js` for examples; just supply an object with the same methods, you don't have to supply a factory function).
+
+* Again, if you want GIF support: you'll need [Imagemagick](http://www.imagemagick.org/script/index.php). `jimp` requires no installation of system packages, but it does not yet support GIF. `imagemagick` is very easy to install, your operating system has a package available for it. So don't compile it.
 
 * [gifsicle](https://www.lcdf.org/gifsicle/) is an optional tool that processes large animated GIFs much faster. Currently, Imagemagick is a prerequisite for using it. Turn it on with the `gifsicle: true` option when calling `init`. Of course you must install `gifsicle` to use it. (Hint: your operating system probably has a package for it. Don't compile things.)
 
 * A local filesystem in which files stay put at least during the current request, to hold temporary files for Imagemagick's conversions. This is no problem with Heroku and most other cloud servers. It's just long-term storage that needs to be in S3 or Azure for some of them.
 
-Note that Heroku includes Imagemagick. You can also install it with `apt-get install imagemagick` on Ubuntu servers. Homebrew can install `imagemagick` on Macs, or you can use [imagecrunch](http://github.com/punkave/imagecrunch), a fast, tiny utility that uses native MacOS APIs.
+> Note that Heroku includes Imagemagick. You can also install it with `apt-get install imagemagick` on Ubuntu servers. Homebrew can install `imagemagick` on Macs.
 
 ## API Overview
 
@@ -70,7 +72,7 @@ For a complete, very simple and short working example in which a user uploads a 
 
 Here's the interesting bit. Note that we do not supply an extension for the final image file, because we want to var Imagemagick figure that out for us.
 
-    app.post('/', function(req, res) {
+    app.post('/', multipartMiddleware, function(req, res) {
       uploadfs.copyImageIn(req.files.photo.path, '/profiles/me', function(e, info) {
         if (e) {
           res.send('An error occurred: ' + e);
@@ -130,6 +132,8 @@ And this call restores it:
 
 For your convenience in the event you should lose your database, the filenames generated still begin with the original filename. The presence of a cryptographically un-guessable part is enough to make them secure.
 
+Those using `local` storage can change their minds about using `disabledFileKey`. use `uploadfs.migrateToDisabledFileKey(callback)` to migrate your existing disabled files to this approach, and `uploadfs.migrateFromDisabledFileKey(callback)` to migrate back. Before calling the former, add the option to your configuration. Before calling the latter, remove it.
+
 ## Configuration Options
 
 Here are the options we pass to `init()` in `sample.js`. Note that we define the image sizes we want the `copyImageIn` function to produce. No image will be wider or taller than the limits specified. The aspect ratio is always maintained, so one axis will often be smaller than the limits specified. Here's a hint: specify the width you really want, and the maximum height you can put up with. That way only obnoxiously tall images will get a smaller width, as a safeguard.
@@ -137,7 +141,9 @@ Here are the options we pass to `init()` in `sample.js`. Note that we define the
     {
       storage: 'local',
       image: 'imagemagick',
-      // Optional. If not specified, ImageMagick or imagecrunch will be used.
+      // Optional. If not specified, ImageMagick will be used with automatic
+      // fallback to jimp.
+      //
       // Options are 'imagemagick', 'imagecrunch', 'jimp', or a custom image processing backend
       uploadsPath: __dirname + '/public/uploads',
       uploadsUrl: 'http://localhost:3000' + uploadsLocalUrl,
@@ -248,9 +254,28 @@ And, an equivalent configuration for Azure:
       parallel: 4
     }
 
+With Azure you may optionally replicate the content across a cluster:
+
+    {
+      storage: 'azure',
+      replicateClusters: [
+        {
+          account: 'storageAccountName1',
+          container: 'storageContainerName1',
+          key: 'accessKey1',
+        },
+        {
+          account: 'storageAccountName2',
+          container: 'storageContainerName2',
+          key: 'accessKey2',
+        },
+      ],
+      ...
+    }
+
 ## Less Frequently Used Options
 
-* If you are using the `local` backend (files on your server's drive), you might not like that when `disable` is called, the permissions of a file are set to `000` (no one has access). If you wish, you can pass the `disablePermissions` option. As usual with Unix permissions, this is an OCTAL NUMBER, not a decimal one. Octal constants have been deprecated, so in modern JavaScript it is best to write it like this:
+* If you are using the `local` backend (files on your server's drive), you might not like that when `disable` is called, the permissions of a file are set to `000` (no one has access). We suggest using the `disableFileKey` option to completely avoid this issue. However, if you wish, you can pass the `disablePermissions` option. As usual with Unix permissions, this is an OCTAL NUMBER, not a decimal one. Octal constants have been deprecated, so in modern JavaScript it is best to write it like this:
 
     // Only the owner can read. This is handy if
     // your proxy server serves static files for you and
@@ -268,7 +293,7 @@ You can also change the permissions set when `enable` is invoked via `enablePerm
 
     storage: require('mystorage.js')
 
-* You may specify an alternate image processing backend via the `image` option. Two backends, `imagemagick` and `imagecrunch`, are built in. [imagecrunch](http://github.com/punkave/imagecrunch) is a Mac-specific optional utility that is much faster than `imagemagick`. You may also supply an object instead of a string to use your own image processor. Just follow the existing `imagecrunch.js` and `imagemagick.js` files as a model.
+* You may specify an alternate image processing backend via the `image` option. Three backends, `imagemagick`, `jimp` and `imagecrunch`, are built in. You may also supply an object instead of a string to use your own image processor. Just follow the existing `imagemagick.js` file as a model.
 
 ## Extra features for S3: caching, HTTPS, and CDNs
 
@@ -317,6 +342,71 @@ It's up to you to create an Amazon S3 bucket and obtain your secret and key. See
 
 S3 support is based on the official AWS SDK. 
 
+## Postprocessing images: extra compression, watermarking, etc.
+
+It is possible to configure `uploadfs` to run a postprocessor such as `imagemin` on every custom-sized image that it generates. This is intended for file size optimization tools like `imagemin`.
+
+Here is an example based on the `imagemin` documentation:
+
+```
+const imagemin = require('imagemin');
+const imageminJpegtran = require('imagemin-jpegtran');
+const imageminPngquant = require('imagemin-pngquant');
+
+uploadfs.init({
+  storage: 'local',
+  image: 'imagemagick',
+  tempPath: __dirname + '/temp',
+  imageSizes: [
+    {
+      name: 'small',
+      width: 320,
+      height: 320
+    },
+    {
+      name: 'medium',
+      width: 640,
+      height: 640
+    }
+  ],
+  postprocessors: [
+    {
+      postprocessor: imagemin,
+      extensions: [ 'gif', 'jpg', 'png' ],
+      options: {
+        plugins: [
+          imageminJpegtran(),
+          imageminPngquant({quality: '65-80'})
+        ]
+      }
+    }
+  ]
+});
+```
+
+A file will not be passed to a postprocessor unless it is configured for the file's true extension as determined by the image backend (`gif`, `jpg`, `png` etc., never `GIF` or `JPEG`).
+
+The above code will invoke `imagemin` like this:
+
+```
+imagemin([ '/temp/folder/file1-small.jpg', '/temp/folder/file2-medium.jpg', ... ], '/temp/folder', {
+  plugins: [
+    imageminJpegtran(),
+    imageminPngquant({quality: '65-80'})
+  ]
+}).then(function() {
+  // All finished
+}).catch(function() {
+  // An error occurred
+});
+```
+
+You may write and use other postprocessors, as long as they expect to be called the same way.
+
+> Note that the second argument is always the folder that contains all of the files in the first argument's array. `uploadfs` expects your postprocessor to be able to update the files "in place." All of the files in the first argument will have the same extension.
+
+If your postprocessor expects four arguments, uploadfs will pass a callback, rather than expecting a promise to be returned.
+
 ## About P'unk Avenue and Apostrophe
 
 `uploadfs` was created at [P'unk Avenue](http://punkave.com) for use in many projects built with Apostrophe, an open-source content management system built on node.js. Appy isn't mandatory for Apostrophe and vice versa, but they play very well together. If you like `uploadfs` you should definitely [check out apostrophenow.org](http://apostrophenow.org). Also be sure to visit us on [github](http://github.com/punkave).
@@ -328,6 +418,33 @@ Feel free to open issues on [github](http://github.com/punkave/uploadfs).
 <a href="http://punkave.com/"><img src="https://raw.github.com/punkave/uploadfs/master/logos/logo-box-builtby.png" /></a>
 
 ## Changelog
+
+### CHANGES IN 1.10.1
+
+* If `replicateClusters` exists but is an empty array, the credential options are used instead. This was not a bug fix, exactly, but it is a nice "do what I mean" feature.
+* A single `gzip` object was being reused, leading to failures on subsequent writes to Azure. Fixed.
+* The Azure backend contained a global array, thus limiting you to a single instance of `uploadfs` in your project. Fixed.
+
+### CHANGES IN 1.10.0
+
+`imagemin` is no longer a dependency. Instead the new `postprocessors` option allows you to optionally pass it in. `imagemin` and its plugins have complicated dependencies that don't build smoothly on all systems, and it makes sense to leave the specifics of this step up to the users who want it.
+
+Since setting the `imagemin: true` option doesn't hurt anything in 1.10.0 (you still get your images, just not squeezed quite as small), this is not a bc break.
+
+Deemphasized `imagecrunch`. People don't serve public sites on Macs anyway and homebrew can install `imagemagick` easily.
+
+### CHANGES IN 1.9.2
+
+`mocha` and `lodash` upgraded to satisfy `npm audit`.
+
+### CHANGES IN 1.9.1
+
+* All `imagemin-` plugin modules are now `optionalDependencies` and uploadfs can print a warning at startup and continue without any one of them. In addition, if `imagemin` fails, this situation is tolerated with a warning printed and the images are still transformed as they would be without `imagemin`. This is necessary because [`imagemin-pngquant` fails on CentOS 7 without sysadmin intervention to install additional system packages outside of npm](https://github.com/imagemin/pngquant-bin/issues/77), and `cjpeg` fails to run without extra libraries even though it does `npm install`, etc.
+
+### CHANGES IN 1.9.0
+
+* Azure support.
+* Added `migrateToDisabledFileKey` and `migrateFromDisabledFileKey` methods for use when switching to the option of renaming files in a cryptographically secure way rather than changing their permissions. These files change the approach for all existing disabled files.
 
 ### CHANGES IN 1.8.0
 
@@ -374,7 +491,7 @@ Every effort has been made to deliver 100% backwards compatibility with the docu
 
 ### CHANGES IN 1.4.0
 
-* The new pure-JavaScript `jimp` image backend works "out of the box" even when ImageMagick is not installed. For faster operation and animated GIF support, you should still install ImageMagick. Thanks to Dave Ramirez for contributing this feature.
+* The new pure-JavaScript `jimp` image backend works "out of the box" even when ImageMagick is not installed. For faster operation and GIF support, you should still install ImageMagick. Thanks to Dave Ramirez for contributing this feature.
 
 ### CHANGES IN 1.3.6
 
