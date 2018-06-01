@@ -109,9 +109,9 @@ describe('UploadFS Azure', function() {
   });
  
   it('Azure test copyOut should work', function(done) {
+    var tmpFileName = new Date().getTime() + '_text.txt';
     _getOutfile(infile, tmpFileName, done);
   });
-  /*
 
   it('Azure disable should work', function(done) {
     uploadfs.disable(infile, function(e, val) {
@@ -183,5 +183,4 @@ describe('UploadFS Azure', function() {
       done();
     });
   });
-  */
 });
