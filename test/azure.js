@@ -1,14 +1,17 @@
 /* global describe, it */
+console.log("ENV", process.env);
 var assert = require('assert');
 var fs = require('fs');
 var zlib = require('zlib');
 var extname = require('path').extname;
 var rp = require('request-promise');
 var uploadfs = require('../uploadfs.js')();
-var srcFile = 'test.jpg';
-var infile = 'one/two/three/test.jpg';
+var srcFile = process.env.AZURE_TEST_FILE || 'test.jpg';
+var infilePath = 'one/two/three/';
+var infile = infilePath + srcFile;
 var _ = require('underscore');
 var gzipBlacklist = require('../defaultGzipBlacklist');
+console.log('Test file', infile);
 
 /* helper to automate scraping files from blob svc */
 var _getOutfile = function(infile, done) {
@@ -30,9 +33,7 @@ var _getOutfile = function(infile, done) {
     function final(res) {
       // @@TODO make sure to clean up tmpFiles
       const outfile = fs.statSync(tmpFileName);
-      //fs.unlinkSync(tmpFileName);
-      console.log("outfile", outfile);
-      console.log("res", res);
+      fs.unlinkSync(tmpFileName);
       done();
     }
     
@@ -137,7 +138,6 @@ describe('UploadFS Azure', function() {
   it('Azure test copyOut should work', function(done) {
     _getOutfile(infile, done);
   });
-/* 
 
   it('Azure disable should work', function(done) {
     uploadfs.disable(infile, function(e, val) {
@@ -150,9 +150,8 @@ describe('UploadFS Azure', function() {
   });
 
   it('Azure test copyOut after disable should fail', function(done) {
-    var tmpFileName = new Date().getTime() + '_text.txt';
     setTimeout(function() {
-      uploadfs.copyOut(infile, tmpFileName, {content}, function(e, res) {
+      uploadfs.copyOut(infile, 'foo.bar', {}, function(e, res) {
         if (e) {
           console.log("error", e);
         }
@@ -208,5 +207,4 @@ describe('UploadFS Azure', function() {
       done();
     });
   });
-  */
 });
