@@ -2,46 +2,71 @@
 var assert = require('assert');
 var fs = require('fs');
 var zlib = require('zlib');
+var extname = require('path').extname;
 var rp = require('request-promise');
 var uploadfs = require('../uploadfs.js')();
-var srcFile = 'test.txt';
-var infile = 'one/two/three/test.txt';
+var srcFile = 'test.jpg';
+var infile = 'one/two/three/test.jpg';
 var _ = require('underscore');
+var gzipBlacklist = require('../defaultGzipBlacklist');
 
 /* helper to automate scraping files from blob svc */
-var _getOutfile = function(infile, tmpFileName, done) {
+var _getOutfile = function(infile, done) {
+  var tmpFileName = new Date().getTime() + srcFile;
   var ogFile = fs.readFileSync(srcFile, {encoding: 'utf8'});
+
   return uploadfs.copyOut(infile, tmpFileName, {}, function(e, res) {
     assert(!e, 'Azure copy out nominal success');
     if (e) {
       return console.log("copyOut Error", e);
     }
-    var read = fs.createReadStream(tmpFileName);
+
     var gunzip = zlib.createGunzip();
     var buffer = [];
     var str;
+    var ext = extname(infile).substring(1);
+    var doGzip = gzipBlacklist[ext];
 
-    read.pipe(gunzip);
-    gunzip.on('data', function(chunk) {
-      buffer.push(chunk);
-    });
-
-    gunzip.on('end', function() {
-      str = buffer.join('');
-
-      assert(!e, 'Azure copy out - nominal success');
-      if (e) {
-        return console.log(e);
-      }
-      // make sure we have actual values not null or undefined
-      assert(str.length, 'copOutFile has length');
-      assert(ogFile.length, 'original textfile body has length');
-      assert(ogFile === str, 'Azure copy out equal to original text file');
-
+    function final(res) {
       // @@TODO make sure to clean up tmpFiles
-      fs.unlinkSync(tmpFileName);
+      const outfile = fs.statSync(tmpFileName);
+      //fs.unlinkSync(tmpFileName);
+      console.log("outfile", outfile);
+      console.log("res", res);
       done();
-    });
+    }
+    
+    function unzip() {
+      var read = fs.createReadStream(tmpFileName);
+      
+      gunzip.on('data', function(chunk) {
+        buffer.push(chunk);
+      });
+
+      gunzip.on('end', function() {
+        str = buffer.join('');
+
+        assert(!e, 'Azure copy out - nominal success');
+        if (e) {
+          return console.log(e);
+        }
+        
+        // make sure we have actual values not null or undefined
+        assert(str.length, 'copOutFile has length');
+        assert(ogFile.length, 'original textfile body has length');
+        assert(ogFile === str, 'Azure copy out equal to original text file');
+
+        final();
+      });
+
+      read.pipe(gunzip);
+    }
+
+    if (doGzip) {
+      unzip();
+    } else {
+      final();
+    }
   });
 };
 
@@ -99,6 +124,7 @@ describe('UploadFS Azure', function() {
   });
 
   it('Azure test copyIn should work', function(done) {
+    debugger;
     uploadfs.copyIn(srcFile, infile, function(e) {
       if (e) {
         console.log("test copyIn ERR", e);
@@ -107,11 +133,11 @@ describe('UploadFS Azure', function() {
       done();
     });
   });
- 
+
   it('Azure test copyOut should work', function(done) {
-    var tmpFileName = new Date().getTime() + '_text.txt';
-    _getOutfile(infile, tmpFileName, done);
+    _getOutfile(infile, done);
   });
+/* 
 
   it('Azure disable should work', function(done) {
     uploadfs.disable(infile, function(e, val) {
@@ -126,7 +152,7 @@ describe('UploadFS Azure', function() {
   it('Azure test copyOut after disable should fail', function(done) {
     var tmpFileName = new Date().getTime() + '_text.txt';
     setTimeout(function() {
-      uploadfs.copyOut(infile, tmpFileName, {}, function(e, res) {
+      uploadfs.copyOut(infile, tmpFileName, {content}, function(e, res) {
         if (e) {
           console.log("error", e);
         }
@@ -149,8 +175,7 @@ describe('UploadFS Azure', function() {
   });
 
   it('Azure test copyOut after enable should succeed', function(done) {
-    var tmpFileName = new Date().getTime() + '_text.txt';
-    _getOutfile(infile, tmpFileName, done);
+    _getOutfile(infile, done);
   });
 
   it('Uploadfs should return valid web-servable url pointing to uploaded file', function() {
@@ -183,4 +208,5 @@ describe('UploadFS Azure', function() {
       done();
     });
   });
+  */
 });
