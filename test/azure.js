@@ -2,8 +2,6 @@
 console.log("ENV", process.env);
 var assert = require('assert');
 var fs = require('fs');
-var zlib = require('zlib');
-var extname = require('path').extname;
 var rp = require('request-promise');
 var uploadfs = require('../uploadfs.js')();
 // A JPEG is not a good default because it is exempt from GZIP so
@@ -12,7 +10,6 @@ var srcFile = process.env.AZURE_TEST_FILE || 'test.txt';
 var infilePath = 'one/two/three/';
 var infile = infilePath + srcFile;
 var _ = require('underscore');
-var gzipBlacklist = require('../defaultGzipBlacklist');
 
 /* helper to automate scraping files from blob svc */
 var _getOutfile = function(infile, done) {
