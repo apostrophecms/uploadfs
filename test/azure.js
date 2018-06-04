@@ -32,14 +32,13 @@ var _getOutfile = function(infile, done) {
 
     function final(res) {
       // @@TODO make sure to clean up tmpFiles
-      const outfile = fs.statSync(tmpFileName);
       fs.unlinkSync(tmpFileName);
       done();
     }
-    
+
     function unzip() {
       var read = fs.createReadStream(tmpFileName);
-      
+
       gunzip.on('data', function(chunk) {
         buffer.push(chunk);
       });
@@ -51,7 +50,7 @@ var _getOutfile = function(infile, done) {
         if (e) {
           return console.log(e);
         }
-        
+
         // make sure we have actual values not null or undefined
         assert(str.length, 'copOutFile has length');
         assert(ogFile.length, 'original textfile body has length');
@@ -110,7 +109,7 @@ describe('UploadFS Azure', function() {
     done();
   });
 
-  it('getGzipBlacklist should be pretend to remove an item from the blacklist that was never on it based on user options', done => {
+  it('getGzipBlacklist should quietly ignore `{ ext: false }` in user config if ext is not on default blacklist', done => {
     const types = uploadfs._storage.getGzipBlacklist({ 'foo': true });
     assert(Array.isArray(types), 'gzip blacklist array is an array');
     assert(types && types.indexOf('foo' <= 0), 'Filetype foo is not added to the blacklist if user wants to gzip it');
@@ -125,7 +124,7 @@ describe('UploadFS Azure', function() {
   });
 
   it('Azure test copyIn should work', function(done) {
-    debugger;
+
     uploadfs.copyIn(srcFile, infile, function(e) {
       if (e) {
         console.log("test copyIn ERR", e);

@@ -5,7 +5,7 @@
   "main": "uploadfs.js",
   "scripts": {
     "test": "npm run testAzure && mocha test/ && node test-imagemagick.js && eslint .",
-    "testAzure": "env AZURE_TEST_FILE="test.jpg" mocha test/azure.js"
+    "testAzure": "env AZURE_TEST_FILE='test.jpg' mocha test/azure.js"
   },
   "repository": {
     "type": "git",
