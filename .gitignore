@@ -1,4 +1,4 @@
-*.swp
+*.sw*
 copy-out-test.txt
 npm-debug.log
 .DS_Store

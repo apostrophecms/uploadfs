@@ -224,6 +224,13 @@ And, an equivalent configuration for Azure:
       disabledFileKey: 'a random string of your choosing',
       // Always required for Azure
       tempPath: __dirname + '/temp',
+      // by default we gzip encode EVERYTHING except for a short list of excpetions, found in defaultGzipBlacklist.js
+      // if for some reason you want to enable gzip encoding for one of these types, you can
+      // you can also add types to ignore when gzipping
+      gzipEncoding: {
+        'jpg': true,
+        'rando': false
+      },
       imageSizes: [
         {
           name: 'small',
