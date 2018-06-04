@@ -419,6 +419,15 @@ Feel free to open issues on [github](http://github.com/punkave/uploadfs).
 
 ## Changelog
 
+### CHANGES IN 1.10.2
+
+We fixed some significant issues impacting users of the `azure` storage backend. If you use that backend you should upgrade:
+
+* Get extensions from uploadfs path so gzipped files are not all application/octet stream
+* Pass the content-encoding header properly. Please note that files already uploaded to `azure` with uploadfs are gzipped but do *not* have the correct header and so your webserver may not recognize them correctly, especially if used for CSS files and other text formats. You can resolve this by uploading them again.
+* `copyOut` now correctly reverses `copyIn` completely, including gunzipping the file if necessary. Without this change cropping, etc. did not work.
+* Default test path covers these issues correctly.
+
 ### CHANGES IN 1.10.1
 
 * If `replicateClusters` exists but is an empty array, the credential options are used instead. This was not a bug fix, exactly, but it is a nice "do what I mean" feature.
