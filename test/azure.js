@@ -2,16 +2,14 @@
 console.log("ENV", process.env);
 var assert = require('assert');
 var fs = require('fs');
-var zlib = require('zlib');
-var extname = require('path').extname;
 var rp = require('request-promise');
 var uploadfs = require('../uploadfs.js')();
-var srcFile = process.env.AZURE_TEST_FILE || 'test.jpg';
+// A JPEG is not a good default because it is exempt from GZIP so
+// we get less coverage. -Tom
+var srcFile = process.env.AZURE_TEST_FILE || 'test.txt';
 var infilePath = 'one/two/three/';
 var infile = infilePath + srcFile;
 var _ = require('underscore');
-var gzipBlacklist = require('../defaultGzipBlacklist');
-console.log('Test file', infile);
 
 /* helper to automate scraping files from blob svc */
 var _getOutfile = function(infile, done) {
@@ -20,53 +18,13 @@ var _getOutfile = function(infile, done) {
 
   return uploadfs.copyOut(infile, tmpFileName, {}, function(e, res) {
     assert(!e, 'Azure copy out nominal success');
-    if (e) {
-      return console.log("copyOut Error", e);
-    }
-
-    var gunzip = zlib.createGunzip();
-    var buffer = [];
-    var str;
-    var ext = extname(infile).substring(1);
-    var doGzip = gzipBlacklist[ext];
-
-    function final(res) {
-      // @@TODO make sure to clean up tmpFiles
-      fs.unlinkSync(tmpFileName);
-      done();
-    }
-
-    function unzip() {
-      var read = fs.createReadStream(tmpFileName);
-
-      gunzip.on('data', function(chunk) {
-        buffer.push(chunk);
-      });
-
-      gunzip.on('end', function() {
-        str = buffer.join('');
-
-        assert(!e, 'Azure copy out - nominal success');
-        if (e) {
-          return console.log(e);
-        }
-
-        // make sure we have actual values not null or undefined
-        assert(str.length, 'copOutFile has length');
-        assert(ogFile.length, 'original textfile body has length');
-        assert(ogFile === str, 'Azure copy out equal to original text file');
-
-        final();
-      });
-
-      read.pipe(gunzip);
-    }
-
-    if (doGzip) {
-      unzip();
-    } else {
-      final();
-    }
+    var content = fs.readFileSync(tmpFileName, { encoding: 'utf8' });
+    assert(content.length, 'copyOut file has length');
+    assert(ogFile.length, 'original file body has length');
+    // console.log(ogFile, content);
+    assert(ogFile === content, 'Azure copy out equal to original text file');
+    fs.unlinkSync(tmpFileName);
+    done();
   });
 };
 
