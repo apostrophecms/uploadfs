@@ -61,6 +61,30 @@ describe('UploadFS Local', function () {
     });
   });
 
+  it('overwrite with copyIn should work for local filesystem', done => {
+    return uploadfs.copyIn('./test2.txt', '/test_copy.txt', e => {
+      assert(!e);
+      var og = fs.readFileSync('./test2.txt', 'utf8');
+      var next = fs.readFileSync('./test/files/test_copy.txt', 'utf8');
+      assert(og.length, 'lengthy');
+      assert(next.length, 'lengthy');
+      assert(og === next, 'Copies are equal');
+      done();
+    });
+  });
+
+  it('copyOut should see update for local filesystem', done => {
+    return uploadfs.copyOut('/test_copy.txt', 'copy-out-test.txt', e => {
+      assert(!e);
+      var og = fs.readFileSync('./test2.txt', 'utf8');
+      var next = fs.readFileSync('./copy-out-test.txt', 'utf8');
+      assert(og.length, 'lengthy');
+      assert(next.length, 'lengthy');
+      assert(og === next, 'Copied files are equal');
+      done();
+    });
+  });
+
   it('Test disable / enable functionality', done => {
     var srcFile = '/test_copy.txt';
     var infile = './test/files/test_copy.txt';
