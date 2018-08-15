@@ -30,6 +30,7 @@ function Uploadfs() {
    */
   self.init = function (options, callback) {
     self.options = options;
+    self.prefix = self.options.prefix || '';
     // bc: support options.backend
     self._storage = options.storage || options.backend;
     if (!self._storage) {
@@ -134,6 +135,7 @@ function Uploadfs() {
       callback = options;
       options = {};
     }
+    path = prefixPath(path);
     return self._storage.copyIn(localPath, path, options, callback);
   };
 
@@ -153,6 +155,7 @@ function Uploadfs() {
    * @param  {Function} callback    Receives the usual err argument
    */
   self.copyOut = function (path, localPath, options, callback) {
+    path = prefixPath(path);
     if (typeof (options) === 'function') {
       callback = options;
       options = {};
@@ -215,6 +218,9 @@ function Uploadfs() {
    */
 
   self.copyImageIn = function (localPath, path, options, callback) {
+
+    // We do not call prefixPath here because we rely on copyIn, which does
+
     if (typeof (options) === 'function') {
       callback = options;
       options = {};
@@ -371,10 +377,11 @@ function Uploadfs() {
     if (self.cdn && self.cdn.enabled) {
       return self.cdn.url;
     }
-    return self._storage.getUrl(options, callback);
+    return self._storage.getUrl(options, callback) + self.prefix;
   };
 
   self.remove = function (path, callback) {
+    path = prefixPath(path);
     return self._storage.remove(path, callback);
   };
 
@@ -394,6 +401,7 @@ function Uploadfs() {
    */
 
   self.enable = function (path, callback) {
+    path = prefixPath(path);
     return self._storage.enable(path, callback);
   };
 
@@ -413,6 +421,7 @@ function Uploadfs() {
    */
 
   self.disable = function (path, callback) {
+    path = prefixPath(path);
     return self._storage.disable(path, callback);
   };
 
@@ -530,6 +539,11 @@ function Uploadfs() {
       }
     }, callback);
   };
+
+  function prefixPath(path) {
+    // Resolve any double // that results from the prefix
+    return (self.prefix + path).replace(/\/\//g, '/');
+  }
 
 }
 

@@ -140,11 +140,11 @@ Here are the options we pass to `init()` in `sample.js`. Note that we define the
 
     {
       storage: 'local',
-      image: 'imagemagick',
       // Optional. If not specified, ImageMagick will be used with automatic
       // fallback to jimp.
-      //
-      // Options are 'imagemagick', 'imagecrunch', 'jimp', or a custom image processing backend
+      image: 'imagemagick',
+      // Options are 'imagemagick', 'imagecrunch', 'jimp', or a custom image
+      // processing backend
       uploadsPath: __dirname + '/public/uploads',
       uploadsUrl: 'http://localhost:3000' + uploadsLocalUrl,
       // Required if you use copyImageIn
@@ -342,6 +342,22 @@ It's up to you to create an Amazon S3 bucket and obtain your secret and key. See
 
 S3 support is based on the official AWS SDK. 
 
+## Applying a prefix to paths regardless of storage layer
+
+If you are running several Apostrophe sites that must share an S3 bucket, you'll notice
+that their uploads are jumbled together in a single `/attachments` "folder." With
+the local storage method you can address this by specifying an `uploadsPath` that
+includes a different prefix for each site, but for S3 or Azure there was previously no good
+solution.
+
+Starting with version 1.11.0, you can specify a `prefix` option no matter what the
+storage backend is. When you do, `uploadfs` will automatically prepend it to
+all uploadfs paths that you pass to it. In addition, the `getUrl` method will
+include it as well. So you can use this technique to separate files from several
+sites even if they share a bucket in S3 or Azure.
+
+**An important exception:** if you have configured the `cdn` option, `uploadfs` assumes that your cdn's `url` subproperty points to the right place for this individual site. This is necessary because CDNs may have prefix features of their own which remap the URL.
+
 ## Postprocessing images: extra compression, watermarking, etc.
 
 It is possible to configure `uploadfs` to run a postprocessor such as `imagemin` on every custom-sized image that it generates. This is intended for file size optimization tools like `imagemin`.
@@ -418,6 +434,10 @@ Feel free to open issues on [github](http://github.com/punkave/uploadfs).
 <a href="http://punkave.com/"><img src="https://raw.github.com/punkave/uploadfs/master/logos/logo-box-builtby.png" /></a>
 
 ## Changelog
+
+### CHANGES IN 1.11.0
+
+* The new `prefix` option, if present, is prepended to all `uploadfs` paths before they reach the storage layer. This makes it easy for several sites to share, for instance, the same S3 bucket without confusion. The `getUrl()` method also reflects the prefix, unless the `cdn` option is in play, as cdn URLs might not include a prefix. Always set the `url` subproperty of `cdn` with the prefix you need, if any.
 
 ### CHANGES IN 1.10.2
 
