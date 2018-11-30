@@ -435,6 +435,10 @@ Feel free to open issues on [github](http://github.com/punkave/uploadfs).
 
 ## Changelog
 
+### CHANGES IN 1.11.1
+
+* Azure storage backend: `mp4` has been added to the list of formats that are excluded from gzip transfer encoding by default. This is because it does not stream properly in Chrome and saves very little space
+
 ### CHANGES IN 1.11.0
 
 * The new `prefix` option, if present, is prepended to all `uploadfs` paths before they reach the storage layer. This makes it easy for several sites to share, for instance, the same S3 bucket without confusion. The `getUrl()` method also reflects the prefix, unless the `cdn` option is in play, as cdn URLs might not include a prefix. Always set the `url` subproperty of `cdn` with the prefix you need, if any.
