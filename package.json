@@ -5,7 +5,8 @@
   "main": "uploadfs.js",
   "scripts": {
     "test": "npm run testAzure && mocha test/ && node test-imagemagick.js && eslint .",
-    "testAzure": "env AZURE_TEST_FILE='test.jpg' mocha test/azure.js"
+    "testAzure": "env AZURE_TEST_FILE='test.jpg' mocha test/azure.js",
+    "lint-be": "eslint --fix 'lib/**/*.js'"
   },
   "repository": {
     "type": "git",
@@ -20,6 +21,7 @@
   "author": "P'unk Avenue LLC",
   "license": "MIT",
   "dependencies": {
+    "@google-cloud/storage": "^2.4.2",
     "async": "^1.0.0",
     "aws-sdk": "^2.239.1",
     "azure-storage": "^2.8.2",
