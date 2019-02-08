@@ -140,6 +140,40 @@ function Uploadfs() {
   };
 
   /**
+   * The rename method renames the file at the uploadfs path oldPath to newPath.
+   * Most backends have no support for this, so this method copies the file down
+   * and copies it up again; this is slow.
+   *
+   * Overuse of this method is to be avoided. The local backend can do it quickly, but don't get used to that,
+   * or you'll suffer when you move your app to S3.
+   *
+   * @param  {[String]}   oldPath   The old path in uploadfs
+   * @param  {[String]}   newPath    The new path in uploadfs
+   * @param  {Function} callback    Will receive the usual err argument
+   */
+
+  self.rename = function(oldPath, newPath, callback) {
+    if (self._storage.rename) {
+      return self._storage.rename(oldPath, newPath, callback);
+    }
+    var temp = tempPath + '/' + generateId();
+    return async.series([
+      copyOut,
+      copyIn,
+      remove
+    ], callback);
+    function copyOut(callback) {
+      return self.copyOut(oldPath, temp, callback);
+    }
+    function copyIn(callback) {
+      return self.copyIn(temp, newPath, callback);
+    },
+    function remove(callback) {
+      return self.remove(oldPath, callback);
+    }
+  }
+
+  /**
    * Obtain the temporary folder used for intermediate files created by copyImageIn. Can also be useful when doing your own manipulations with copyOut.
    * @see Uploadfs#copyOut
    */

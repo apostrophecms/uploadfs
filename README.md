@@ -64,6 +64,8 @@ You need:
 
 * The `identifyLocalImage` method provides direct access to the `uploadfs` functionality for determining the extension, width, height and orientation of images. Normally `copyIn` does everything you need in one step, but this method is occasionally useful for migration purposes.
 
+* The `rename` method renames a file already in uploadfs. Note that this is slow in most backends; its use should be minimized.
+
 The `destroy` method releases any resources such as file descriptors or timeouts that may be held by the backends, and then invokes its callback. Its use is optional, but command line Node apps might never exit without it.
 
 ## Working Example
