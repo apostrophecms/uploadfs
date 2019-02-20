@@ -2,7 +2,7 @@
 
 <a href="http://apostrophenow.org/"><img src="https://raw.github.com/punkave/uploadfs/master/logos/logo-box-madefor.png" align="right" /></a>
 
-uploadfs copies files to a web-accessible location and provides a consistent way to get the URLs that correspond to those files. uploadfs can also resize, crop and autorotate uploaded images. uploadfs includes S3-based, Azure-based and local filesystem-based backends and you may supply others. The API offers the same conveniences with both backends, avoiding the most frustrating features of each:
+uploadfs copies files to a web-accessible location and provides a consistent way to get the URLs that correspond to those files. uploadfs can also resize, crop and autorotate uploaded images. uploadfs includes S3-based, Azure-based, GCS-based and local filesystem-based backends and you may supply others. The API offers the same conveniences with both backends, avoiding the most frustrating features of each:
 
 * Parent directories are created automatically as needed (like S3 and Azure)
 * Content types are inferred from file extensions (like the filesystem)
@@ -24,7 +24,7 @@ It is possible to copy a file back from uploadfs, but there is no API to retriev
 
 You need:
 
-* A "normal" filesystem in which files stay put forever, *OR* Amazon S3, *OR* Microsoft Azure, OR a willingness to write a backend for something else (look at `s3.js`, `azure.js` and `local.js` for examples; just supply an object with the same methods, you don't have to supply a factory function).
+* A "normal" filesystem in which files stay put forever, *OR* Amazon S3, *OR* Microsoft Azure, *OR* Google Cloud Platform OR a willingness to write a backend for something else (look at `s3.js`, `azure.js` and `local.js` for examples; just supply an object with the same methods, you don't have to supply a factory function).
 
 * Patience, to wait for [Jimp](https://github.com/oliver-moran/jimp) to convert your images; or [Imagemagick](http://www.imagemagick.org/script/index.php), if you want much better speed and GIF support. You can also write a backend for something else (look at `imagemagick.js`, `imagecrunch.js`, and `jimp.js` for examples; just supply an object with the same methods, you don't have to supply a factory function).
 
@@ -272,6 +272,47 @@ With Azure you may optionally replicate the content across a cluster:
       ],
       ...
     }
+
+And, an equivalent configuration for Google Cloud Storage:
+
+    {
+          storage: 'gcs',
+          // Go to the Google Cloud Console, select your project and select the Storage item on the left side of the screen to find / create your bucket. Put your bucket name here.
+          bucket: 'getyourownbucketplease',
+          // Select your region
+          region: 'us-west-2',
+          // Required if you use copyImageIn, or use Azure at all
+          tempPath: __dirname + '/temp',
+          imageSizes: [
+            {
+              name: 'small',
+              width: 320,
+              height: 320
+            },
+            {
+              name: 'medium',
+              width: 640,
+              height: 640
+            },
+            {
+              name: 'large',
+              width: 1140,
+              height: 1140
+            }
+          ],
+          // Render up to 4 image sizes at once. Note this means 4 at once per call
+          // to copyImageIn. There is currently no built-in throttling of multiple calls to
+          // copyImageIn
+          parallel: 4
+    }
+
+Note that GCS assumes the presence of a service account file and an environment variable of GOOGLE_APPLICATION_CREDENTIALS set pointing to this file. For example:
+
+    export GOOGLE_APPLICATION_CREDENTIALS=./projectname-f7f5e919aa79.json
+
+In the above example, the file named `projectname-f7f5e919aa79.json` is sitting in the root of the module
+    
+For more information, see [Creating and Managing Service Accounts](https://cloud.google.com/iam/docs/creating-managing-service-account-keys) at cloud.google.com.
 
 ## Less Frequently Used Options
 
