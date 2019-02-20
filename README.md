@@ -314,6 +314,9 @@ In the above example, the file named `projectname-f7f5e919aa79.json` is sitting 
     
 For more information, see [Creating and Managing Service Accounts](https://cloud.google.com/iam/docs/creating-managing-service-account-keys) at cloud.google.com.
 
+> When using Google Cloud Storage, you **must enable object ACLs for the
+bucket**. Otherwise you will get this error: "cannot use ACL API to set object policy when object policies are disabled." You have 90 days to do this after first creating a bucket, otherwise you will need to use a new bucket for uploadfs.
+
 ## Less Frequently Used Options
 
 * If you are using the `local` backend (files on your server's drive), you might not like that when `disable` is called, the permissions of a file are set to `000` (no one has access). We suggest using the `disableFileKey` option to completely avoid this issue. However, if you wish, you can pass the `disablePermissions` option. As usual with Unix permissions, this is an OCTAL NUMBER, not a decimal one. Octal constants have been deprecated, so in modern JavaScript it is best to write it like this:
@@ -475,6 +478,10 @@ Feel free to open issues on [github](http://github.com/punkave/uploadfs).
 <a href="http://punkave.com/"><img src="https://raw.github.com/punkave/uploadfs/master/logos/logo-box-builtby.png" /></a>
 
 ## Changelog
+
+### CHANGES IN 1.12.0
+
+* Google Cloud Storage (GCS) support. Thanks to Nick Bauman for this contribution.
 
 ### CHANGES IN 1.11.1
 
