@@ -479,6 +479,10 @@ Feel free to open issues on [github](http://github.com/punkave/uploadfs).
 
 ## Changelog
 
+### CHANGES IN 1.13.0
+
+* Now compatible with S3-like backends that build the bucket URL as a path rather than a subdomain. To enable this behavior, set the `s3ForcePathStyle` option to `true`. Thanks to Funkhaus Creative for this contribution.
+
 ### CHANGES IN 1.12.0
 
 * Google Cloud Storage (GCS) support. Thanks to Nick Bauman for this contribution.
