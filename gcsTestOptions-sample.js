@@ -5,5 +5,6 @@ module.exports = {
   // If you are getting `Error: Invalid Grant`, this is likely your problem
   backend: 'gcs',
   bucket: 'yourownbucketnamefromgcs',
-  region: 'us-west-2'
+  region: 'us-west-2',
+  validation: false // Can be one of false, "md5" or  "crc32", YMMV
 };
