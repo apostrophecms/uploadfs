@@ -1,7 +1,7 @@
 {
   "name": "uploadfs",
-  "version": "1.13.0",
-  "description": "Store files in a web-accessible location via a simplified API. Can automatically scale and rotate images. Includes S3, Azure and local filesystem-based backends with the most convenient features of each.",
+  "version": "1.14.0",
+  "description": "Store files in a web-accessible location via a simplified API. Can automatically scale and rotate images. Includes AWS S3, Azure blobs, Google GCS and local filesystem-based backends with the most convenient features of each.",
   "main": "uploadfs.js",
   "scripts": {
     "test": "npm run testAzure && mocha test/ && node test-imagemagick.js && eslint .",

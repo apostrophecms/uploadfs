@@ -479,6 +479,12 @@ Feel free to open issues on [github](http://github.com/punkave/uploadfs).
 
 ## Changelog
 
+### CHANGES IN 1.14.0
+
+* Failover: azure copyOut now attempts to copy from every available replica, for durability
+* azure errors now report the account and container concerned so you can identify the faulty replica; if all were tried (copyOut), ALL is reported. This is done via `account` and `container` properties on the error object
+* eslint fixes, including undefined variable fixes
+
 ### CHANGES IN 1.13.0
 
 * Now compatible with S3-like backends that build the bucket URL as a path rather than a subdomain. To enable this behavior, set the `s3ForcePathStyle` option to `true`. Thanks to Funkhaus Creative for this contribution.
