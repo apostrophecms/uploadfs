@@ -479,6 +479,10 @@ Feel free to open issues on [github](http://github.com/punkave/uploadfs).
 
 ## Changelog
 
+### CHANTES IN 1.14.1
+
+* Depend on GCS 4.x to address npm audit warning. There appear to be no relevant breaking API changes in GCS.
+
 ### CHANGES IN 1.14.0
 
 * Failover: azure copyOut now attempts to copy from every available replica, for durability
