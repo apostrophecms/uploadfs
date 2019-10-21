@@ -479,6 +479,10 @@ Feel free to open issues on [github](http://github.com/punkave/uploadfs).
 
 ## Changelog
 
+### CHANGES IN 1.13.1
+
+* Depend on GCS 4.x to address npm audit warning. There appear to be no relevant breaking API changes in GCS.
+
 ### CHANGES IN 1.13.0
 
 * Now compatible with S3-like backends that build the bucket URL as a path rather than a subdomain. To enable this behavior, set the `s3ForcePathStyle` option to `true`. Thanks to Funkhaus Creative for this contribution.
