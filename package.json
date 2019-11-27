@@ -1,7 +1,7 @@
 {
   "name": "uploadfs",
-  "version": "1.14.1",
-  "description": "Store files in a web-accessible location via a simplified API. Can automatically scale and rotate images. Includes AWS S3, Azure blobs, Google GCS and local filesystem-based backends with the most convenient features of each.",
+  "version": "1.15.0",
+  "description": "Store files in a web-accessible location via a simplified API. Can automatically scale and rotate images. Includes S3, Azure and local filesystem-based backends with the most convenient features of each.",
   "main": "uploadfs.js",
   "scripts": {
     "test": "npm run testAzure && mocha test/ && node test-imagemagick.js && eslint .",
@@ -10,7 +10,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com:punkave/uploadfs.git"
+    "url": "git@github.com:apostrophecms/uploadfs.git"
   },
   "keywords": [
     "upload",
@@ -18,7 +18,7 @@
     "s3",
     "storage"
   ],
-  "author": "P'unk Avenue LLC",
+  "author": "Apostrophe Technologies",
   "license": "MIT",
   "dependencies": {
     "@google-cloud/storage": "^4.0.0",
