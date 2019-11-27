@@ -1,5 +1,4 @@
 /* global describe, it */
-console.log("ENV", process.env);
 var assert = require('assert');
 var fs = require('fs');
 var rp = require('request-promise');

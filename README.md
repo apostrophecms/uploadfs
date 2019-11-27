@@ -479,13 +479,19 @@ Feel free to open issues on [github](http://github.com/punkave/uploadfs).
 
 ## Changelog
 
-### CHANGES IN 1.14.0
+### CHANGES IN 1.15.0
 
 * gzip content encoding for S3. When using `copyIn` to copy a file of a suitable type into S3, it will be gzipped and the appropriate content encoding will be set so that browsers automatically do the right thing when they download it. Similarly, the `copyOut` implementation for S3 now transparently supports downloading the original, uncompressed content from S3. The standard web image formats and zipfiles are not double-compressed because the benefit is minimal, so the CPU impact on phones is not justified in this case.
 
-### CHANGES IN 1.13.1
+### CHANGES IN 1.14.1
 
 * Depend on GCS 4.x to address npm audit warning. There appear to be no relevant breaking API changes in GCS.
+
+### CHANGES IN 1.14.0
+
+* Failover: azure copyOut now attempts to copy from every available replica, for durability
+* azure errors now report the account and container concerned so you can identify the faulty replica; if all were tried (copyOut), ALL is reported. This is done via `account` and `container` properties on the error object
+* eslint fixes, including undefined variable fixes
 
 ### CHANGES IN 1.13.0
 
