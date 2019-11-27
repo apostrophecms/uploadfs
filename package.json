@@ -10,7 +10,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com:punkave/uploadfs.git"
+    "url": "git@github.com:apostrophecms/uploadfs.git"
   },
   "keywords": [
     "upload",
@@ -18,7 +18,7 @@
     "s3",
     "storage"
   ],
-  "author": "P'unk Avenue LLC",
+  "author": "Apostrophe Technologies",
   "license": "MIT",
   "dependencies": {
     "@google-cloud/storage": "^4.0.0",
