@@ -479,6 +479,10 @@ Feel free to open issues on [github](http://github.com/punkave/uploadfs).
 
 ## Changelog
 
+### CHANGES IN 1.14.0
+
+* gzip content encoding for S3. When using `copyIn` to copy a file of a suitable type into S3, it will be gzipped and the appropriate content encoding will be set so that browsers automatically do the right thing when they download it. Similarly, the `copyOut` implementation for S3 now transparently supports downloading the original, uncompressed content from S3. The standard web image formats and zipfiles are not double-compressed because the benefit is minimal, so the CPU impact on phones is not justified in this case.
+
 ### CHANGES IN 1.13.1
 
 * Depend on GCS 4.x to address npm audit warning. There appear to be no relevant breaking API changes in GCS.
