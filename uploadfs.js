@@ -362,6 +362,9 @@ function Uploadfs() {
       if (context.tempFolder) {
         rmRf(context.tempFolder, function (e) { });
       }
+      if (context.workingPath) {
+        rmRf(context.workingPath, function(e) { });
+      }
       callback(err, err ? null : {
         basePath: context.basePath,
         extension: context.extension,
