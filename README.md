@@ -479,6 +479,10 @@ Feel free to open issues on [github](http://github.com/punkave/uploadfs).
 
 ## Changelog
 
+### CHANGES IN 1.15.1
+
+* Using the latest version of jimp, which resolves an `npm audit` issue. JPEG EXIF rotation autocorrection is now standard in jimp so we don't explicitly invoke it anymore but should get the same good results with smartphone photos etc.
+
 ### CHANGES IN 1.15.0
 
 * gzip content encoding for S3. When using `copyIn` to copy a file of a suitable type into S3, it will be gzipped and the appropriate content encoding will be set so that browsers automatically do the right thing when they download it. Similarly, the `copyOut` implementation for S3 now transparently supports downloading the original, uncompressed content from S3. The standard web image formats and zipfiles are not double-compressed because the benefit is minimal, so the CPU impact on phones is not justified in this case.

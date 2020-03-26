@@ -1,6 +1,6 @@
 {
   "name": "uploadfs",
-  "version": "1.15.0",
+  "version": "1.15.1",
   "description": "Store files in a web-accessible location via a simplified API. Can automatically scale and rotate images. Includes S3, Azure and local filesystem-based backends with the most convenient features of each.",
   "main": "uploadfs.js",
   "scripts": {
@@ -21,32 +21,32 @@
   "author": "Apostrophe Technologies",
   "license": "MIT",
   "dependencies": {
-    "@google-cloud/storage": "^4.0.0",
+    "@google-cloud/storage": "^4.6.0",
     "async": "^1.0.0",
-    "aws-sdk": "^2.239.1",
+    "aws-sdk": "^2.645.0",
     "azure-storage": "^2.8.2",
-    "bluebird": "^3.5.1",
+    "bluebird": "^3.7.2",
     "es6-promise": "^4.1.0",
     "fs-extra": "^5.0.0",
     "gm": "^1.9.0",
     "gzipme": "^0.1.1",
-    "jimp": "^0.2.27",
+    "jimp": "^0.9.6",
     "lodash": "^4.0.0",
     "mkdirp": "~0.3.4",
-    "request": "^2.86.0",
+    "request": "^2.88.2",
     "rimraf": "^2.0.2",
-    "xml2js": "^0.4.19"
+    "xml2js": "^0.4.23"
   },
   "devDependencies": {
     "eslint": "^4.19.1",
     "eslint-config-punkave": "^1.0.10",
     "eslint-config-standard": "^11.0.0-beta.0",
-    "eslint-plugin-import": "^2.11.0",
+    "eslint-plugin-import": "^2.20.1",
     "eslint-plugin-node": "^5.2.1",
     "eslint-plugin-promise": "^3.7.0",
     "eslint-plugin-standard": "^3.1.0",
     "mocha": "^5.1.1",
-    "request-promise": "^4.2.2",
+    "request-promise": "^4.2.5",
     "stat-mode": "^0.2.2"
   }
 }

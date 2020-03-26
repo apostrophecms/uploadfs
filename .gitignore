@@ -10,3 +10,5 @@ public/uploads
 temp
 package-lock.json
 .jshintrc
+# an extra local test in my checkout
+test-jimp.js
