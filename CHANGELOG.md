@@ -2,7 +2,7 @@
 
 ## CHANGES IN 1.16.0
 
-* Added bucketObjectsACL option to s3.js to allow override of default 'public-read' permission when using a restricted S3 bucket to store assets.
+* Added bucketObjectsACL option to s3.js to allow override of default 'public-read' permission when using a restricted S3 bucket to store assets. Thanks to Shaun Hurley for the contribution.
 
 ## CHANGES IN 1.15.1
 
