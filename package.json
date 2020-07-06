@@ -33,6 +33,7 @@
     "jimp": "^0.9.6",
     "lodash": "^4.0.0",
     "mkdirp": "~0.3.4",
+    "regexp-quote": "0.0.0",
     "request": "^2.88.2",
     "rimraf": "^2.0.2",
     "xml2js": "^0.4.23"

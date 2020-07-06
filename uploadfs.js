@@ -426,6 +426,19 @@ function Uploadfs() {
   };
 
   /**
+   *
+   * Callback receives `(null, list)` where `list` is an array
+   * of all files with `path` and `trash` properties. This
+   * method respects the `prefix` option, so only files matching
+   * the prefix are included.
+   * @param {*} path
+   * @param {*} callback
+   */
+  self.catalog = function (callback) {
+    return self._storage.catalog(self.prefix, callback);
+  };
+
+  /**
    * Identify a local image file. Normally you don't need to call
    * this yourself, it is mostly used by copyImageIn. But you may find it
    * useful in certain migration situations, so we have exported it.
