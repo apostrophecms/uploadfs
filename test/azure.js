@@ -91,6 +91,16 @@ describe('UploadFS Azure', function() {
     });
   });
 
+  it('catalog should work', function (done) {
+    return uploadfs.catalog(function(e, list) {
+      assert(!e);
+      assert(_.find(list, function(file) {
+        return (file.path === infile) && (!file.disabled);
+      }));
+      done();
+    });
+  });
+
   it('Azure test copyOut should work', function(done) {
     _getOutfile(infile, done);
   });
@@ -108,15 +118,22 @@ describe('UploadFS Azure', function() {
   it('Azure test copyOut after disable should fail', function(done) {
     setTimeout(function() {
       uploadfs.copyOut(infile, 'foo.bar', {}, function(e, res) {
-        if (e) {
-          console.log("error", e);
-        }
         assert(e);
         assert(e.name === 'StorageError');
         assert(e.message === 'NotFound');
         done();
       });
     }, 5000);
+  });
+
+  it('catalog should show file as disabled', function (done) {
+    return uploadfs.catalog(function(e, list) {
+      assert(!e);
+      assert(_.find(list, function(file) {
+        return (file.path === infile) && (file.disabled);
+      }));
+      done();
+    });
   });
 
   it('Azure enable should work', function(done) {
