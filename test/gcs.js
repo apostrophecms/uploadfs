@@ -1,6 +1,7 @@
 /* global describe, it */
 const assert = require('assert');
 const request = require('request');
+const _ = require('lodash');
 
 describe('UploadFS GCS', function () {
   this.timeout(20000);
@@ -54,6 +55,16 @@ describe('UploadFS GCS', function () {
     });
   });
 
+  it('catalog should work', function (done) {
+    return uploadfs.catalog(function(e, list) {
+      assert(!e);
+      assert(_.find(list, function(file) {
+        return (file.path === dstPath) && (!file.disabled);
+      }));
+      done();
+    });
+  });
+
   it('CopyIn file should be available via gcs', function (done) {
     const url = uploadfs.getUrl() + '/one/two/three/test.txt';
     const og = fs.readFileSync('test.txt', 'utf8');
@@ -89,6 +100,15 @@ describe('UploadFS GCS', function () {
         return request(url, (e, res, body) => {
           assert(res.statusCode >= 400, 'Request on disabled resource should fail: expected 40x, got ' + res.statusCode);
           cb(null);
+        });
+      },
+      catalog: cb => {
+        return uploadfs.catalog(function(e, list) {
+          assert(!e);
+          assert(_.find(list, function(file) {
+            return (file.path === dstPath) && (file.disabled);
+          }));
+          return cb(null);
         });
       },
       enable: cb => {
