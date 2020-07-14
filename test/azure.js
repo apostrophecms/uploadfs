@@ -6,7 +6,7 @@ var uploadfs = require('../uploadfs.js')();
 // A JPEG is not a good default because it is exempt from GZIP so
 // we get less coverage. -Tom
 var srcFile = process.env.AZURE_TEST_FILE || 'test.txt';
-var infilePath = 'one/two/three/';
+var infilePath = '/one/two/three/';
 var infile = infilePath + srcFile;
 var _ = require('underscore');
 
@@ -151,9 +151,9 @@ describe('UploadFS Azure', function() {
   });
 
   it('Uploadfs should return valid web-servable url pointing to uploaded file', function() {
-    var url = uploadfs.getUrl(infile);
+    var url = uploadfs.getUrl() + infile;
+    console.log('**', url);
     var ogFile = fs.readFileSync(srcFile, {encoding: 'utf8'});
-
     return rp({uri: url, gzip: true})
       .then(function(res) {
         assert(ogFile === res, "Web servable file contents equal original text file contents");

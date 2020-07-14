@@ -373,11 +373,11 @@ function Uploadfs() {
     });
   };
 
-  self.getUrl = function (options, callback) {
+  self.getUrl = function () {
     if (self.cdn && self.cdn.enabled) {
       return self.cdn.url;
     }
-    return self._storage.getUrl(options, callback) + self.prefix;
+    return self._storage.getUrl() + self.prefix;
   };
 
   self.remove = function (path, callback) {
