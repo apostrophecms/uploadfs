@@ -306,7 +306,7 @@ And, an equivalent configuration for Google Cloud Storage:
           parallel: 4
     }
 
-Note that GCS assumes the presence of a service account file and an environment variable of GOOGLE_APPLICATION_CREDENTIALS set pointing to this file. For example:
+Note that GCS assumes the presence of a service account file and an environment variable of `GOOGLE_APPLICATION_CREDENTIALS` set pointing to this file. For example:
 
     export GOOGLE_APPLICATION_CREDENTIALS=./projectname-f7f5e919aa79.json
 
@@ -338,6 +338,8 @@ You can also change the permissions set when `enable` is invoked via `enablePerm
     storage: require('mystorage.js')
 
 * You may specify an alternate image processing backend via the `image` option. Three backends, `imagemagick`, `jimp` and `imagecrunch`, are built in. You may also supply an object instead of a string to use your own image processor. Just follow the existing `imagemagick.js` file as a model.
+
+* In backends like Google Cloud Storage and S3, uploadfs finesses the path so that paths with a leading slash like `/foo/bar.txt` behave reasonably and a double slash never appears in the URL. For Apostrophe this is a requirement. However, if you have your heart set on the double slashes, you can set the `strictPaths` option to `true`.
 
 ## Extra features for S3: caching, HTTPS, and CDNs
 
