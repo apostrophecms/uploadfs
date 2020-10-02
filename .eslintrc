@@ -1,14 +1,5 @@
 {
-  "extends": "punkave",
-  "rules": {
-    "space-before-function-paren": 0,
-    "padded-blocks": 0,
-    "quotes": 0,
-    "standard/no-callback-literal": 0,
-    "no-path-concat": 0,
-    "no-throw-literal": 0,
-    "no-console": 0
-  },
+  "extends": "apostrophe",
   "overrides": [
     {
       "files": [ "**/public/**/*.js" ],
@@ -39,8 +30,6 @@
         "it": true,
         "after": true,
         "before": true
-      },
-      "rules": {
       }
     }
   ]
