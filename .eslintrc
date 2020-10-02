@@ -1,5 +1,8 @@
 {
   "extends": "apostrophe",
+  "rules": {
+    "no-console": 0
+  },
   "overrides": [
     {
       "files": [ "**/public/**/*.js" ],
