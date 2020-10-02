@@ -39,7 +39,14 @@ function Uploadfs() {
     // Load standard storage backends, by name. You can also pass an object
     // with your own implementation
     if (typeof (self._storage) === 'string') {
-      self._storage = require('./lib/storage/' + self._storage + '.js')();
+      let library;
+      try {
+        library = require('./lib/storage/' + self._storage + '.js');
+      } catch (e) {
+        console.error('Unable to require the ' + self._storage + ' storage backend, your node version may be too old for it');
+        return callback(e);
+      }
+      self._storage = library();
     }
 
     // If you want to deliver your images
