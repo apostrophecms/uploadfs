@@ -469,6 +469,12 @@ You may write and use other postprocessors, as long as they expect to be called 
 
 If your postprocessor expects four arguments, uploadfs will pass a callback, rather than expecting a promise to be returned.
 
+## Participating in development
+
+### Running the unit tests
+
+If you wish to run the unit tests of this module, you will need to copy the various `-sample.js` files to `.js` and edit them to match your own credentials and buckets for the various services. In addition, you will need to download your credentials `.json` file for Google Cloud Services and place it in `gcs-credentials-uploadfstest.json`. *None of these steps are needed unless you are running our module's unit tests, which only makes sense if you are contributing to further development.*
+
 ## About P'unk Avenue and Apostrophe
 
 `uploadfs` was created at [P'unk Avenue](https://punkave.com) for use in many projects built with Apostrophe, an open-source content management system built on node.js. Appy isn't mandatory for Apostrophe and vice versa, but they play very well together. If you like `uploadfs` you should definitely [check out apostrophecms.com](https://apostrophecms.com). Also be sure to visit us on [github](http://github.com/apostrophecms).
