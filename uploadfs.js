@@ -34,7 +34,7 @@ function Uploadfs() {
     // bc: support options.backend
     self._storage = options.storage || options.backend;
     if (!self._storage) {
-      return callback("Storage backend must be specified");
+      return callback('Storage backend must be specified');
     }
     // Load standard storage backends, by name. You can also pass an object
     // with your own implementation

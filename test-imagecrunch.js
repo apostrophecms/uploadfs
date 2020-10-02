@@ -4,7 +4,12 @@ var _ = require('lodash');
 
 // Test the imagecrunch image backend, written specifically for Macs
 
-var localOptions = { storage: 'local', local: 'imagecrunch', uploadsPath: __dirname + '/test', uploadsUrl: 'http://localhost:3000/test' };
+var localOptions = {
+  storage: 'local',
+  local: 'imagecrunch',
+  uploadsPath: __dirname + '/test',
+  uploadsUrl: 'http://localhost:3000/test'
+};
 
 var imageSizes = [
   {
@@ -100,7 +105,14 @@ function localTestStart() {
 
     // Note copyImageIn adds an extension for us
     // Should grab the flowers
-    uploadfs.copyImageIn('test.jpg', '/images/profiles/me-cropped', { crop: { top: 830, left: 890, width: 500, height: 500 } }, function(e, info) {
+    uploadfs.copyImageIn('test.jpg', '/images/profiles/me-cropped', {
+      crop: {
+        top: 830,
+        left: 890,
+        width: 500,
+        height: 500
+      }
+    }, function(e, info) {
       if (e) {
         console.log('testCopyImageIn failed:');
         console.log(e);

@@ -27,7 +27,7 @@ describe('UploadFS S3', function () {
     }
   ];
 
-  let s3Options = require('../s3TestOptions.js');
+  const s3Options = require('../s3TestOptions.js');
 
   s3Options.imageSizes = imageSizes;
   s3Options.tempPath = tempPath;
@@ -39,9 +39,13 @@ describe('UploadFS S3', function () {
   it('S3 Should init s3 connection without error', function(done) {
     return uploadfs.init(s3Options, function(e) {
       assert(!e, 'S3 init without error');
-      if (e) console.log("=======E", e);
+      if (e) {
+        console.log('=======E', e);
+      }
       uploadfs.copyIn('test.txt', dstPath, function(e) {
-        if (e) console.log("=======EE", e);
+        if (e) {
+          console.log('=======EE', e);
+        }
         assert(!e, 'S3 copyIn without error');
         done();
       });
@@ -147,7 +151,7 @@ describe('UploadFS S3', function () {
 
       setTimeout(() => {
         const url = uploadfs.getUrl();
-        let paths = [ info.basePath + '.jpg' ];
+        const paths = [ info.basePath + '.jpg' ];
 
         paths.push(info.basePath + '.small.jpg');
         paths.push(info.basePath + '.medium.jpg');
