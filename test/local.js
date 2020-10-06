@@ -8,7 +8,11 @@ describe('UploadFS Local', function () {
   var fs = require('fs');
   var async = require('async');
   var tempPath = __dirname + '/temp';
-  var localOptions = { storage: 'local', uploadsPath: __dirname + '/files/', uploadsUrl: 'http://localhost:3000/test/' };
+  var localOptions = {
+    storage: 'local',
+    uploadsPath: __dirname + '/files/',
+    uploadsUrl: 'http://localhost:3000/test/'
+  };
   var imageSizes = [
     {
       name: 'small',

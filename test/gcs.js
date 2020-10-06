@@ -27,7 +27,7 @@ describe('UploadFS GCS', function () {
     }
   ];
 
-  let gcsOptions = require('../gcsTestOptions.js');
+  const gcsOptions = require('../gcsTestOptions.js');
 
   gcsOptions.imageSizes = imageSizes;
   gcsOptions.tempPath = tempPath;
@@ -37,10 +37,14 @@ describe('UploadFS GCS', function () {
 
   it('uploadfs should init gcs connection without error', function(done) {
     return uploadfs.init(gcsOptions, function(e) {
-      if (e) console.log("=======E", e);
+      if (e) {
+        console.log('=======E', e);
+      }
       assert(!e, 'gcs init without error');
       uploadfs.copyIn('test.txt', dstPath, function(e) {
-        if (e) console.log("=======EE", e);
+        if (e) {
+          console.log('=======EE', e);
+        }
         assert(!e, 'gcs copyIn without error');
         done();
       });
@@ -139,7 +143,7 @@ describe('UploadFS GCS', function () {
 
       setTimeout(() => {
         const url = uploadfs.getUrl();
-        let paths = [ info.basePath + '.jpg' ];
+        const paths = [ info.basePath + '.jpg' ];
 
         paths.push(info.basePath + '.small.jpg');
         paths.push(info.basePath + '.medium.jpg');

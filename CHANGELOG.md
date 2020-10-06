@@ -1,5 +1,8 @@
 # Changelog
 
+## CHANGES IN 1.17.1
+* Updates ESLint configuration and fixes errors.
+
 ## CHANGES IN 1.17.0
 
 * Updated the `@google-cloud/storage` module to the 5.x series to address a possible security vulnerability reported by `npm audit`. Version 5.x does not support node 8, which is itself not supported, so you should not be running it anymore.
