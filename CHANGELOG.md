@@ -1,12 +1,14 @@
 # Changelog
 
+## CHANGES IN 1.17.1
+* Updates ESLint configuration and fixes errors.
+
 ## CHANGES IN 1.17.0
 
 * Updated the `@google-cloud/storage` module to the 5.x series to address a possible security vulnerability reported by `npm audit`. Version 5.x does not support node 8, which is itself not supported, so you should not be running it anymore.
 * However, we also made the libraries for all three cloud storage backends (GCS, S3, and Azure) `optionalDependencies`. If they fail to install for any reason, uploadfs will still work, as long as you do not try to use that specific backend.
 * A longstanding bug in GCS storage that broke its use with ApostropheCMS has been fixed. Leading slashes in paths are no longer stored in a way that produces double slashes in URLs and breaks Apostrophe's URL-building. As far as we're concerned, this was a bug, since it broke the unit tests.
 * However, for the benefit of anyone who preferred this behavior for non-Apostrophe applications, the new `strictPaths: true` option may be passed when configuring uploadfs to get the old behavior in which leading slashes are not finessed and the URL will actually contain a double slash.
-* Updates ESLint configuration and fixes errors.
 
 ## CHANGES IN 1.16.0
 
