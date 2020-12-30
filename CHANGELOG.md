@@ -1,5 +1,8 @@
 # Changelog
 
+## CHANGES IN 1.17.2
+* Documented the `endpoint` option. Thanks to Joe Innes for this contribution.
+
 ## CHANGES IN 1.17.1
 * Updates ESLint configuration and fixes errors.
 
