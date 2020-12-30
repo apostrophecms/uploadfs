@@ -179,6 +179,8 @@ Here is an equivalent configuration for S3:
 
     {
       storage: 's3',
+      // Add an arbitrary S3 compatible endpoint
+      endpoint: 's3-compatible-endpoint.com',
       // Get your credentials at aws.amazon.com
       secret: 'xxx',
       key: 'xxx',
