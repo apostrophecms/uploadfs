@@ -1,5 +1,8 @@
 # Changelog
 
+## CHANGES IN 1.18.1
+* Bug fix: the `sizes` option to `copyImageIn` now works even if `imageSizes` was not passed at all when calling `init`.
+
 ## CHANGES IN 1.18.0
 * Support for a `sizes` option when calling `copyImageIn`, removing the requirement that all uploads are scaled to the same set of sizes. If the option is not provided the globally configured sizes are used.
 

@@ -19,6 +19,7 @@ function generateId() {
 function Uploadfs() {
   var tempPath, imageSizes;
   var scaledJpegQuality;
+  var ensuredTempDir = false;
   var self = this;
   /**
    * Initialize uploadfs. The init method passes options to the backend and invokes a callback when the backend is ready.
@@ -79,6 +80,8 @@ function Uploadfs() {
 
     imageSizes = options.imageSizes || [];
 
+    tempPath = options.tempPath;
+
     async.series([
       // create temp folder if needed
       function (callback) {
@@ -86,11 +89,7 @@ function Uploadfs() {
           return callback();
         }
 
-        tempPath = options.tempPath;
-
-        if (!fs.existsSync(options.tempPath)) {
-          fs.mkdirSync(options.tempPath);
-        }
+        ensureTempDir();
         return callback(null);
       },
 
@@ -235,6 +234,8 @@ function Uploadfs() {
     }
 
     var sizes = options.sizes || imageSizes;
+
+    ensureTempDir();
 
     // We'll pass this context to the image processing backend with
     // additional properties
@@ -553,6 +554,15 @@ function Uploadfs() {
   function prefixPath(path) {
     // Resolve any double // that results from the prefix
     return (self.prefix + path).replace(/\/\//g, '/');
+  }
+
+  function ensureTempDir() {
+    if (!ensuredTempDir) {
+      if (!fs.existsSync(tempPath)) {
+        fs.mkdirSync(tempPath);
+      }
+      ensuredTempDir = true;
+    }
   }
 
 }
