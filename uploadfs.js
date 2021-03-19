@@ -172,7 +172,8 @@ function Uploadfs() {
 
   /**
    * Copy an image into uploadfs. Scaled versions as defined by the imageSizes option
-   * at init() time are copied into uploadfs as follows:
+   * passed at init() time, or as overridden by `options.sizes` on this call,
+   * are copied into uploadfs as follows:
    *
    * If 'path' is '/me' and sizes with names 'small', 'medium' and 'large'
    * were defined at init() time, the scaled versions will be:
@@ -233,11 +234,13 @@ function Uploadfs() {
       options = {};
     }
 
+    var sizes = options.sizes || imageSizes;
+
     // We'll pass this context to the image processing backend with
     // additional properties
     var context = {
       crop: options.crop,
-      sizes: imageSizes
+      sizes: sizes
     };
 
     context.scaledJpegQuality = options.scaledJpegQuality || scaledJpegQuality;
@@ -275,7 +278,7 @@ function Uploadfs() {
         // Name the destination folder
         context.tempName = generateId();
         // Create destination folder
-        if (imageSizes.length) {
+        if (sizes.length) {
           context.tempFolder = tempPath + '/' + context.tempName;
           return fs.mkdir(context.tempFolder, callback);
         } else {
@@ -321,7 +324,7 @@ function Uploadfs() {
             // Nowhere to do the work
             return callback(null);
           }
-          var filenames = _.map(imageSizes, function(size) {
+          var filenames = _.map(sizes, function(size) {
             return context.tempFolder + '/' + size.name + '.' + context.extension;
           });
           return self.postprocess(filenames, callback);
@@ -348,7 +351,7 @@ function Uploadfs() {
       },
 
       copySizes: function(callback) {
-        return async.each(imageSizes, function(size, callback) {
+        return async.each(sizes, function(size, callback) {
           var suffix = size.name + '.' + context.extension;
           var tempFile = context.tempFolder + '/' + suffix;
           var permFile = context.basePath + '.' + suffix;

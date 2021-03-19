@@ -1,5 +1,8 @@
 # Changelog
 
+## CHANGES IN 1.18.0
+* Support for a `sizes` option when calling `copyImageIn`, removing the requirement that all uploads are scaled to the same set of sizes. If the option is not provided the globally configured sizes are used.
+
 ## CHANGES IN 1.17.2
 * Documented the `endpoint` option. Thanks to Joe Innes for this contribution.
 

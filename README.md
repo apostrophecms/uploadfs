@@ -50,6 +50,8 @@ You need:
 
 * The default JPEG quality setting for scaled-down versions of your image is `80`. This avoids unacceptably large file sizes for web deployment. You can adjust this via the `scaledJpegQuality` option, either when initializing uploadfs or when calling `copyImageIn`.
 
+* If you do not wish to always use the same set of image sizes, you may pass a `sizes` property as part of the options object when calling `copyImageIn`.
+
 * The `copyOut` method takes a path in uploadfs and a local filename and copies the file back from uploadfs to the local filesystem. This should be used only rarely. Heavy reliance on this method sets you up for poor performance in S3 and Azure. However it may be necessary at times, for instance when you want to crop an image differently later. *Heavy reliance on copyOut is a recipe for bad S3 and/or Azure performance. Use it only for occasional operations like cropping.*
 
 * The `remove` method removes a file from uploadfs.
