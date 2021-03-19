@@ -185,4 +185,59 @@ describe('UploadFS S3', function () {
       }, 5000);
     });
   });
+
+  it('S3 uploadfs copyImageIn should work with custom sizes', done => {
+    const imgDstPath = '/images/profiles/me';
+
+    const customSizes = [
+      {
+        name: 'tiny',
+        width: 80,
+        height: 80
+      },
+      {
+        name: 'nice',
+        width: 120,
+        height: 120
+      }
+    ];
+  
+    uploadfs.copyImageIn('test.jpg', imgDstPath, { sizes: customSizes }, (e, info) => {
+      assert(!e, 'S3 copyImageIn works');
+
+      setTimeout(() => {
+        const url = uploadfs.getUrl();
+        const paths = [ info.basePath + '.jpg' ];
+
+        paths.push(info.basePath + '.tiny.jpg');
+        paths.push(info.basePath + '.nice.jpg');
+
+        async.map(paths, (path, cb) => {
+          const imgPath = url + path;
+          request(imgPath, {
+            gzip: true,
+            // return a buffer so we can test bytes
+            encoding: null
+          }, (e, res, body) => {
+            assert(!e);
+            // Not suitable for images, make sure we didn't force it
+            assert(res.headers['content-encoding'] !== 'gzip');
+            assert(res.statusCode === 200);
+            // JPEG magic number check
+            assert(body[0] === 0xFF);
+            assert(body[1] === 0xD8);
+            // clean up
+            uploadfs.remove(path, e => {
+              assert(!e, 'Remove uploaded file after testing');
+              return cb();
+            });
+          });
+        }, e => {
+          assert(!e, 'Can request all copyImageInned images');
+          done();
+        });
+        // end async.each
+      }, 5000);
+    });
+  });
 });
