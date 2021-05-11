@@ -201,7 +201,7 @@ describe('UploadFS S3', function () {
         height: 120
       }
     ];
-  
+
     uploadfs.copyImageIn('test.jpg', imgDstPath, { sizes: customSizes }, (e, info) => {
       assert(!e, 'S3 copyImageIn works');
 
