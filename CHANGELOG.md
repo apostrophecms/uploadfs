@@ -1,5 +1,10 @@
 # Changelog
 
+## CHANGES IN 1.18.2
+* Addressed `npm audit` complaints about `mkdirp` by using a simple `mkdirp` implementation that has no legacy compatibility issues.
+* Addressed `npm audit` complaints about `mocha` and friends by upgrading `mocha`.
+* There are currently `npm audit` warnings about `azure-storage`, however a fix for this is forthcoming according to the upstream maintainers, and the existing semver ranges in this package will pick it up on `npm audit` when released.
+
 ## CHANGES IN 1.18.1
 * Bug fix: the `sizes` option to `copyImageIn` now works even if `imageSizes` was not passed at all when calling `init`.
 
