@@ -2,7 +2,6 @@
   "extends": "apostrophe",
   "rules": {
     "no-console": 0,
-    "multiline-ternary": 0,
     "node/no-path-concat": 0,
     "node/no-callback-literal": 0
   },
