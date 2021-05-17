@@ -6,16 +6,17 @@ var express = require('express');
 var uploadfs = require('uploadfs')();
 var multipart = require('connect-multiparty');
 var multipartMiddleware = multipart();
+var path = require('path');
 
 // For the local backend
-var uploadsPath = __dirname + '/public/uploads';
+var uploadsPath = path.join(__dirname, '/public/uploads');
 var uploadsLocalUrl = '/uploads';
 var options = {
   backend: 'local',
   uploadsPath: uploadsPath,
   uploadsUrl: 'http://localhost:3000' + uploadsLocalUrl,
   // Required if you use imageSizes and copyImageIn
-  tempPath: __dirname + '/temp',
+  tempPath: path.join(__dirname, '/temp'),
   imageSizes: [
     {
       name: 'small',

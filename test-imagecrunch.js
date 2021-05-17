@@ -1,5 +1,6 @@
 var uploadfs = require('./uploadfs.js')();
 var fs = require('fs');
+var path = require('path');
 var _ = require('lodash');
 
 // Test the imagecrunch image backend, written specifically for Macs
@@ -7,7 +8,7 @@ var _ = require('lodash');
 var localOptions = {
   storage: 'local',
   local: 'imagecrunch',
-  uploadsPath: __dirname + '/test',
+  uploadsPath: path.join(__dirname, '/test'),
   uploadsUrl: 'http://localhost:3000/test'
 };
 
@@ -29,7 +30,7 @@ var imageSizes = [
   }
 ];
 
-var tempPath = __dirname + '/temp';
+var tempPath = path.join(__dirname, '/temp');
 
 localOptions.imageSizes = imageSizes;
 localOptions.tempPath = tempPath;
