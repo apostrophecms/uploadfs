@@ -373,14 +373,16 @@ function Uploadfs() {
       if (context.tempFolder) {
         rmRf(context.tempFolder, function (e) { });
       }
-      callback(err, err ? null : {
-        basePath: context.basePath,
-        extension: context.extension,
-        width: context.info.width,
-        height: context.info.height,
-        originalWidth: context.info.originalWidth,
-        originalHeight: context.info.originalHeight
-      });
+      callback(err, err
+        ? null
+        : {
+          basePath: context.basePath,
+          extension: context.extension,
+          width: context.info.width,
+          height: context.info.height,
+          originalWidth: context.info.originalWidth,
+          originalHeight: context.info.originalHeight
+        });
     });
   };
 

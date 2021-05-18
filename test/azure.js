@@ -8,7 +8,7 @@ var uploadfs = require('../uploadfs.js')();
 var srcFile = process.env.AZURE_TEST_FILE || 'test.txt';
 var infilePath = 'one/two/three/';
 var infile = infilePath + srcFile;
-var _ = require('underscore');
+var _ = require('lodash');
 
 /* helper to automate scraping files from blob svc */
 var _getOutfile = function(infile, done) {
