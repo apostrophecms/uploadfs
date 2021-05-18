@@ -1,16 +1,17 @@
 /* global describe, it */
 var Mode = require('stat-mode');
 var assert = require('assert');
+var path = require('path');
 
 describe('UploadFS Local', function () {
   this.timeout(4500);
   var uploadfs = require('../uploadfs.js')();
   var fs = require('fs');
   var async = require('async');
-  var tempPath = __dirname + '/temp';
+  var tempPath = path.join(__dirname, '/temp');
   var localOptions = {
     storage: 'local',
-    uploadsPath: __dirname + '/files/',
+    uploadsPath: path.join(__dirname, '/files/'),
     uploadsUrl: 'http://localhost:3000/test/'
   };
   var imageSizes = [
