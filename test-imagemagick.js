@@ -3,13 +3,14 @@ var fs = require('fs');
 var async = require('async');
 var Promise = require('bluebird');
 var _ = require('lodash');
+var path = require('path');
 
 // Test the imagecrunch image backend, written specifically for Macs
 
 var localOptions = {
   storage: 'local',
   image: 'imagemagick',
-  uploadsPath: __dirname + '/test',
+  uploadsPath: path.join(__dirname, '/test'),
   uploadsUrl: 'http://localhost:3000/test'
 };
 
@@ -31,7 +32,7 @@ var imageSizes = [
   }
 ];
 
-var tempPath = __dirname + '/temp';
+var tempPath = path.join(__dirname, '/temp');
 var basePath = '/images/profiles/me';
 
 localOptions.imageSizes = imageSizes;
