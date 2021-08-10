@@ -1,5 +1,11 @@
 # Changelog
 
+
+## [Unreleased]
+
+### Fixed
+* Set Azure containers public access level to `blob` instead of `container` to avoid anonymous to list the content.
+
 ## CHANGES IN 1.18.2
 * Addressed `npm audit` complaints about `mkdirp` by using a simple `mkdirp` implementation that has no legacy compatibility issues.
 * Addressed `npm audit` complaints about `mocha` and friends by upgrading `mocha`.
