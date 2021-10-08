@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.18.4 - Unreleased
+## 1.18.4 - 2021-10-08
 
 ### Fixed
 
