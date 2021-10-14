@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.18.4 - 2021-10-08
+
+### Fixed
+
+* Updates jimp to resolve npm audit warning.
+
 ## 1.18.3 - 2021-08-13
 
 ### Fixed
