@@ -50,6 +50,8 @@ You need:
 
 * The default JPEG quality setting for scaled-down versions of your image is `80`. This avoids unacceptably large file sizes for web deployment. You can adjust this via the `scaledJpegQuality` option, either when initializing uploadfs or when calling `copyImageIn`.
 
+* If you do not wish to always use the same set of image sizes, you may pass a `sizes` property as part of the options object when calling `copyImageIn`.
+
 * The `copyOut` method takes a path in uploadfs and a local filename and copies the file back from uploadfs to the local filesystem. This should be used only rarely. Heavy reliance on this method sets you up for poor performance in S3 and Azure. However it may be necessary at times, for instance when you want to crop an image differently later. *Heavy reliance on copyOut is a recipe for bad S3 and/or Azure performance. Use it only for occasional operations like cropping.*
 
 * The `remove` method removes a file from uploadfs.
@@ -179,6 +181,8 @@ Here is an equivalent configuration for S3:
 
     {
       storage: 's3',
+      // Add an arbitrary S3 compatible endpoint
+      endpoint: 's3-compatible-endpoint.com',
       // Get your credentials at aws.amazon.com
       secret: 'xxx',
       key: 'xxx',
@@ -306,7 +310,7 @@ And, an equivalent configuration for Google Cloud Storage:
           parallel: 4
     }
 
-Note that GCS assumes the presence of a service account file and an environment variable of GOOGLE_APPLICATION_CREDENTIALS set pointing to this file. For example:
+Note that GCS assumes the presence of a service account file and an environment variable of `GOOGLE_APPLICATION_CREDENTIALS` set pointing to this file. For example:
 
     export GOOGLE_APPLICATION_CREDENTIALS=./projectname-f7f5e919aa79.json
 
@@ -338,6 +342,8 @@ You can also change the permissions set when `enable` is invoked via `enablePerm
     storage: require('mystorage.js')
 
 * You may specify an alternate image processing backend via the `image` option. Three backends, `imagemagick`, `jimp` and `imagecrunch`, are built in. You may also supply an object instead of a string to use your own image processor. Just follow the existing `imagemagick.js` file as a model.
+
+* In backends like Google Cloud Storage and S3, uploadfs finesses the path so that paths with a leading slash like `/foo/bar.txt` behave reasonably and a double slash never appears in the URL. For Apostrophe this is a requirement. However, if you have your heart set on the double slashes, you can set the `strictPaths` option to `true`.
 
 ## Extra features for S3: caching, HTTPS, and CDNs
 
@@ -466,6 +472,12 @@ You may write and use other postprocessors, as long as they expect to be called 
 > Note that the second argument is always the folder that contains all of the files in the first argument's array. `uploadfs` expects your postprocessor to be able to update the files "in place." All of the files in the first argument will have the same extension.
 
 If your postprocessor expects four arguments, uploadfs will pass a callback, rather than expecting a promise to be returned.
+
+## Participating in development
+
+### Running the unit tests
+
+If you wish to run the unit tests of this module, you will need to copy the various `-sample.js` files to `.js` and edit them to match your own credentials and buckets for the various services. In addition, you will need to download your credentials `.json` file for Google Cloud Services and place it in `gcs-credentials-uploadfstest.json`. *None of these steps are needed unless you are running our module's unit tests, which only makes sense if you are contributing to further development.*
 
 ## About P'unk Avenue and Apostrophe
 

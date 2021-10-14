@@ -19,6 +19,7 @@ function generateId() {
 function Uploadfs() {
   var tempPath, imageSizes;
   var scaledJpegQuality;
+  var ensuredTempDir = false;
   var self = this;
   /**
    * Initialize uploadfs. The init method passes options to the backend and invokes a callback when the backend is ready.
@@ -34,12 +35,19 @@ function Uploadfs() {
     // bc: support options.backend
     self._storage = options.storage || options.backend;
     if (!self._storage) {
-      return callback("Storage backend must be specified");
+      return callback('Storage backend must be specified');
     }
     // Load standard storage backends, by name. You can also pass an object
     // with your own implementation
     if (typeof (self._storage) === 'string') {
-      self._storage = require('./lib/storage/' + self._storage + '.js')();
+      let library;
+      try {
+        library = require('./lib/storage/' + self._storage + '.js');
+      } catch (e) {
+        console.error('Unable to require the ' + self._storage + ' storage backend, your node version may be too old for it');
+        return callback(e);
+      }
+      self._storage = library();
     }
 
     // If you want to deliver your images
@@ -72,6 +80,8 @@ function Uploadfs() {
 
     imageSizes = options.imageSizes || [];
 
+    tempPath = options.tempPath;
+
     async.series([
       // create temp folder if needed
       function (callback) {
@@ -79,11 +89,7 @@ function Uploadfs() {
           return callback();
         }
 
-        tempPath = options.tempPath;
-
-        if (!fs.existsSync(options.tempPath)) {
-          fs.mkdirSync(options.tempPath);
-        }
+        ensureTempDir();
         return callback(null);
       },
 
@@ -165,7 +171,8 @@ function Uploadfs() {
 
   /**
    * Copy an image into uploadfs. Scaled versions as defined by the imageSizes option
-   * at init() time are copied into uploadfs as follows:
+   * passed at init() time, or as overridden by `options.sizes` on this call,
+   * are copied into uploadfs as follows:
    *
    * If 'path' is '/me' and sizes with names 'small', 'medium' and 'large'
    * were defined at init() time, the scaled versions will be:
@@ -226,11 +233,15 @@ function Uploadfs() {
       options = {};
     }
 
+    var sizes = options.sizes || imageSizes;
+
+    ensureTempDir();
+
     // We'll pass this context to the image processing backend with
     // additional properties
     var context = {
       crop: options.crop,
-      sizes: imageSizes
+      sizes: sizes
     };
 
     context.scaledJpegQuality = options.scaledJpegQuality || scaledJpegQuality;
@@ -268,7 +279,7 @@ function Uploadfs() {
         // Name the destination folder
         context.tempName = generateId();
         // Create destination folder
-        if (imageSizes.length) {
+        if (sizes.length) {
           context.tempFolder = tempPath + '/' + context.tempName;
           return fs.mkdir(context.tempFolder, callback);
         } else {
@@ -314,7 +325,7 @@ function Uploadfs() {
             // Nowhere to do the work
             return callback(null);
           }
-          var filenames = _.map(imageSizes, function(size) {
+          var filenames = _.map(sizes, function(size) {
             return context.tempFolder + '/' + size.name + '.' + context.extension;
           });
           return self.postprocess(filenames, callback);
@@ -341,7 +352,7 @@ function Uploadfs() {
       },
 
       copySizes: function(callback) {
-        return async.each(imageSizes, function(size, callback) {
+        return async.each(sizes, function(size, callback) {
           var suffix = size.name + '.' + context.extension;
           var tempFile = context.tempFolder + '/' + suffix;
           var permFile = context.basePath + '.' + suffix;
@@ -362,14 +373,16 @@ function Uploadfs() {
       if (context.tempFolder) {
         rmRf(context.tempFolder, function (e) { });
       }
-      callback(err, err ? null : {
-        basePath: context.basePath,
-        extension: context.extension,
-        width: context.info.width,
-        height: context.info.height,
-        originalWidth: context.info.originalWidth,
-        originalHeight: context.info.originalHeight
-      });
+      callback(err, err
+        ? null
+        : {
+          basePath: context.basePath,
+          extension: context.extension,
+          width: context.info.width,
+          height: context.info.height,
+          originalWidth: context.info.originalWidth,
+          originalHeight: context.info.originalHeight
+        });
     });
   };
 
@@ -556,6 +569,15 @@ function Uploadfs() {
   function prefixPath(path) {
     // Resolve any double // that results from the prefix
     return (self.prefix + path).replace(/\/\//g, '/');
+  }
+
+  function ensureTempDir() {
+    if (!ensuredTempDir) {
+      if (!fs.existsSync(tempPath)) {
+        fs.mkdirSync(tempPath);
+      }
+      ensuredTempDir = true;
+    }
   }
 
 }

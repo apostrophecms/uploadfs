@@ -3,10 +3,16 @@ var fs = require('fs');
 var async = require('async');
 var Promise = require('bluebird');
 var _ = require('lodash');
+var path = require('path');
 
 // Test the imagecrunch image backend, written specifically for Macs
 
-var localOptions = { storage: 'local', image: 'imagemagick', uploadsPath: __dirname + '/test', uploadsUrl: 'http://localhost:3000/test' };
+var localOptions = {
+  storage: 'local',
+  image: 'imagemagick',
+  uploadsPath: path.join(__dirname, '/test'),
+  uploadsUrl: 'http://localhost:3000/test'
+};
 
 var imageSizes = [
   {
@@ -26,7 +32,7 @@ var imageSizes = [
   }
 ];
 
-var tempPath = __dirname + '/temp';
+var tempPath = path.join(__dirname, '/temp');
 var basePath = '/images/profiles/me';
 
 localOptions.imageSizes = imageSizes;
@@ -35,7 +41,7 @@ localOptions.backend = 'local';
 
 localTestStart(function () {
   var filesSeen = false;
-  console.log("RERUN TESTS WITH TEST OF POSTPROCESSORS");
+  console.log('RERUN TESTS WITH TEST OF POSTPROCESSORS');
   localOptions.postprocessors = [
     {
       postprocessor: function(files, folder, options) {
@@ -84,7 +90,7 @@ localTestStart(function () {
       console.error('postprocessor saw no files');
       process.exit(1);
     }
-    console.log("Tests, done");
+    console.log('Tests, done');
     process.exit(0);
   });
 });
@@ -156,7 +162,7 @@ function localTestStart(cb) {
           });
         }, function(err) {
           if (err) {
-            console.log("Test failed", err);
+            console.log('Test failed', err);
             process.exit(1);
           }
           testCopyImageInCrop(cb);
@@ -170,7 +176,14 @@ function localTestStart(cb) {
 
     // Note copyImageIn adds an extension for us
     // Should grab the flowers
-    uploadfs.copyImageIn('test.jpg', '/images/profiles/me-cropped', { crop: { top: 830, left: 890, width: 500, height: 500 } }, function(e, info) {
+    uploadfs.copyImageIn('test.jpg', '/images/profiles/me-cropped', {
+      crop: {
+        top: 830,
+        left: 890,
+        width: 500,
+        height: 500
+      }
+    }, function(e, info) {
       if (e) {
         console.log('testCopyImageIn failed:');
         console.log(e);
@@ -213,10 +226,10 @@ function localTestStart(cb) {
           });
         }, function (err) {
           if (err) {
-            console.log("Remove file fails", err);
+            console.log('Remove file fails', err);
             process.exit(1);
           }
-          console.log("Files removed");
+          console.log('Files removed');
           cb();
         });
       });

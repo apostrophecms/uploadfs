@@ -28,7 +28,7 @@ describe('UploadFS GCS', function () {
     }
   ];
 
-  let gcsOptions = require('../gcsTestOptions.js');
+  const gcsOptions = require('../gcsTestOptions.js');
 
   gcsOptions.imageSizes = imageSizes;
   gcsOptions.tempPath = tempPath;
@@ -38,10 +38,14 @@ describe('UploadFS GCS', function () {
 
   it('uploadfs should init gcs connection without error', function(done) {
     return uploadfs.init(gcsOptions, function(e) {
+      if (e) {
+        console.log('=======E', e);
+      }
       assert(!e, 'gcs init without error');
-      if (e) console.log("=======E", e);
       uploadfs.copyIn('test.txt', dstPath, function(e) {
-        if (e) console.log("=======EE", e);
+        if (e) {
+          console.log('=======EE', e);
+        }
         assert(!e, 'gcs copyIn without error');
         done();
       });
@@ -124,8 +128,9 @@ describe('UploadFS GCS', function () {
           assert(!e, 'Request for enabled resource should not fail');
           assert(res.statusCode < 400, 'Request for enabled resource should not fail');
           assert(og === res.body, 'Downloaded content should be equal to previous upload');
-          assert(res.headers['content-type'] === 'text/plain; charset=utf-8',
-            `Check content-type header expected "text/plain; charset=utf-8" but got "${res.headers['content-type']}"`);
+          // Don't get fussed about presence or absence of UTF-8 in this header
+          assert(res.headers['content-type'].match(/text\/plain/),
+            `Check content-type header expected "text/plain" but got "${res.headers['content-type']}"`);
           cb(null);
         });
       }
@@ -158,7 +163,7 @@ describe('UploadFS GCS', function () {
 
       setTimeout(() => {
         const url = uploadfs.getUrl();
-        let paths = [ info.basePath + '.jpg' ];
+        const paths = [ info.basePath + '.jpg' ];
 
         paths.push(info.basePath + '.small.jpg');
         paths.push(info.basePath + '.medium.jpg');
