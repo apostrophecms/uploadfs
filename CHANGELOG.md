@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.18.5 - 2021-11-05
+
+### Fixed
+
+* Updates azure-storage to resolve npm audit warning.
+
 ## 1.18.4 - 2021-10-08
 
 ### Fixed
