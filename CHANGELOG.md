@@ -1,5 +1,12 @@
 # Changelog
 
+## UNRELEASED
+
+### Fixed
+
+* Local storage is fully compatible with Node 16 and later, as well as earlier releases previously supported.
+* Removed a stray folder.
+
 ## 1.18.4 - 2021-10-08
 
 ### Fixed
