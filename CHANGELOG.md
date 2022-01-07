@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.18.6
+* New options `noGzipContentTypes` and `addNoGzipContentTypes` to configure content types which should not be gzipped.
+
 ## 1.18.5 2021-12-07
 
 ### Fixed
