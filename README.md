@@ -345,7 +345,7 @@ You can also change the permissions set when `enable` is invoked via `enablePerm
 
 * In backends like Google Cloud Storage and S3, uploadfs finesses the path so that paths with a leading slash like `/foo/bar.txt` behave reasonably and a double slash never appears in the URL. For Apostrophe this is a requirement. However, if you have your heart set on the double slashes, you can set the `strictPaths` option to `true`.
 
-## Extra features for S3: caching, HTTPS, and CDNs
+## Extra features for S3: caching, HTTPS, CDNs, and No Gzip Content Types
 
 By default, when users fetch files from S3 via the web, the browser is instructed to cache them for 24 hours. This is reasonable, but you can change that cache lifetime by specifying the `cachingTime` option, in seconds:
 
@@ -371,6 +371,20 @@ Also, if you are using a CDN such as cloudfront that automatically mirrors the c
 ```
 
 Note that specifying a CDN in this way does not in any way activate that CDN for you. It just tells `uploadfs` to return a different result from `getUrl`. The rest is up to you. More CDN-related options may be added in the future.
+
+There is also a list which contains content types that are not gzipped when being uploaded. You can override this default list by setting `noGzipContentTypes`: 
+
+```javascript
+  // Don't gzip jpeg and zip files (override default list)
+  noGzipContentTypes: ['image/jpeg', 'application/zip'] 
+```
+
+Alternatively you can just extend the content types, which should not be gzipped by setting `addNoGzipContentTypes`:
+
+```javascript
+  // Additionally don't gzip pdf files (append to default list)
+  noGzipContentTypes: ['application/pdf'] 
+```
 
 ## Important Concerns With S3
 
