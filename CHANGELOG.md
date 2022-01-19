@@ -1,7 +1,7 @@
 # Changelog
 
-## 1.18.6
-* New options `noGzipContentTypes` and `addNoGzipContentTypes` to configure content types which should not be gzipped.
+## UNRELEASED
+* New options `noGzipContentTypes` and `addNoGzipContentTypes` to configure content types which should not be gzipped when using the `s3` storage backend.
 
 ## 1.18.5 2021-12-07
 

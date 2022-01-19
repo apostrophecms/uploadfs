@@ -372,14 +372,16 @@ Also, if you are using a CDN such as cloudfront that automatically mirrors the c
 
 Note that specifying a CDN in this way does not in any way activate that CDN for you. It just tells `uploadfs` to return a different result from `getUrl`. The rest is up to you. More CDN-related options may be added in the future.
 
-There is also a list which contains content types that are not gzipped when being uploaded. You can override this default list by setting `noGzipContentTypes`: 
+There is also a list which contains content types that shold not be gzipped for faster delivery from s3. Note that gzip content delivery is completely transparent to the end user and supported by all browsers, so the only types that should be excluded are those that are already compressed (i.e. a waste of CPU to unzip) unless there is an issue with the gzip feature in a particular s3-compatible backend.
+
+You can override this default list by setting the `noGzipContentTypes` option: 
 
 ```javascript
-  // Don't gzip jpeg and zip files (override default list)
+  // Don't gzip jpeg and zip files, but gzip everything else (override default list)
   noGzipContentTypes: ['image/jpeg', 'application/zip'] 
 ```
 
-Alternatively you can just extend the content types, which should not be gzipped by setting `addNoGzipContentTypes`:
+Alternatively you can just extend the standard list of types not to be gzipped by setting `addNoGzipContentTypes`:
 
 ```javascript
   // Additionally don't gzip pdf files (append to default list)
@@ -388,17 +390,11 @@ Alternatively you can just extend the content types, which should not be gzipped
 
 ## Important Concerns With S3
 
-**Be aware that uploads to Amazon S3's us-standard region are not guaranteed to be readable the moment you finish uploading them.** This is a big difference from how a regular filesystem behaves. One browser might see them right away while another does not. This is called "eventual consistency."
-
-If you want your files served from the east coast of the US, set `region` to `external-1` instead. This causes uploadfs to use the `s3-external-1` endpoint, for which Amazon guarantees "read-after-write consistency."
-
-Currently `us-standard` is the only region where this is an issue.
-
-However, also be aware that no matter what region you choose, updates of an existing file or deletions of a file still won't always be instantly seen everywhere, even if you don't use the `us-standard` region. To avoid this problem, include a version number or randomly generated ID in each filename.
+Since 2015, files uploaded to S3 are immediately available in all AWS regions ("read after write consistency"). However, also be aware that no matter what region you choose, updates of an existing file or deletions of a file still won't always be instantly seen everywhere, even if you don't use the `us-standard` region. To avoid this problem, it is best to change filenames when uploading updated versions.
 
 In `sample.js` we configure Express to actually serve the uploaded files when using the local backend. When using the s3 backend, you don't need to do this, because your files are served from S3. S3 URLs look like this:
 
-    http://yourbucketname.s3.amazonaws.com/your/path/to/something.jpg
+    https://yourbucketname.s3.amazonaws.com/your/path/to/something.jpg
 
 But your code doesn't need to worry about that. If you use `uploadfs.getUrl()` consistently, code written with one backend will migrate easily to the other.
 
