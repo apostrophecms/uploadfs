@@ -6,7 +6,7 @@ var uploadfs = require('../uploadfs.js')();
 // A JPEG is not a good default because it is exempt from GZIP so
 // we get less coverage. -Tom
 var srcFile = process.env.AZURE_TEST_FILE || 'test.txt';
-var infilePath = 'one/two/three/';
+var infilePath = '/one/two/three/';
 var infile = infilePath + srcFile;
 var _ = require('lodash');
 
@@ -94,6 +94,16 @@ describe('UploadFS Azure', function() {
     });
   });
 
+  it('catalog should work', function (done) {
+    return uploadfs.catalog(function(e, list) {
+      assert(!e);
+      assert(_.find(list, function(file) {
+        return (file.path === infile) && (!file.disabled);
+      }));
+      done();
+    });
+  });
+
   it('Azure test copyOut should work', function(done) {
     _getOutfile(infile, done);
   });
@@ -120,6 +130,16 @@ describe('UploadFS Azure', function() {
         done();
       });
     }, 5000);
+  });
+
+  it('catalog should show file as disabled', function (done) {
+    return uploadfs.catalog(function(e, list) {
+      assert(!e);
+      assert(_.find(list, function(file) {
+        return (file.path === infile) && (file.disabled);
+      }));
+      done();
+    });
   });
 
   it('Azure enable should work', function(done) {

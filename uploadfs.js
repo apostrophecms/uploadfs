@@ -386,11 +386,11 @@ function Uploadfs() {
     });
   };
 
-  self.getUrl = function (options, callback) {
+  self.getUrl = function () {
     if (self.cdn && self.cdn.enabled) {
       return self.cdn.url;
     }
-    return self._storage.getUrl(options, callback) + self.prefix;
+    return self._storage.getUrl() + self.prefix;
   };
 
   self.remove = function (path, callback) {
@@ -436,6 +436,19 @@ function Uploadfs() {
   self.disable = function (path, callback) {
     path = prefixPath(path);
     return self._storage.disable(path, callback);
+  };
+
+  /**
+   *
+   * Callback receives `(null, list)` where `list` is an array
+   * of all files with `path` and `trash` properties. This
+   * method respects the `prefix` option, so only files matching
+   * the prefix are included.
+   * @param {*} path
+   * @param {*} callback
+   */
+  self.catalog = function (callback) {
+    return self._storage.catalog(self.prefix, callback);
   };
 
   /**

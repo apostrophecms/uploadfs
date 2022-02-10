@@ -1,6 +1,7 @@
 /* global describe, it */
 const assert = require('assert');
 const request = require('request');
+const _ = require('lodash');
 
 describe('UploadFS S3', function () {
   this.timeout(50000);
@@ -73,6 +74,16 @@ describe('UploadFS S3', function () {
     });
   });
 
+  it('catalog should work', function (done) {
+    return uploadfs.catalog(function(e, list) {
+      assert(!e);
+      assert(_.find(list, function(file) {
+        return (file.path === dstPath) && (!file.disabled);
+      }));
+      done();
+    });
+  });
+
   it('S3 CopyOut should work', done => {
     const cpOutPath = 'copy-out-test.txt';
     return uploadfs.copyOut(dstPath, cpOutPath, e => {
@@ -99,6 +110,19 @@ describe('UploadFS S3', function () {
         }, (e, res, body) => {
           assert(res.statusCode >= 400, 'Request on disabled resource should fail');
           cb(null);
+        });
+      },
+      catalog: cb => {
+        uploadfs.catalog((e, list) => {
+          if (e) {
+            return cb(e);
+          }
+          if (!_.find(list, function(item) {
+            return (item.path === dstPath) && item.disabled
+          })) {
+            return cb('catalog does not show test.txt as disabled');
+          }
+          return cb(null);
         });
       },
       enable: cb => {

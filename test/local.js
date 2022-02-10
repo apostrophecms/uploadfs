@@ -1,6 +1,7 @@
 /* global describe, it */
 var Mode = require('stat-mode');
 var assert = require('assert');
+var _ = require('lodash');
 var path = require('path');
 
 describe('UploadFS Local', function () {
@@ -54,6 +55,16 @@ describe('UploadFS Local', function () {
     });
   });
 
+  it('catalog should work', function (done) {
+    return uploadfs.catalog(function(e, list) {
+      assert(!e);
+      assert(_.find(list, function(file) {
+        return (file.path === '/test_copy.txt') && (!file.disabled);
+      }));
+      done();
+    });
+  });
+
   it('copyOut should work for local filesystem', done => {
     return uploadfs.copyOut('/test_copy.txt', 'copy-out-test.txt', e => {
       assert(!e);
@@ -96,13 +107,24 @@ describe('UploadFS Local', function () {
 
     return async.series({
       disable: cb => {
-        assert(fs.existsSync(infile), 'copyIn file exissts');
+        assert(fs.existsSync(infile), 'copyIn file exists');
 
         uploadfs.disable(srcFile, e => {
           var stats = fs.statSync(infile);
           var mode = new Mode(stats);
           assert(!e, 'uploadfs disable success!');
           assert(mode.toString() === '----------', 'File permissions locked down');
+          return cb(null);
+        });
+      },
+      catalog: cb => {
+        return uploadfs.catalog(function(e, list) {
+          if (e) {
+            return cb(e);
+          }
+          assert(_.find(list, function(file) {
+            return (file.path === '/test_copy.txt') && (file.disabled);
+          }));
           return cb(null);
         });
       },
