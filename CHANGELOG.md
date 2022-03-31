@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.19.1 2022-03-31
+
+* Security: since Imagemagick depends on Ghostscript which has [known security issues in certain releases](https://cve.circl.lu/cve/CVE-2017-8291) with certain file formats like PDF that are not valid images on the web anyway, verify the magic number of the file and confirm it is a widely web-supported format (a `gif`, `jpeg`, `png`, or `webp` file) before passing it to imagemagick at all.
+
 ## 1.19.0 2022-01-21
 
 * New options `noGzipContentTypes` and `addNoGzipContentTypes` to configure content types which should not be gzipped when using the `s3` storage backend. Thanks to Christian Litzlbauer.
