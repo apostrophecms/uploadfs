@@ -30,6 +30,7 @@
     "lodash": "^4.17.21",
     "request": "^2.88.2",
     "rimraf": "^2.0.2",
+    "sharp": "^0.30.6",
     "xml2js": "^0.4.23"
   },
   "optionalDependencies": {
