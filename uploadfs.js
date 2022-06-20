@@ -114,8 +114,7 @@ function Uploadfs() {
               return true;
             }
           })) {
-            // Fall back to jimp, no need for an error
-            self._image = require('./lib/image/jimp.js')();
+            return callback(new Error('notfound'));
           }
         }
         return callback(null);
