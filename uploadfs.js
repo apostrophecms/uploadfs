@@ -1,4 +1,3 @@
-/* jshint node:true */
 
 var _ = require('lodash');
 var async = require('async');
@@ -65,16 +64,45 @@ function Uploadfs() {
       self.cdn = options.cdn;
     }
 
+
     // Load image backend
-    self._image = options.image;
+     self._image = options.image;
+    const processors = [ 'imagemagick', 'jimp' ];
     if (typeof (self._image) === 'string') {
-      self._image = require('./lib/image/' + self._image + '.js')();
+      if (processors.includes(self._image)) {
+        console.error('We now recommend the use of the sharp.js library for image processing. As fallback, if sharp is not installed we will attempt to use imagemagick instead.');
+      } else if (self._image != 'sharp') {
+        return callback('The sharp.js library is the default with imagemagick as the fallback. No other image processors are supported');
+      }
+    }
+
+    let fallback = false;
+    try {
+      self._image = require('./lib/image/sharp.js')();
+    } catch(e){
+      console.log("Sharp not installed. We highly recommend you run 'npm install sharp'. Trying to fall back to imagemagick.")
+      fallback = true;
+    }
+    if (fallback) {
+      let paths = (process.env.PATH || '').split(delimiter);
+      if (_.find(paths, function(p) {
+      // Allow for Windows and Unix filenames for identify. Silly oversight
+      // after getting delimiter right (:
+        if (fs.existsSync(p + '/identify') || fs.existsSync(p + '/identify.exe')) {
+          self._image = require('./lib/image/imagemagick.js')();
+          return true;
+        }
+      })) {
+      } else {
+        return callback('No supported image processor found.');
+      }
     }
 
     // Reasonable default JPEG quality setting for scaled copies. Imagemagick's default
     // quality is the quality of the original being converted, which is usually a terrible idea
     // when it's a super hi res original. And if that isn't apropos it defaults
     // to 92 which is still sky high and produces very large files
+    // sub-comment - I'm not sure about the 92 above, it seems to be 80 below
 
     scaledJpegQuality = options.scaledJpegQuality || 80;
 
@@ -96,29 +124,6 @@ function Uploadfs() {
       // invoke storage backend init with options
       function (callback) {
         return self._storage.init(options, callback);
-      },
-
-      // Autodetect image backend if necessary
-      function (callback) {
-        if (!self._image) {
-          var paths = (process.env.PATH || '').split(delimiter);
-          if (!_.find(paths, function(p) {
-            if (fs.existsSync(p + '/imagecrunch')) {
-              self._image = require('./lib/image/imagecrunch.js')();
-              return true;
-            }
-            // Allow for Windows and Unix filenames for identify. Silly oversight
-            // after getting delimiter right (:
-            if (fs.existsSync(p + '/identify') || fs.existsSync(p + '/identify.exe')) {
-              self._image = require('./lib/image/imagemagick.js')();
-              return true;
-            }
-          })) {
-            // Fall back to jimp, no need for an error
-            self._image = require('./lib/image/jimp.js')();
-          }
-        }
-        return callback(null);
       },
 
       // invoke image backend init with options
