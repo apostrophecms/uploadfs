@@ -115,7 +115,6 @@ function Uploadfs() {
       }
     }
 
-
     // Reasonable default JPEG quality setting for scaled copies. Imagemagick's default
     // quality is the quality of the original being converted, which is usually a terrible idea
     // when it's a super hi res original. And if that isn't apropos it defaults
