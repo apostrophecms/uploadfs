@@ -64,39 +64,57 @@ function Uploadfs() {
       self.cdn = options.cdn;
     }
 
-
     // Load image backend
-     self._image = options.image;
-    const processors = [ 'imagemagick', 'jimp' ];
-    if (typeof (self._image) === 'string') {
-      if (processors.includes(self._image)) {
-        console.error('We now recommend the use of the sharp.js library for image processing. As fallback, if sharp is not installed we will attempt to use imagemagick instead.');
-      } else if (self._image != 'sharp') {
-        return callback('The sharp.js library is the default with imagemagick as the fallback. No other image processors are supported');
+    self._image = options.image;
+    // Throw warnings about deprecated processors or load default
+    if (typeof self._image === 'string') {
+      if (self._image === 'imagemagick') {
+        console.error('We now recommend the use of the sharp.js library (included) for image processing.');
+      }
+      if (self._image === 'jimp' || self._image === 'imagecrunch') {
+        console.error('The specified processor is no longer supported, defaulting to the sharp.js library.');
+        self._image = 'sharp';
       }
     }
 
     let fallback = false;
-    try {
-      self._image = require('./lib/image/sharp.js')();
-    } catch(e){
-      console.log("Sharp not installed. We highly recommend you run 'npm install sharp'. Trying to fall back to imagemagick.")
-      fallback = true;
-    }
-    if (fallback) {
-      let paths = (process.env.PATH || '').split(delimiter);
-      if (_.find(paths, function(p) {
-      // Allow for Windows and Unix filenames for identify. Silly oversight
-      // after getting delimiter right (:
-        if (fs.existsSync(p + '/identify') || fs.existsSync(p + '/identify.exe')) {
-          self._image = require('./lib/image/imagemagick.js')();
-          return true;
+    // if processor is passed as an string (including 'imagemagick' or 'sharp'), try to load it or fail with warning
+    // if undefined try to load sharp and fallback to imagemagick upon fail
+    if (typeof self._image === 'string' || self._image === undefined) {
+      self._image = self._image === undefined ? 'sharp' : self._image;
+      try {
+        self._image = require(`./lib/image/${self._image}.js`)();
+      } catch {
+        if (self._image === 'sharp') {
+          console.error('Sharp not installed. We highly recommend you run \'npm install sharp\'. Trying to fall back to imagemagick.');
+          fallback = true;
+        } else {
+          return callback('The specified processor was not found.');
         }
-      })) {
+      }
+    }
+
+    if (fallback) {
+      // Check for presence of imagemagick - if we fail sharp load it doesn't mean imagemagick is there
+      const paths = (process.env.PATH || '').split(delimiter);
+      if (
+        _.find(paths, function (p) {
+          // Allow for Windows and Unix filenames for identify. Silly oversight
+          // after getting delimiter right (:
+          if (
+            fs.existsSync(p + '/identify') ||
+            fs.existsSync(p + '/identify.exe')
+          ) {
+            return true;
+          }
+        })
+      ) {
+        self._image = require('./lib/image/imagemagick.js')();
       } else {
         return callback('No supported image processor found.');
       }
     }
+
 
     // Reasonable default JPEG quality setting for scaled copies. Imagemagick's default
     // quality is the quality of the original being converted, which is usually a terrible idea
