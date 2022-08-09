@@ -86,7 +86,7 @@ function Uploadfs() {
         self._image = require(`./lib/image/${self._image}.js`)();
       } catch {
         if (self._image === 'sharp') {
-          console.error('Sharp not installed. We highly recommend you run \'npm install sharp\'. Trying to fall back to imagemagick.');
+          console.error('Sharp not available on this operating system. Trying to fall back to imagemagick.');
           fallback = true;
         } else {
           return callback('The specified processor was not found.');
