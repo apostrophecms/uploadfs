@@ -3,7 +3,7 @@
 ## Unreleased
 
 * Default image processing library changed to [sharp.js](https://www.npmjs.com/package/sharp) as an optional dependency
-* Support for jimp and imagecrunch deprecated
+* Support for jimp and imagecrunch removed
 * imagemagick is now the fallback if sharp has not been installed
 * tests for sharp have been added and the package scripts updated to add "test-sharp"
 ## 1.19.0 2022-01-21
