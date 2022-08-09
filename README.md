@@ -13,7 +13,7 @@ uploadfs copies files to a web-accessible location and provides a consistent way
 * Image width, image height and correct file extension are made available to the developer
 * Non-image files are also supported
 * Web access to files can be disabled and reenabled
-* GIF is supported, including animation, with full support for scaling and cropping (if you have `imagemagick`)
+* GIF is supported, including animation, with full support for scaling and cropping
 * On fire about minimizing file sizes for your resized images? You can plug in `imagemin` and compatible tools using the `postprocessors` option.
 
 You can also remove a file if needed.
@@ -26,13 +26,11 @@ You need:
 
 * A "normal" filesystem in which files stay put forever, *OR* Amazon S3, *OR* Microsoft Azure, *OR* Google Cloud Platform OR a willingness to write a backend for something else (look at `s3.js`, `azure.js` and `local.js` for examples; just supply an object with the same methods, you don't have to supply a factory function).
 
-* Patience, to wait for [Jimp](https://github.com/oliver-moran/jimp) to convert your images; or [Imagemagick](http://www.imagemagick.org/script/index.php), if you want much better speed and GIF support. You can also write a backend for something else (look at `imagemagick.js`, `imagecrunch.js`, and `jimp.js` for examples; just supply an object with the same methods, you don't have to supply a factory function).
+* Patience, to wait for [Sharp](https://www.npmjs.com/package/sharp) to convert your images; or optionally, [Imagemagick](http://www.imagemagick.org/script/index.php). You can also write a backend for something else (look at `sharp.js` or `imagemagick.js` for examples); just supply an object with the same methods, you don't have to supply a factory function).
 
-* Again, if you want GIF support: you'll need [Imagemagick](http://www.imagemagick.org/script/index.php). `jimp` requires no installation of system packages, but it does not yet support GIF. `imagemagick` is very easy to install, your operating system has a package available for it. So don't compile it.
+* If you need to use `imagemagick` and want GIF support: you'll need [gifsicle](https://www.lcdf.org/gifsicle/). It is an optional tool that processes large animated GIFs much faster. Currently, Imagemagick is a prerequisite for using it. Turn it on with the `gifsicle: true` option when calling `init`. Of course you must install `gifsicle` to use it. (Hint: your operating system probably has a package for it. Don't compile things.)
 
-* [gifsicle](https://www.lcdf.org/gifsicle/) is an optional tool that processes large animated GIFs much faster. Currently, Imagemagick is a prerequisite for using it. Turn it on with the `gifsicle: true` option when calling `init`. Of course you must install `gifsicle` to use it. (Hint: your operating system probably has a package for it. Don't compile things.)
-
-* A local filesystem in which files stay put at least during the current request, to hold temporary files for Imagemagick's conversions. This is no problem with Heroku and most other cloud servers. It's just long-term storage that needs to be in S3 or Azure for some of them.
+* A local filesystem in which files stay put at least during the current request, to hold temporary files for Sharp's conversions. This is no problem with Heroku and most other cloud servers. It's just long-term storage that needs to be in S3 or Azure for some of them.
 
 > Note that Heroku includes Imagemagick. You can also install it with `apt-get install imagemagick` on Ubuntu servers. Homebrew can install `imagemagick` on Macs.
 
@@ -72,7 +70,7 @@ The `destroy` method releases any resources such as file descriptors or timeouts
 
 For a complete, very simple and short working example in which a user uploads a profile photo, see `sample.js`.
 
-Here's the interesting bit. Note that we do not supply an extension for the final image file, because we want to var Imagemagick figure that out for us.
+Here's the interesting bit. Note that we do not supply an extension for the final image file, because we want to have Sharp figure that out for us.
 
     app.post('/', multipartMiddleware, function(req, res) {
       uploadfs.copyImageIn(req.files.photo.path, '/profiles/me', function(e, info) {
@@ -142,10 +140,10 @@ Here are the options we pass to `init()` in `sample.js`. Note that we define the
 
     {
       storage: 'local',
-      // Optional. If not specified, ImageMagick will be used with automatic
-      // fallback to jimp.
-      image: 'imagemagick',
-      // Options are 'imagemagick', 'imagecrunch', 'jimp', or a custom image
+      // Optional. If not specified, Sharp will be used with automatic
+      // fallback to Imagemagick.
+      image: 'sharp',
+      // Options are 'sharp' and 'imagemagick', or a custom image
       // processing backend
       uploadsPath: __dirname + '/public/uploads',
       uploadsUrl: 'http://localhost:3000' + uploadsLocalUrl,
@@ -335,13 +333,13 @@ You can also change the permissions set when `enable` is invoked via `enablePerm
     // Only the owner and group can read.
     enablePermissions: parseInt("0440", 8)
 
-* In backends like imagemagick that support it, even the "original" is rotated for you if it is not oriented "top left," as with some iPhone photos. This is necessary for the original to be of any use on the web. But it does modify the original. So if you really don't want this, you can set the `orientOriginals` option to `false`.
+* In backends like sharp or imagemagick that support it, even the "original" is rotated for you if it is not oriented "top left," as with some iPhone photos. This is necessary for the original to be of any use on the web. But it does modify the original. So if you really don't want this, you can set the `orientOriginals` option to `false`.
 
 * It is possible to pass your own custom storage module instead of `local` or `s3`. Follow `local.js` or `s3.js` as a model, and specify your backend like this:
 
     storage: require('mystorage.js')
 
-* You may specify an alternate image processing backend via the `image` option. Three backends, `imagemagick`, `jimp` and `imagecrunch`, are built in. You may also supply an object instead of a string to use your own image processor. Just follow the existing `imagemagick.js` file as a model.
+* You may specify an alternate image processing backend via the `image` option. Two backends, `sharp` and `imagemagick`, are built in. You may also supply an object instead of a string to use your own image processor. Just follow the existing `sharp.js` file as a model.
 
 * In backends like Google Cloud Storage and S3, uploadfs finesses the path so that paths with a leading slash like `/foo/bar.txt` behave reasonably and a double slash never appears in the URL. For Apostrophe this is a requirement. However, if you have your heart set on the double slashes, you can set the `strictPaths` option to `true`.
 
@@ -431,7 +429,7 @@ const imageminPngquant = require('imagemin-pngquant');
 
 uploadfs.init({
   storage: 'local',
-  image: 'imagemagick',
+  image: 'sharp',
   tempPath: __dirname + '/temp',
   imageSizes: [
     {
