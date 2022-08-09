@@ -26,9 +26,9 @@ You need:
 
 * A "normal" filesystem in which files stay put forever, *OR* Amazon S3, *OR* Microsoft Azure, *OR* Google Cloud Platform OR a willingness to write a backend for something else (look at `s3.js`, `azure.js` and `local.js` for examples; just supply an object with the same methods, you don't have to supply a factory function).
 
-* Patience, to wait for [Sharp](https://www.npmjs.com/package/sharp) to convert your images; or optionally, [Imagemagick](http://www.imagemagick.org/script/index.php). You can also write a backend for something else (look at `sharp.js` or `imagemagick.js` for examples); just supply an object with the same methods, you don't have to supply a factory function).
+* Most modern macOS, Windows and Linux systems running Node.js >= 12.13.0 do not require any additional install or runtime dependencies. They will automatically use sharp which is extremely fast. Systems not meeting these qualifications can still use this module if imagemagick is installed on the system. You can also write a backend for something else (look at `sharp.js` or `imagemagick.js` for examples); just supply an object with the same methods, you don't have to supply a factory function).
 
-* If you need to use `imagemagick` and want GIF support: you'll need [gifsicle](https://www.lcdf.org/gifsicle/). It is an optional tool that processes large animated GIFs much faster. Currently, Imagemagick is a prerequisite for using it. Turn it on with the `gifsicle: true` option when calling `init`. Of course you must install `gifsicle` to use it. (Hint: your operating system probably has a package for it. Don't compile things.)
+* If you need to use `imagemagick` and want faster GIF support: you'll need [gifsicle](https://www.lcdf.org/gifsicle/). It is an optional tool that processes large animated GIFs much faster. Currently, Imagemagick is a prerequisite for using it. Turn it on with the `gifsicle: true` option when calling `init`. Of course you must install `gifsicle` to use it. (Hint: your operating system probably has a package for it. Don't compile things.)
 
 * A local filesystem in which files stay put at least during the current request, to hold temporary files for Sharp's conversions. This is no problem with Heroku and most other cloud servers. It's just long-term storage that needs to be in S3 or Azure for some of them.
 
