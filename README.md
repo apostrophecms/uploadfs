@@ -72,19 +72,21 @@ For a complete, very simple and short working example in which a user uploads a 
 
 Here's the interesting bit. Note that we do not supply an extension for the final image file, because we want to have Sharp figure that out for us.
 
-    app.post('/', multipartMiddleware, function(req, res) {
-      uploadfs.copyImageIn(req.files.photo.path, '/profiles/me', function(e, info) {
-        if (e) {
-          res.send('An error occurred: ' + e);
-        } else {
-          res.send('<h1>All is well. Here is the image in three sizes plus the original.</h1>' +
-            '<div><img src="' + uploadfs.getUrl() + info.basePath + '.small.' + info.extension + '" /></div>' +
-            '<div><img src="' + uploadfs.getUrl() + info.basePath + '.medium.' + info.extension + '" /></div>' +
-            '<div><img src="' + uploadfs.getUrl() + info.basePath + '.large.' + info.extension + '" /></div>' +
-            '<div><img src="' + uploadfs.getUrl() + info.basePath + '.' + info.extension + '" /></div>');
-        }
-      });
-    });
+```javascript
+app.post('/', multipartMiddleware, function(req, res) {
+  uploadfs.copyImageIn(req.files.photo.path, '/profiles/me', function(e, info) {
+    if (e) {
+      res.send('An error occurred: ' + e);
+    } else {
+      res.send('<h1>All is well. Here is the image in three sizes plus the original.</h1>' +
+        '<div><img src="' + uploadfs.getUrl() + info.basePath + '.small.' + info.extension + '" /></div>' +
+        '<div><img src="' + uploadfs.getUrl() + info.basePath + '.medium.' + info.extension + '" /></div>' +
+        '<div><img src="' + uploadfs.getUrl() + info.basePath + '.large.' + info.extension + '" /></div>' +
+        '<div><img src="' + uploadfs.getUrl() + info.basePath + '.' + info.extension + '" /></div>');
+    }
+  });
+});
+```
 
 Note the use of `uploadfs.getUrl()` to determine the URL of the uploaded image. **Use this method consistently and your code will find the file in the right place regardless of the backend chosen.**
 
@@ -112,17 +114,23 @@ The same information is available via `identifyLocalImage` if you want to examin
 
 Here's how to remove a file:
 
-    uploadfs.remove('/profiles/me.jpg', function(e) { ... });
+```javascript
+uploadfs.remove('/profiles/me.jpg', function(e) { ... });
+```
 
 ## Disabling Access To Files
 
 This call shuts off **web access** to a file:
 
-    uploadfs.disable('/profiles/me.jpg', function(e) { ... });
+```javascript
+uploadfs.disable('/profiles/me.jpg', function(e) { ... });
+```
 
 And this call restores it:
 
-    uploadfs.enable('/profiles/me.jpg', function(e) { ... });
+```javascript
+uploadfs.enable('/profiles/me.jpg', function(e) { ... });
+```
 
 *Depending on the backend, `disable` may also block the copyOut method*, so be sure to call `enable` before attempting any further access to the file.
 
@@ -137,59 +145,159 @@ Those using `local` storage can change their minds about using `disabledFileKey`
 ## Configuration Options
 
 Here are the options we pass to `init()` in `sample.js`. Note that we define the image sizes we want the `copyImageIn` function to produce. No image will be wider or taller than the limits specified. The aspect ratio is always maintained, so one axis will often be smaller than the limits specified. Here's a hint: specify the width you really want, and the maximum height you can put up with. That way only obnoxiously tall images will get a smaller width, as a safeguard.
-
+```javascript
+{
+  storage: 'local',
+  // Optional. If not specified, Sharp will be used with automatic
+  // fallback to Imagemagick.
+  image: 'sharp',
+  // Options are 'sharp' and 'imagemagick', or a custom image
+  // processing backend
+  uploadsPath: __dirname + '/public/uploads',
+  uploadsUrl: 'http://localhost:3000' + uploadsLocalUrl,
+  // Required if you use copyImageIn
+  // Temporary files are made here and later automatically removed
+  tempPath: __dirname + '/temp',
+  imageSizes: [
     {
-      storage: 'local',
-      // Optional. If not specified, Sharp will be used with automatic
-      // fallback to Imagemagick.
-      image: 'sharp',
-      // Options are 'sharp' and 'imagemagick', or a custom image
-      // processing backend
-      uploadsPath: __dirname + '/public/uploads',
-      uploadsUrl: 'http://localhost:3000' + uploadsLocalUrl,
-      // Required if you use copyImageIn
-      // Temporary files are made here and later automatically removed
-      tempPath: __dirname + '/temp',
-      imageSizes: [
-        {
-          name: 'small',
-          width: 320,
-          height: 320
-        },
-        {
-          name: 'medium',
-          width: 640,
-          height: 640
-        },
-        {
-          name: 'large',
-          width: 1140,
-          height: 1140
-        }
-      ],
-      // Render up to 4 image sizes at once. Note this means 4 at once per call
-      // to copyImageIn. There is currently no built-in throttling of multiple calls to
-      // copyImageIn
-      parallel: 4,
-      // Optional. See "disabling access to files," above
-      // disabledFileKey: 'this should be a unique, random string'
+      name: 'small',
+      width: 320,
+      height: 320
+    },
+    {
+      name: 'medium',
+      width: 640,
+      height: 640
+    },
+    {
+      name: 'large',
+      width: 1140,
+      height: 1140
     }
+  ],
+  // Render up to 4 image sizes at once. Note this means 4 at once per call
+  // to copyImageIn. There is currently no built-in throttling of multiple calls to
+  // copyImageIn
+  parallel: 4,
+  // Optional. See "disabling access to files," above
+  // disabledFileKey: 'this should be a unique, random string'
+}
+```
 
 Here is an equivalent configuration for S3:
 
+```javascript
+{
+  storage: 's3',
+  // Add an arbitrary S3 compatible endpoint
+  endpoint: 's3-compatible-endpoint.com',
+  // Get your credentials at aws.amazon.com
+  secret: 'xxx',
+  key: 'xxx',
+  // You need to create your bucket first before using it here
+  // Go to aws.amazon.com
+  bucket: 'getyourownbucketplease',
+  // For read-after-write consistency in the US East region.
+  // You could also use any other region name except us-standard
+  region: 'external-1',
+  // Required if you use copyImageIn, or use Azure at all
+  tempPath: __dirname + '/temp',
+  imageSizes: [
     {
-      storage: 's3',
-      // Add an arbitrary S3 compatible endpoint
-      endpoint: 's3-compatible-endpoint.com',
-      // Get your credentials at aws.amazon.com
-      secret: 'xxx',
-      key: 'xxx',
-      // You need to create your bucket first before using it here
-      // Go to aws.amazon.com
+      name: 'small',
+      width: 320,
+      height: 320
+    },
+    {
+      name: 'medium',
+      width: 640,
+      height: 640
+    },
+    {
+      name: 'large',
+      width: 1140,
+      height: 1140
+    }
+  ],
+  // Render up to 4 image sizes at once. Note this means 4 at once per call
+  // to copyImageIn. There is currently no built-in throttling of multiple calls to
+  // copyImageIn
+  parallel: 4
+}
+```
+
+And, an equivalent configuration for Azure:
+
+```javascript
+{
+  storage: 'azure',
+  account: 'storageAccountName',
+  container: 'storageContainerName',
+  key: 'accessKey',
+  disabledFileKey: 'a random string of your choosing',
+  // Always required for Azure
+  tempPath: __dirname + '/temp',
+  // by default we gzip encode EVERYTHING except for a short list of excpetions, found in defaultGzipBlacklist.js
+  // if for some reason you want to enable gzip encoding for one of these types, you can
+  // you can also add types to ignore when gzipping
+  gzipEncoding: {
+    'jpg': true,
+    'rando': false
+  },
+  imageSizes: [
+    {
+      name: 'small',
+      width: 320,
+      height: 320
+    },
+    {
+      name: 'medium',
+      width: 640,
+      height: 640
+    },
+    {
+      name: 'large',
+      width: 1140,
+      height: 1140
+    }
+  ],
+  // Render up to 4 image sizes at once. Note this means 4 at once per call
+  // to copyImageIn. There is currently no built-in throttling of multiple calls to
+  // copyImageIn
+  parallel: 4
+}
+```
+
+With Azure you may optionally replicate the content across a cluster:
+
+```javascript
+{
+  storage: 'azure',
+  replicateClusters: [
+    {
+      account: 'storageAccountName1',
+      container: 'storageContainerName1',
+      key: 'accessKey1',
+    },
+    {
+      account: 'storageAccountName2',
+      container: 'storageContainerName2',
+      key: 'accessKey2',
+    },
+  ],
+  ...
+}
+```
+
+And, an equivalent configuration for Google Cloud Storage:
+
+```javascript
+{
+      storage: 'gcs',
+      // Go to the Google Cloud Console, select your project and select the Storage item on the left side of the screen to find / create your bucket. Put your bucket name here.
       bucket: 'getyourownbucketplease',
-      // For read-after-write consistency in the US East region.
-      // You could also use any other region name except us-standard
-      region: 'external-1',
+      // Select your region
+      region: 'us-west-2',
       // Required if you use copyImageIn, or use Azure at all
       tempPath: __dirname + '/temp',
       imageSizes: [
@@ -213,104 +321,12 @@ Here is an equivalent configuration for S3:
       // to copyImageIn. There is currently no built-in throttling of multiple calls to
       // copyImageIn
       parallel: 4
-
-    }
-
-And, an equivalent configuration for Azure:
-
-    {
-      storage: 'azure',
-      account: 'storageAccountName',
-      container: 'storageContainerName',
-      key: 'accessKey',
-      disabledFileKey: 'a random string of your choosing',
-      // Always required for Azure
-      tempPath: __dirname + '/temp',
-      // by default we gzip encode EVERYTHING except for a short list of excpetions, found in defaultGzipBlacklist.js
-      // if for some reason you want to enable gzip encoding for one of these types, you can
-      // you can also add types to ignore when gzipping
-      gzipEncoding: {
-        'jpg': true,
-        'rando': false
-      },
-      imageSizes: [
-        {
-          name: 'small',
-          width: 320,
-          height: 320
-        },
-        {
-          name: 'medium',
-          width: 640,
-          height: 640
-        },
-        {
-          name: 'large',
-          width: 1140,
-          height: 1140
-        }
-      ],
-      // Render up to 4 image sizes at once. Note this means 4 at once per call
-      // to copyImageIn. There is currently no built-in throttling of multiple calls to
-      // copyImageIn
-      parallel: 4
-    }
-
-With Azure you may optionally replicate the content across a cluster:
-
-    {
-      storage: 'azure',
-      replicateClusters: [
-        {
-          account: 'storageAccountName1',
-          container: 'storageContainerName1',
-          key: 'accessKey1',
-        },
-        {
-          account: 'storageAccountName2',
-          container: 'storageContainerName2',
-          key: 'accessKey2',
-        },
-      ],
-      ...
-    }
-
-And, an equivalent configuration for Google Cloud Storage:
-
-    {
-          storage: 'gcs',
-          // Go to the Google Cloud Console, select your project and select the Storage item on the left side of the screen to find / create your bucket. Put your bucket name here.
-          bucket: 'getyourownbucketplease',
-          // Select your region
-          region: 'us-west-2',
-          // Required if you use copyImageIn, or use Azure at all
-          tempPath: __dirname + '/temp',
-          imageSizes: [
-            {
-              name: 'small',
-              width: 320,
-              height: 320
-            },
-            {
-              name: 'medium',
-              width: 640,
-              height: 640
-            },
-            {
-              name: 'large',
-              width: 1140,
-              height: 1140
-            }
-          ],
-          // Render up to 4 image sizes at once. Note this means 4 at once per call
-          // to copyImageIn. There is currently no built-in throttling of multiple calls to
-          // copyImageIn
-          parallel: 4
-    }
-
+}
+```
 Note that GCS assumes the presence of a service account file and an environment variable of `GOOGLE_APPLICATION_CREDENTIALS` set pointing to this file. For example:
-
-    export GOOGLE_APPLICATION_CREDENTIALS=./projectname-f7f5e919aa79.json
+```sh
+export GOOGLE_APPLICATION_CREDENTIALS=./projectname-f7f5e919aa79.json
+```
 
 In the above example, the file named `projectname-f7f5e919aa79.json` is sitting in the root of the module
 
@@ -322,22 +338,28 @@ bucket**. Otherwise you will get this error: "cannot use ACL API to set object p
 ## Less Frequently Used Options
 
 * If you are using the `local` backend (files on your server's drive), you might not like that when `disable` is called, the permissions of a file are set to `000` (no one has access). We suggest using the `disableFileKey` option to completely avoid this issue. However, if you wish, you can pass the `disablePermissions` option. As usual with Unix permissions, this is an OCTAL NUMBER, not a decimal one. Octal constants have been deprecated, so in modern JavaScript it is best to write it like this:
-
-    // Only the owner can read. This is handy if
-    // your proxy server serves static files for you and
-    // shares a group but does not run as the same user
-    disablePermissions: parseInt("0400", 8)
+* 
+```javascript
+// Only the owner can read. This is handy if
+// your proxy server serves static files for you and
+// shares a group but does not run as the same user
+disablePermissions: parseInt("0400", 8)
+```
 
 You can also change the permissions set when `enable` is invoked via `enablePermissions`. Keep in mind that `enable()` is not invoked for a brand new file (it receives the default permissions). You might choose to write:
 
-    // Only the owner and group can read.
-    enablePermissions: parseInt("0440", 8)
+```javascript
+// Only the owner and group can read.
+enablePermissions: parseInt("0440", 8)
+```
 
 * In backends like sharp or imagemagick that support it, even the "original" is rotated for you if it is not oriented "top left," as with some iPhone photos. This is necessary for the original to be of any use on the web. But it does modify the original. So if you really don't want this, you can set the `orientOriginals` option to `false`.
 
 * It is possible to pass your own custom storage module instead of `local` or `s3`. Follow `local.js` or `s3.js` as a model, and specify your backend like this:
-
-    storage: require('mystorage.js')
+* 
+```javascript
+storage: require('mystorage.js')
+```
 
 * You may specify an alternate image processing backend via the `image` option. Two backends, `sharp` and `imagemagick`, are built in. You may also supply an object instead of a string to use your own image processor. Just follow the existing `sharp.js` file as a model.
 
@@ -392,7 +414,9 @@ Since 2015, files uploaded to S3 are immediately available in all AWS regions ("
 
 In `sample.js` we configure Express to actually serve the uploaded files when using the local backend. When using the s3 backend, you don't need to do this, because your files are served from S3. S3 URLs look like this:
 
-    https://yourbucketname.s3.amazonaws.com/your/path/to/something.jpg
+```html
+https://yourbucketname.s3.amazonaws.com/your/path/to/something.jpg
+```
 
 But your code doesn't need to worry about that. If you use `uploadfs.getUrl()` consistently, code written with one backend will migrate easily to the other.
 
@@ -404,7 +428,7 @@ S3 support is based on the official AWS SDK.
 
 If you are running several Apostrophe sites that must share an S3 bucket, you'll notice
 that their uploads are jumbled together in a single `/attachments` "folder." With
-the local storage method you can address this by specifying an `uploadsPath` that
+the local storage method, you can address this by specifying an `uploadsPath` that
 includes a different prefix for each site, but for S3 or Azure there was previously no good
 solution.
 
@@ -422,7 +446,7 @@ It is possible to configure `uploadfs` to run a postprocessor such as `imagemin`
 
 Here is an example based on the `imagemin` documentation:
 
-```
+```javascript
 const imagemin = require('imagemin');
 const imageminJpegtran = require('imagemin-jpegtran');
 const imageminPngquant = require('imagemin-pngquant');
@@ -462,7 +486,7 @@ A file will not be passed to a postprocessor unless it is configured for the fil
 
 The above code will invoke `imagemin` like this:
 
-```
+```javascript
 imagemin([ '/temp/folder/file1-small.jpg', '/temp/folder/file2-medium.jpg', ... ], '/temp/folder', {
   plugins: [
     imageminJpegtran(),
