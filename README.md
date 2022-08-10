@@ -405,7 +405,7 @@ Alternatively you can just extend the standard list of types not to be gzipped b
 
 ```javascript
   // Additionally don't gzip pdf files (append to default list)
-  noGzipContentTypes: ['application/pdf'] 
+  addNoGzipContentTypes: ['application/pdf'] 
 ```
 
 ## Important Concerns With S3
