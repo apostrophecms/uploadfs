@@ -6,7 +6,8 @@
   "scripts": {
     "test": "npm run testAzure && GOOGLE_APPLICATION_CREDENTIALS=gcs-credentials-uploadfstest.json mocha test/ && node test-imagemagick.js && eslint .",
     "testAzure": "env AZURE_TEST_FILE='test.jpg' mocha test/azure.js",
-    "lint-be": "eslint --fix 'lib/**/*.js'"
+    "lint-be": "eslint --fix 'lib/**/*.js'",
+    "test-sharp": "npm run testAzure && GOOGLE_APPLICATION_CREDENTIALS=gcs-credentials-uploadfstest.json mocha test/ && node test-sharp.js && eslint ."
   },
   "repository": {
     "type": "git",
@@ -27,7 +28,6 @@
     "fs-extra": "^5.0.0",
     "gm": "^1.9.0",
     "gzipme": "^0.1.1",
-    "jimp": "^0.13.0",
     "lodash": "^4.17.21",
     "request": "^2.88.2",
     "rimraf": "^2.0.2",
@@ -36,7 +36,8 @@
   "optionalDependencies": {
     "@google-cloud/storage": "^5.3.0",
     "aws-sdk": "^2.645.0",
-    "azure-storage": "^2.8.2"
+    "azure-storage": "^2.8.2",
+    "sharp": "^0.30.7"
   },
   "devDependencies": {
     "eslint": "^7.26.0",

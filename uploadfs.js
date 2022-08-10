@@ -1,5 +1,3 @@
-/* jshint node:true */
-
 var _ = require('lodash');
 var async = require('async');
 var crypto = require('crypto');
@@ -39,12 +37,16 @@ function Uploadfs() {
     }
     // Load standard storage backends, by name. You can also pass an object
     // with your own implementation
-    if (typeof (self._storage) === 'string') {
+    if (typeof self._storage === 'string') {
       let library;
       try {
         library = require('./lib/storage/' + self._storage + '.js');
       } catch (e) {
-        console.error('Unable to require the ' + self._storage + ' storage backend, your node version may be too old for it');
+        console.error(
+          'Unable to require the ' +
+            self._storage +
+            ' storage backend, your node version may be too old for it'
+        );
         return callback(e);
       }
       self._storage = library();
@@ -53,11 +55,14 @@ function Uploadfs() {
     // If you want to deliver your images
     // over a CDN then this could be set in options
     if (options.cdn !== undefined) {
-      if (!_.isObject(options.cdn) ||
-            !_.isString(options.cdn.url) ||
-            (options.cdn.enabled !== undefined && !_.isBoolean(options.cdn.enabled))
+      if (
+        !_.isObject(options.cdn) ||
+        !_.isString(options.cdn.url) ||
+        (options.cdn.enabled !== undefined && !_.isBoolean(options.cdn.enabled))
       ) {
-        return callback('CDN must be a valid object: {enabled: boolean, url: string}');
+        return callback(
+          'CDN must be a valid object: {enabled: boolean, url: string}'
+        );
       }
       if (options.cdn.enabled === undefined) {
         options.cdn.enabled = true;
@@ -67,14 +72,59 @@ function Uploadfs() {
 
     // Load image backend
     self._image = options.image;
-    if (typeof (self._image) === 'string') {
-      self._image = require('./lib/image/' + self._image + '.js')();
+    // Throw warnings about deprecated processors or load default
+    if (self._image === 'jimp' || self._image === 'imagecrunch') {
+      console.error(
+        'The specified processor is no longer supported, defaulting to the sharp.js library.'
+      );
+      self._image = 'sharp';
+    }
+
+    let fallback = false;
+    // if processor is passed as an string (including 'imagemagick' or 'sharp'), try to load it or fail with warning
+    // if undefined try to load sharp and fallback to imagemagick upon fail
+    if (typeof self._image === 'string' || self._image === undefined) {
+      self._image = self._image === undefined ? 'sharp' : self._image;
+      try {
+        self._image = require(`./lib/image/${self._image}.js`)();
+      } catch {
+        if (self._image === 'sharp') {
+          console.error(
+            'Sharp not available on this operating system. Trying to fall back to imagemagick.'
+          );
+          fallback = true;
+        } else {
+          return callback('The specified processor was not found.');
+        }
+      }
+    }
+
+    if (fallback) {
+      // Check for presence of imagemagick - if we fail sharp load it doesn't mean imagemagick is there
+      const paths = (process.env.PATH || '').split(delimiter);
+      if (
+        _.find(paths, function (p) {
+          // Allow for Windows and Unix filenames for identify. Silly oversight
+          // after getting delimiter right (:
+          if (
+            fs.existsSync(p + '/identify') ||
+            fs.existsSync(p + '/identify.exe')
+          ) {
+            return true;
+          }
+        })
+      ) {
+        self._image = require('./lib/image/imagemagick.js')();
+      } else {
+        return callback('No supported image processor found.');
+      }
     }
 
     // Reasonable default JPEG quality setting for scaled copies. Imagemagick's default
     // quality is the quality of the original being converted, which is usually a terrible idea
     // when it's a super hi res original. And if that isn't apropos it defaults
     // to 92 which is still sky high and produces very large files
+    // sub-comment - I'm not sure about the 92 above, it seems to be 80 below
 
     scaledJpegQuality = options.scaledJpegQuality || 80;
 
@@ -82,51 +132,30 @@ function Uploadfs() {
 
     tempPath = options.tempPath;
 
-    async.series([
-      // create temp folder if needed
-      function (callback) {
-        if (!imageSizes.length) {
-          return callback();
-        }
-
-        ensureTempDir();
-        return callback(null);
-      },
-
-      // invoke storage backend init with options
-      function (callback) {
-        return self._storage.init(options, callback);
-      },
-
-      // Autodetect image backend if necessary
-      function (callback) {
-        if (!self._image) {
-          var paths = (process.env.PATH || '').split(delimiter);
-          if (!_.find(paths, function(p) {
-            if (fs.existsSync(p + '/imagecrunch')) {
-              self._image = require('./lib/image/imagecrunch.js')();
-              return true;
-            }
-            // Allow for Windows and Unix filenames for identify. Silly oversight
-            // after getting delimiter right (:
-            if (fs.existsSync(p + '/identify') || fs.existsSync(p + '/identify.exe')) {
-              self._image = require('./lib/image/imagemagick.js')();
-              return true;
-            }
-          })) {
-            // Fall back to jimp, no need for an error
-            self._image = require('./lib/image/jimp.js')();
+    async.series(
+      [
+        // create temp folder if needed
+        function (callback) {
+          if (!imageSizes.length) {
+            return callback();
           }
+
+          ensureTempDir();
+          return callback(null);
+        },
+
+        // invoke storage backend init with options
+        function (callback) {
+          return self._storage.init(options, callback);
+        },
+
+        // invoke image backend init with options
+        function (callback) {
+          return self._image.init(options, callback);
         }
-        return callback(null);
-      },
-
-      // invoke image backend init with options
-      function (callback) {
-        return self._image.init(options, callback);
-      }
-
-    ], callback);
+      ],
+      callback
+    );
   };
 
   /**
@@ -137,7 +166,7 @@ function Uploadfs() {
    * @param  {Function} callback    Will receive the usual err argument
    */
   self.copyIn = function (localPath, path, options, callback) {
-    if (typeof (options) === 'function') {
+    if (typeof options === 'function') {
       callback = options;
       options = {};
     }
@@ -149,7 +178,7 @@ function Uploadfs() {
    * Obtain the temporary folder used for intermediate files created by copyImageIn. Can also be useful when doing your own manipulations with copyOut.
    * @see Uploadfs#copyOut
    */
-  self.getTempPath = function() {
+  self.getTempPath = function () {
     return tempPath;
   };
 
@@ -162,7 +191,7 @@ function Uploadfs() {
    */
   self.copyOut = function (path, localPath, options, callback) {
     path = prefixPath(path);
-    if (typeof (options) === 'function') {
+    if (typeof options === 'function') {
       callback = options;
       options = {};
     }
@@ -225,10 +254,9 @@ function Uploadfs() {
    */
 
   self.copyImageIn = function (localPath, path, options, callback) {
-
     // We do not call prefixPath here because we rely on copyIn, which does
 
-    if (typeof (options) === 'function') {
+    if (typeof options === 'function') {
       callback = options;
       options = {};
     }
@@ -250,7 +278,7 @@ function Uploadfs() {
     // context.extension
 
     function identify(path, callback) {
-      return self.identifyLocalImage(path, function(err, info) {
+      return self.identifyLocalImage(path, function (err, info) {
         if (err) {
           return callback(err);
         }
@@ -264,126 +292,144 @@ function Uploadfs() {
     var copyOriginal = options.copyOriginal !== false;
     var originalPath;
 
-    async.series({
-      // Identify the file
-      identify: function (callback) {
-        return identify(localPath, function(err) {
-          if (err) {
-            return callback(err);
-          }
-          return callback(null);
-        });
-      },
-      // make a temporary folder for our work
-      temporary: function (callback) {
-        // Name the destination folder
-        context.tempName = generateId();
-        // Create destination folder
-        if (sizes.length) {
-          context.tempFolder = tempPath + '/' + context.tempName;
-          return fs.mkdir(context.tempFolder, callback);
-        } else {
-          return callback(null);
-        }
-      },
-      // Determine base path in uploadfs, working path for temporary files,
-      // and final uploadfs path of the original
-      paths: function (callback) {
-        context.basePath = path.replace(/\.\w+$/, '');
-        context.workingPath = localPath;
-
-        // Indulge their wild claims about the extension the original
-        // should have if any, otherwise provide the truth from identify
-        if (path.match(/\.\w+$/)) {
-          originalPath = path;
-        } else {
-          originalPath = path + '.' + context.extension;
-        }
-        return callback(null);
-      },
-      copyOriginal: function(callback) {
-        // If there are no transformations of the original, copy it
-        // in directly
-        if ((!copyOriginal) || (options.orientOriginals !== false) || (options.crop)) {
-          return callback(null);
-        }
-        originalDone = true;
-        return self.copyIn(localPath, originalPath, options, callback);
-      },
-
-      convert: function (callback) {
-        context.copyOriginal = copyOriginal && (!originalDone);
-        return async.series([
-          convert,
-          postprocess
-        ], callback);
-        function convert(callback) {
-          return self._image.convert(context, callback);
-        }
-        function postprocess(callback) {
-          if (!context.tempFolder) {
-            // Nowhere to do the work
+    async.series(
+      {
+        // Identify the file
+        identify: function (callback) {
+          return identify(localPath, function (err) {
+            if (err) {
+              return callback(err);
+            }
+            return callback(null);
+          });
+        },
+        // make a temporary folder for our work
+        temporary: function (callback) {
+          // Name the destination folder
+          context.tempName = generateId();
+          // Create destination folder
+          if (sizes.length) {
+            context.tempFolder = tempPath + '/' + context.tempName;
+            return fs.mkdir(context.tempFolder, callback);
+          } else {
             return callback(null);
           }
-          var filenames = _.map(sizes, function(size) {
-            return context.tempFolder + '/' + size.name + '.' + context.extension;
-          });
-          return self.postprocess(filenames, callback);
-        }
-      },
+        },
+        // Determine base path in uploadfs, working path for temporary files,
+        // and final uploadfs path of the original
+        paths: function (callback) {
+          context.basePath = path.replace(/\.\w+$/, '');
+          context.workingPath = localPath;
 
-      reidentify: function(callback) {
-        if (!context.adjustedOriginal) {
-          return callback(null);
-        }
-        // Push and pop the original size properties as we determined
-        // those on the first identify and don't want to return the values
-        // for the cropped and/or reoriented version
-        var originalWidth = context.info.originalWidth;
-        var originalHeight = context.info.originalHeight;
-        return identify(context.adjustedOriginal, function(err) {
-          if (err) {
-            return callback(err);
+          // Indulge their wild claims about the extension the original
+          // should have if any, otherwise provide the truth from identify
+          if (path.match(/\.\w+$/)) {
+            originalPath = path;
+          } else {
+            originalPath = path + '.' + context.extension;
           }
-          context.info.originalWidth = originalWidth;
-          context.info.originalHeight = originalHeight;
           return callback(null);
-        });
-      },
+        },
+        copyOriginal: function (callback) {
+          // If there are no transformations of the original, copy it
+          // in directly
+          if (
+            !copyOriginal ||
+            options.orientOriginals !== false ||
+            options.crop
+          ) {
+            return callback(null);
+          }
+          originalDone = true;
+          return self.copyIn(localPath, originalPath, options, callback);
+        },
 
-      copySizes: function(callback) {
-        return async.each(sizes, function(size, callback) {
-          var suffix = size.name + '.' + context.extension;
-          var tempFile = context.tempFolder + '/' + suffix;
-          var permFile = context.basePath + '.' + suffix;
-          return self.copyIn(tempFile, permFile, options, callback);
-        }, callback);
-      },
+        convert: function (callback) {
+          context.copyOriginal = copyOriginal && !originalDone;
+          return async.series([ convert, postprocess ], callback);
+          function convert(callback) {
+            return self._image.convert(context, callback);
+          }
+          function postprocess(callback) {
+            if (!context.tempFolder) {
+              // Nowhere to do the work
+              return callback(null);
+            }
+            var filenames = _.map(sizes, function (size) {
+              return (
+                context.tempFolder + '/' + size.name + '.' + context.extension
+              );
+            });
+            return self.postprocess(filenames, callback);
+          }
+        },
 
-      copyAdjustedOriginal: function(callback) {
-        if (!context.adjustedOriginal) {
-          return callback(null);
+        reidentify: function (callback) {
+          if (!context.adjustedOriginal) {
+            return callback(null);
+          }
+          // Push and pop the original size properties as we determined
+          // those on the first identify and don't want to return the values
+          // for the cropped and/or reoriented version
+          var originalWidth = context.info.originalWidth;
+          var originalHeight = context.info.originalHeight;
+          return identify(context.adjustedOriginal, function (err) {
+            if (err) {
+              return callback(err);
+            }
+            context.info.originalWidth = originalWidth;
+            context.info.originalHeight = originalHeight;
+            return callback(null);
+          });
+        },
+
+        copySizes: function (callback) {
+          return async.each(
+            sizes,
+            function (size, callback) {
+              var suffix = size.name + '.' + context.extension;
+              var tempFile = context.tempFolder + '/' + suffix;
+              var permFile = context.basePath + '.' + suffix;
+              return self.copyIn(tempFile, permFile, options, callback);
+            },
+            callback
+          );
+        },
+
+        copyAdjustedOriginal: function (callback) {
+          if (!context.adjustedOriginal) {
+            return callback(null);
+          }
+          return self.copyIn(
+            context.adjustedOriginal,
+            originalPath,
+            options,
+            callback
+          );
         }
-        return self.copyIn(context.adjustedOriginal, originalPath, options, callback);
+      },
+      function (err) {
+        // Try to clean up the temp folder. This can fail if its creation
+        // failed, in which case there is nothing we can or should do,
+        // thus the empty callback
+        if (context.tempFolder) {
+          rmRf(context.tempFolder, function (e) {});
+        }
+        callback(
+          err,
+          err
+            ? null
+            : {
+              basePath: context.basePath,
+              extension: context.extension,
+              width: context.info.width,
+              height: context.info.height,
+              originalWidth: context.info.originalWidth,
+              originalHeight: context.info.originalHeight
+            }
+        );
       }
-    }, function (err) {
-      // Try to clean up the temp folder. This can fail if its creation
-      // failed, in which case there is nothing we can or should do,
-      // thus the empty callback
-      if (context.tempFolder) {
-        rmRf(context.tempFolder, function (e) { });
-      }
-      callback(err, err
-        ? null
-        : {
-          basePath: context.basePath,
-          extension: context.extension,
-          width: context.info.width,
-          height: context.info.height,
-          originalWidth: context.info.originalWidth,
-          originalHeight: context.info.originalHeight
-        });
-    });
+    );
   };
 
   self.getUrl = function (options, callback) {
@@ -467,7 +513,7 @@ function Uploadfs() {
    * @see Uploadfs#copyImageIn
    */
 
-  self.identifyLocalImage = function(path, callback) {
+  self.identifyLocalImage = function (path, callback) {
     return self._image.identify(path, callback);
   };
 
@@ -481,7 +527,7 @@ function Uploadfs() {
    * change your mind and add or remove sizes later.
    * @return {array} [Image size objects]
    */
-  self.getImageSizes = function() {
+  self.getImageSizes = function () {
     return imageSizes;
   };
 
@@ -494,7 +540,7 @@ function Uploadfs() {
    * content, it just releases system resources.
    * @param {function} callback
    */
-  self.destroy = function(callback) {
+  self.destroy = function (callback) {
     var callbacks = [
       self._storage.destroy || noOperation,
       self._image.destroy || noOperation
@@ -505,7 +551,7 @@ function Uploadfs() {
     }
   };
 
-  self.migrateToDisabledFileKey = function(callback) {
+  self.migrateToDisabledFileKey = function (callback) {
     var method = self._storage.migrateToDisabledFileKey;
     if (!method) {
       // Not relevant for this backend
@@ -514,7 +560,7 @@ function Uploadfs() {
     return self._storage.migrateToDisabledFileKey(callback);
   };
 
-  self.migrateFromDisabledFileKey = function(callback) {
+  self.migrateFromDisabledFileKey = function (callback) {
     var method = self._storage.migrateFromDisabledFileKey;
     if (!method) {
       // Not relevant for this backend
@@ -526,31 +572,46 @@ function Uploadfs() {
   // Called by `convert` to postprocess resized/cropped images
   // for optimal file size, etc.
 
-  self.postprocess = function(files, callback) {
+  self.postprocess = function (files, callback) {
     var sample = files[0];
     if (!sample) {
       return callback(null);
     }
-    var relevant = _.filter(self.options.postprocessors || [], function(postprocessor) {
-      var matches = sample.match(/\.(\w+)$/);
-      if (!matches) {
-        return false;
+    var relevant = _.filter(
+      self.options.postprocessors || [],
+      function (postprocessor) {
+        var matches = sample.match(/\.(\w+)$/);
+        if (!matches) {
+          return false;
+        }
+        var extension = matches[1];
+        return _.includes(postprocessor.extensions, extension);
       }
-      var extension = matches[1];
-      return _.includes(postprocessor.extensions, extension);
-    });
+    );
     var folder = require('path').dirname(sample);
-    return async.eachSeries(relevant, function(postprocessor, callback) {
-      if (postprocessor.length === 4) {
-        return postprocessor.postprocessor(files, folder, postprocessor.options, callback);
-      } else {
-        return postprocessor.postprocessor(files, folder, postprocessor.options).then(function() {
-          return callback(null);
-        }).catch(function(err) {
-          return callback(err);
-        });
-      }
-    }, callback);
+    return async.eachSeries(
+      relevant,
+      function (postprocessor, callback) {
+        if (postprocessor.length === 4) {
+          return postprocessor.postprocessor(
+            files,
+            folder,
+            postprocessor.options,
+            callback
+          );
+        } else {
+          return postprocessor
+            .postprocessor(files, folder, postprocessor.options)
+            .then(function () {
+              return callback(null);
+            })
+            .catch(function (err) {
+              return callback(err);
+            });
+        }
+      },
+      callback
+    );
   };
 
   function prefixPath(path) {
@@ -566,7 +627,6 @@ function Uploadfs() {
       ensuredTempDir = true;
     }
   }
-
 }
 
 module.exports = function () {
