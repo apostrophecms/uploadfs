@@ -1,10 +1,10 @@
 # Changelog
 
-## Unreleased
+## 1.20.0 2022-08-18
 
-* Default image processing library changed to [sharp.js](https://www.npmjs.com/package/sharp) as an optional dependency
-* Support for jimp and imagecrunch removed
-* imagemagick is now the fallback if sharp has not been installed
+* Default image processing library changed to [sharp.js](https://www.npmjs.com/package/sharp) for excellent performance
+* Support for jimp and imagecrunch removed (added fallback to sharp for bc)
+* imagemagick is now the fallback if sharp installation fails on a particular platform
 * tests for sharp have been added and the package scripts updated to add "test-sharp"
 ## 1.19.0 2022-01-21
 
