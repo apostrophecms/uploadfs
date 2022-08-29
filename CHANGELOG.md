@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-* Adds tests for `webp` files, updates the package scripts to include "webp" to run the tests, and a webp test image (Note: one test commented out because `sharp` currently fails to reorient webp files). Thanks to Isaac Preston (ixc7).
+* Adds tests for `webp` files, updates the package scripts to include "webp" to run the tests, and a webp test image (Note: one test commented out because `sharp` currently fails to reorient webp files). Thanks to [Isaac Preston](https://github.com/ixc7) for this contribution.
   
 ## 1.20.0 2022-08-18
 
