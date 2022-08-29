@@ -6,6 +6,7 @@
   "scripts": {
     "test": "npm run testAzure && GOOGLE_APPLICATION_CREDENTIALS=gcs-credentials-uploadfstest.json mocha test/ && node test-imagemagick.js && eslint .",
     "testAzure": "env AZURE_TEST_FILE='test.jpg' mocha test/azure.js",
+    "webp" : "./webp-test.js",
     "lint-be": "eslint --fix 'lib/**/*.js'",
     "test-sharp": "npm run testAzure && GOOGLE_APPLICATION_CREDENTIALS=gcs-credentials-uploadfstest.json mocha test/ && node test-sharp.js && eslint ."
   },
