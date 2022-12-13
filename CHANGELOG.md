@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.20.1 2022-12-13
+
+* Add `webm` to the list of file formats with a known content type and add it to the list of types that should not be gzip encoded as it is precompressed and Chrome appears to behave poorly if it is gzip encoded
+
 ## 1.20.0 2022-08-18
 
 * Default image processing library changed to [sharp.js](https://www.npmjs.com/package/sharp) for excellent performance
