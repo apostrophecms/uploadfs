@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+* Adds tests for `webp` files, updates the package scripts to include "webp" to run the tests, and a webp test image (Note: one test commented out because `sharp` currently fails to reorient webp files). Thanks to [Isaac Preston](https://github.com/ixc7) for this contribution.
+
 ## 1.20.1 2022-12-13
 
 * Add `webm` to the list of file formats with a known content type and add it to the list of types that should not be gzip encoded as it is precompressed and Chrome appears to behave poorly if it is gzip encoded
