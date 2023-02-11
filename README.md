@@ -102,7 +102,7 @@ When you successfully copy an image into uploadfs with copyImageIn, the second a
 
 `originalHeight` (not rotated)
 
-`extension` (`gif`,`jpg` or `png`)
+`extension` (`gif`,`jpg`, `webp` or `png`)
 
 You should record these properties in your own database if you need access to them later.
 

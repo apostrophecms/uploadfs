@@ -1,8 +1,9 @@
 # Changelog
 
-## Unreleased
+## 1.21.0 2023-02-11
 
 * Adds tests for `webp` files, updates the package scripts to include "webp" to run the tests, and a webp test image (Note: one test commented out because `sharp` currently fails to reorient webp files). Thanks to [Isaac Preston](https://github.com/ixc7) for this contribution.
+* `https` is now the default protocol for S3. As it is always supported and there are no uploadfs+S3 use cases where `http` is preferred this is not considered a bc break.
 
 ## 1.20.1 2022-12-13
 
@@ -14,6 +15,7 @@
 * Support for jimp and imagecrunch removed (added fallback to sharp for bc)
 * imagemagick is now the fallback if sharp installation fails on a particular platform
 * tests for sharp have been added and the package scripts updated to add "test-sharp"
+
 ## 1.19.0 2022-01-21
 
 * New options `noGzipContentTypes` and `addNoGzipContentTypes` to configure content types which should not be gzipped when using the `s3` storage backend. Thanks to Christian Litzlbauer.

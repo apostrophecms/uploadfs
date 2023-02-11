@@ -207,6 +207,8 @@ describe('UploadFS S3', function () {
 
       setTimeout(() => {
         const url = uploadfs.getUrl();
+        // Default should be https
+        assert(url.startsWith('https://'));
         const paths = [ info.basePath + '.jpg' ];
 
         paths.push(info.basePath + '.tiny.jpg');
