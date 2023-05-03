@@ -1,6 +1,6 @@
 /* global describe, it */
 const assert = require('assert');
-const request = require('request');
+const fetch = require('node-fetch');
 
 describe('UploadFS GCS', function () {
   this.timeout(20000);
@@ -58,15 +58,25 @@ describe('UploadFS GCS', function () {
     });
   });
 
-  it('CopyIn file should be available via gcs', function (done) {
+  it('CopyIn file should be available via gcs', function () {
     const url = uploadfs.getUrl() + '/one/two/three/test.txt';
     const og = fs.readFileSync('test.txt', 'utf8');
-    request(url, (e, res, body) => {
-      assert(!e, 'Request success');
-      assert(res.statusCode === 200, `Request status 200 != ${res.statusCode}`);
-      assert(res.body === og, 'Res body equals uploaded file');
-      done();
-    });
+
+    return fetch(url, {
+      method: 'GET',
+      headers: {
+        'Accept-Encoding': 'gzip',
+        'Content-type': 'text/plain; charset=utf-8'
+      }
+    })
+      .then(function (response) {
+        assert(response.status === 200, `Request status 200 != ${response.status}`);
+        return response.text();
+
+      })
+      .then(function (content) {
+        assert.strictEqual(content, og, 'Res body equals uploaded file');
+      });
   });
 
   it('CopyOut should work', done => {
@@ -90,10 +100,14 @@ describe('UploadFS GCS', function () {
       },
       webShouldFail: cb => {
         const url = uploadfs.getUrl() + dstPath;
-        return request(url, (e, res, body) => {
-          assert(res.statusCode >= 400, 'Request on disabled resource should fail: expected 40x, got ' + res.statusCode);
-          cb(null);
-        });
+        return fetch(url, {
+          method: 'GET'
+        })
+          .then(function (response) {
+            assert(response.status >= 400, 'Request on disabled resource should fail: expected 40x, got ' + response.status);
+            cb(null);
+          })
+          .catch(cb);
       },
       enable: cb => {
         uploadfs.enable(dstPath, e => {
@@ -103,16 +117,23 @@ describe('UploadFS GCS', function () {
       },
       webShouldSucceed: cb => {
         const url = uploadfs.getUrl() + dstPath;
-        return request(url, (e, res, body) => {
-          const og = fs.readFileSync('test.txt', 'utf8');
-          assert(!e, 'Request for enabled resource should not fail');
-          assert(res.statusCode < 400, 'Request for enabled resource should not fail');
-          assert(og === res.body, 'Downloaded content should be equal to previous upload');
-          // Don't get fussed about presence or absence of UTF-8 in this header
-          assert(res.headers['content-type'].match(/text\/plain/),
-            `Check content-type header expected "text/plain" but got "${res.headers['content-type']}"`);
-          cb(null);
-        });
+        const og = fs.readFileSync('test.txt', 'utf8');
+
+        return fetch(url, {
+          method: 'GET'
+        })
+          .then(function (res) {
+            assert(res.status < 400, 'Request for enabled resource should not fail');
+            // Don't get fussed about presence or absence of UTF-8 in this header
+            assert(res.headers.get('content-type').match(/text\/plain/),
+            `Check content-type header expected "text/plain" but got "${res.headers.get('content-type')}"`);
+            return res.text();
+          })
+          .then(function (content) {
+            assert.strictEqual(og, content, 'Downloaded content should be equal to previous upload');
+            cb(null);
+          })
+          .catch(cb);
       }
     }, e => {
       assert(!e, 'Series should succeed');
@@ -126,11 +147,14 @@ describe('UploadFS GCS', function () {
 
       setTimeout(() => {
         const url = uploadfs.getUrl() + dstPath;
-        request(url, (e, res, body) => {
-          assert(!e);
-          assert(res.statusCode >= 400, 'Removed file is gone from gcs');
-          done();
-        });
+        fetch(url, {
+          method: 'GET'
+        })
+          .then(function (res) {
+            assert(res.status >= 400, 'Removed file is gone from gcs');
+            done();
+          })
+          .catch(done);
       }, 5000);
     });
   });
@@ -151,17 +175,21 @@ describe('UploadFS GCS', function () {
 
         async.map(paths, (path, cb) => {
           const imgPath = url + path;
-          request(imgPath, (e, res, body) => {
-            assert(!e);
-            assert(res.statusCode === 200, `Request status 200 != ${res.statusCode}`);
-            /* @@TODO we should test the correctness of uploaded images */
 
-            // clean up
-            uploadfs.remove(path, e => {
-              assert(!e, 'Remove uploaded file after testing');
-              return cb();
-            });
-          });
+          fetch(imgPath, {
+            method: 'GET'
+          })
+            .then(function (res) {
+              assert(res.status === 200, `Request status 200 != ${res.status}`);
+              /* @@TODO we should test the correctness of uploaded images */
+
+              // clean up
+              uploadfs.remove(path, e => {
+                assert(!e, 'Remove uploaded file after testing');
+                return cb();
+              });
+            })
+            .catch(cb);
         }, e => {
           assert(!e, 'Can request all copyImageInned images');
           done();

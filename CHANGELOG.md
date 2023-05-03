@@ -1,5 +1,11 @@
 # Changelog
 
+## UNRELEASED
+
+* Remove `azure-storage` in favor of `@azure/storage-blob`, refactor. No public API changes.
+* Remove `request` package and all related dependencies in favor of `node-fetch@2`, refactor tests.
+* Update outdated dev dependencies.
+
 ## 1.21.0 2023-02-11
 
 * Adds tests for `webp` files, updates the package scripts to include "webp" to run the tests, and a webp test image (Note: one test commented out because `sharp` currently fails to reorient webp files). Thanks to [Isaac Preston](https://github.com/ixc7) for this contribution.

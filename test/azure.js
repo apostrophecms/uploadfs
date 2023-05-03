@@ -1,7 +1,7 @@
 /* global describe, it */
 var assert = require('assert');
 var fs = require('fs');
-var rp = require('request-promise');
+var fetch = require('node-fetch');
 var uploadfs = require('../uploadfs.js')();
 // A JPEG is not a good default because it is exempt from GZIP so
 // we get less coverage. -Tom
@@ -15,20 +15,24 @@ var _getOutfile = function(infile, done) {
   var tmpFileName = new Date().getTime() + srcFile;
   var ogFile = fs.readFileSync(srcFile, { encoding: 'utf8' });
 
-  return uploadfs.copyOut(infile, tmpFileName, {}, function(e, res) {
-    assert(!e, 'Azure copy out nominal success');
-    var content = fs.readFileSync(tmpFileName, { encoding: 'utf8' });
-    assert(content.length, 'copyOut file has length');
-    assert(ogFile.length, 'original file body has length');
-    // console.log(ogFile, content);
-    assert(ogFile === content, 'Azure copy out equal to original text file');
-    fs.unlinkSync(tmpFileName);
-    done();
+  return uploadfs.copyOut(infile, tmpFileName, {}, function (e, res) {
+    try {
+      assert(!e, 'Azure copy out nominal success');
+      var content = fs.readFileSync(tmpFileName, { encoding: 'utf8' });
+      assert(content.length, 'copyOut file has length');
+      assert(ogFile.length, 'original file body has length');
+      // console.log(ogFile, content);
+      assert(ogFile === content, 'Azure copy out equal to original text file');
+      fs.unlinkSync(tmpFileName);
+      done();
+    } catch (ae) {
+      done(ae);
+    }
   });
 };
 
 describe('UploadFS Azure', function() {
-  this.timeout(20000);
+  this.timeout(40000);
 
   var tempPath = '../temp';
 
@@ -40,46 +44,45 @@ describe('UploadFS Azure', function() {
       if (e) {
         console.log('error', e);
       }
-      assert(!e, 'Successfully initialize azure service');
-      done();
+      try {
+        assert(!e, 'Successfully initialize azure service');
+        done();
+      } catch (ae) {
+        done(ae);
+      }
     });
   });
 
-  it('getGzipBlackList should return expected defaults if no options provided', done => {
+  it('getGzipBlackList should return expected defaults if no options provided', function() {
     const types = uploadfs._storage.getGzipBlacklist();
     assert(Array.isArray(types), 'gzip blacklist array is an array');
     assert(types && types.indexOf('zip' >= 0));
-    done();
   });
 
-  it('getGzipBlacklist should be able to remove a type from the blacklist based on user settings', done => {
+  it('getGzipBlacklist should be able to remove a type from the blacklist based on user settings', function() {
     const types = uploadfs._storage.getGzipBlacklist({ zip: true });
     assert(Array.isArray(types), 'gzip blacklist array is an array');
     assert(types && types.indexOf('zip' < 0));
-    done();
   });
 
-  it('getGzipBlacklist should be able to add a type to the blacklist based on user settings', done => {
+  it('getGzipBlacklist should be able to add a type to the blacklist based on user settings', function() {
     const types = uploadfs._storage.getGzipBlacklist({ foo: false });
     assert(Array.isArray(types), 'gzip blacklist array is an array');
     assert(types && types.indexOf('foo' >= 0));
-    done();
   });
 
-  it('getGzipBlacklist should quietly ignore `{ ext: false }` in user config if ext is not on default blacklist', done => {
+  it('getGzipBlacklist should quietly ignore `{ ext: false }` in user config if ext is not on default blacklist', function() {
     const types = uploadfs._storage.getGzipBlacklist({ foo: true });
     assert(Array.isArray(types), 'gzip blacklist array is an array');
     assert(types && types.indexOf('foo' <= 0), 'Filetype foo is not added to the blacklist if user wants to gzip it');
-    done();
   });
 
-  it('getGzipBlacklist should ignore duplicates', done => {
+  it('getGzipBlacklist should ignore duplicates', function() {
     const types = uploadfs._storage.getGzipBlacklist({
       jpg: false,
       zip: false
     });
     const counts = _.countBy(types);
-    done();
     assert(counts.jpg === 1, 'No duplicate jpg type is present, despite it all');
   });
 
@@ -89,8 +92,12 @@ describe('UploadFS Azure', function() {
       if (e) {
         console.log('test copyIn ERR', e);
       }
-      assert(!e, 'Azure copy in - nominal success');
-      done();
+      try {
+        assert(!e, 'Azure copy in - nominal success');
+        done();
+      } catch (ae) {
+        done(ae);
+      }
     });
   });
 
@@ -103,21 +110,27 @@ describe('UploadFS Azure', function() {
       if (e) {
         console.log('error', e);
       }
-      assert(!e, 'Azure disable, nominal success');
-      done();
+      try {
+        assert(!e, 'Azure disable, nominal success');
+        done();
+      } catch (ae) {
+        done(ae);
+      }
     });
   });
 
   it('Azure test copyOut after disable should fail', function(done) {
     setTimeout(function() {
       uploadfs.copyOut(infile, 'foo.bar', {}, function(e, res) {
-        if (e) {
-          console.log('error', e);
+        try {
+          assert(e);
+          assert(e.name === 'RestError');
+          assert(e.code === 'BlobNotFound');
+          assert(e.statusCode === 404);
+          done();
+        } catch (ae) {
+          done(ae);
         }
-        assert(e);
-        assert(e.name === 'StorageError');
-        assert(e.message === 'NotFound');
-        done();
       });
     }, 5000);
   });
@@ -127,8 +140,12 @@ describe('UploadFS Azure', function() {
       if (e) {
         console.log('error', e);
       }
-      assert(!e, 'Azure enable , nominal success');
-      done();
+      try {
+        assert(!e, 'Azure enable , nominal success');
+        done();
+      } catch (ae) {
+        done(ae);
+      }
     });
   });
 
@@ -138,14 +155,22 @@ describe('UploadFS Azure', function() {
 
   it('Uploadfs should return valid web-servable url pointing to uploaded file', function() {
     var url = uploadfs.getUrl(infile);
-    var ogFile = fs.readFileSync(srcFile, { encoding: 'utf8' });
+    var ogFile = fs.readFileSync(srcFile);
+    assert(ogFile.length);
+    assert(url);
 
-    return rp({
-      uri: url,
-      gzip: true
+    return fetch(url, {
+      method: 'GET',
+      headers: {
+        'Accept-Encoding': 'gzip'
+      }
     })
-      .then(function(res) {
-        assert(ogFile === res, 'Web servable file contents equal original text file contents');
+      .then(function (response) {
+        assert(response.status >= 400, 'Bad response status');
+        return response.buffer();
+      })
+      .then(function (buffer) {
+        assert.deepStrictEqual(Buffer.compare(buffer, ogFile), 0, 'Web servable file contents equal original text file contents');
       });
   });
 
@@ -154,19 +179,28 @@ describe('UploadFS Azure', function() {
       if (e) {
         console.log('error', e);
       }
-      assert(!e, 'Azure remove, nominal success');
-      done();
+      try {
+        assert(!e, 'Azure remove, nominal success');
+        done();
+      } catch (ae) {
+        done(ae);
+      }
     });
   });
 
   it('Azure test copyOut should fail', function(done) {
     var tmpFileName = new Date().getTime() + '_text.txt';
 
-    uploadfs.copyOut(infile, tmpFileName, {}, function(e, res) {
-      assert(e);
-      assert(e.name === 'StorageError');
-      assert(e.message === 'NotFound');
-      done();
+    uploadfs.copyOut(infile, tmpFileName, {}, function (e, res) {
+      try {
+        assert(e);
+        assert(e.name === 'RestError');
+        assert(e.code === 'BlobNotFound');
+        assert(e.statusCode === 404);
+        done();
+      } catch (ae) {
+        done(ae);
+      }
     });
   });
 });

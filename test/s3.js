@@ -1,6 +1,6 @@
 /* global describe, it */
 const assert = require('assert');
-const request = require('request');
+const fetch = require('node-fetch');
 
 describe('UploadFS S3', function () {
   this.timeout(50000);
@@ -59,18 +59,24 @@ describe('UploadFS S3', function () {
     });
   });
 
-  it('CopyIn file should be available via s3', function (done) {
+  it('CopyIn file should be available via s3', function () {
     const url = uploadfs.getUrl() + '/one/two/three/test.txt';
     const og = fs.readFileSync('test.txt', 'utf8');
 
-    request(url, {
-      gzip: true
-    }, (e, res, body) => {
-      assert(!e, 'Request success');
-      assert(res.statusCode === 200, 'Request status 200');
-      assert(res.body === og, 'Res body equals uploaded file');
-      done();
-    });
+    return fetch(url, {
+      method: 'GET',
+      headers: {
+        'Accept-Encoding': 'gzip',
+        'Content-type': 'text/plain; charset=utf-8'
+      }
+    })
+      .then(function (response) {
+        assert(response.status === 200, `Request status 200 != ${response.status}`);
+        return response.text();
+      })
+      .then(function (body) {
+        assert(body === og, 'Res body equals uploaded file');
+      });
   });
 
   it('S3 CopyOut should work', done => {
@@ -94,12 +100,18 @@ describe('UploadFS S3', function () {
       },
       webShouldFail: cb => {
         const url = uploadfs.getUrl() + dstPath;
-        return request(url, {
-          gzip: true
-        }, (e, res, body) => {
-          assert(res.statusCode >= 400, 'Request on disabled resource should fail');
-          cb(null);
-        });
+
+        fetch(url, {
+          method: 'GET',
+          headers: {
+            'Accept-Encoding': 'gzip'
+          }
+        })
+          .then(function (res) {
+            assert(res.status >= 400, 'Request on disabled resource should fail');
+            cb(null);
+          })
+          .catch(cb);
       },
       enable: cb => {
         uploadfs.enable(dstPath, e => {
@@ -109,16 +121,25 @@ describe('UploadFS S3', function () {
       },
       webShouldSucceed: cb => {
         const url = uploadfs.getUrl() + dstPath;
-        return request(url, {
-          gzip: true
-        }, (e, res, body) => {
-          const og = fs.readFileSync('test.txt', 'utf8');
-          assert(!e, 'Request for enabled resource should not fail');
-          assert(res.statusCode < 400, 'Request for enabled resource should not fail');
-          assert(og === res.body, 'Downloaded content should be equal to previous upload');
-          assert(res.headers['content-type'] === 'text/plain', 'Check content-type header');
-          cb(null);
-        });
+        const og = fs.readFileSync('test.txt', 'utf8');
+
+        return fetch(url, {
+          method: 'GET',
+          headers: {
+            'Accept-Encoding': 'gzip',
+            'Content-type': 'text/plain; charset=utf-8'
+          }
+        })
+          .then(function (res) {
+            assert(res.status < 400, 'Request for enabled resource should not fail');
+            assert(res.headers.get('content-type') === 'text/plain', 'Check content-type header');
+            return res.text();
+          })
+          .then(function (body) {
+            assert(og === body, 'Downloaded content should be equal to previous upload');
+            cb(null);
+          })
+          .catch(cb);
       }
     }, e => {
       assert(!e, 'Series should succeed');
@@ -132,13 +153,18 @@ describe('UploadFS S3', function () {
 
       setTimeout(() => {
         const url = uploadfs.getUrl() + dstPath;
-        request(url, {
-          gzip: true
-        }, (e, res, body) => {
-          assert(!e);
-          assert(res.statusCode >= 400, 'Removed file is gone from s3');
-          done();
-        });
+        fetch(url, {
+          method: 'GET',
+          headers: {
+            'Accept-Encoding': 'gzip'
+          }
+        })
+          .then(function (res) {
+            assert(!e);
+            assert(res.status >= 400, 'Removed file is gone from s3');
+            done();
+          })
+          .catch(done);
       }, 5000);
     });
   });
@@ -159,24 +185,30 @@ describe('UploadFS S3', function () {
 
         async.map(paths, (path, cb) => {
           const imgPath = url + path;
-          request(imgPath, {
-            gzip: true,
-            // return a buffer so we can test bytes
-            encoding: null
-          }, (e, res, body) => {
-            assert(!e);
-            // Not suitable for images, make sure we didn't force it
-            assert(res.headers['content-encoding'] !== 'gzip');
-            assert(res.statusCode === 200);
-            // JPEG magic number check
-            assert(body[0] === 0xFF);
-            assert(body[1] === 0xD8);
-            // clean up
-            uploadfs.remove(path, e => {
-              assert(!e, 'Remove uploaded file after testing');
-              return cb();
-            });
-          });
+          fetch(imgPath, {
+            method: 'GET',
+            headers: {
+              'Accept-Encoding': 'gzip'
+            }
+          })
+            .then(function (response) {
+              assert(response.status === 200);
+              // Not suitable for images, make sure we didn't force it
+              assert(response.headers.get('content-encoding') !== 'gzip');
+              // return a buffer so we can test bytes
+              return response.buffer();
+            })
+            .then(function (buffer) {
+              // JPEG magic number check
+              assert(buffer[0] === 0xFF);
+              assert(buffer[1] === 0xD8);
+              // clean up
+              uploadfs.remove(path, e => {
+                assert(!e, 'Remove uploaded file after testing');
+                return cb();
+              });
+            })
+            .catch(cb);
         }, e => {
           assert(!e, 'Can request all copyImageInned images');
           done();
@@ -216,24 +248,31 @@ describe('UploadFS S3', function () {
 
         async.map(paths, (path, cb) => {
           const imgPath = url + path;
-          request(imgPath, {
-            gzip: true,
-            // return a buffer so we can test bytes
-            encoding: null
-          }, (e, res, body) => {
-            assert(!e);
-            // Not suitable for images, make sure we didn't force it
-            assert(res.headers['content-encoding'] !== 'gzip');
-            assert(res.statusCode === 200);
-            // JPEG magic number check
-            assert(body[0] === 0xFF);
-            assert(body[1] === 0xD8);
-            // clean up
-            uploadfs.remove(path, e => {
-              assert(!e, 'Remove uploaded file after testing');
-              return cb();
-            });
-          });
+
+          fetch(imgPath, {
+            method: 'GET',
+            headers: {
+              'Accept-Encoding': 'gzip'
+            }
+          })
+            .then(function (response) {
+              assert(response.status === 200);
+              // Not suitable for images, make sure we didn't force it
+              assert(response.headers.get('content-encoding') !== 'gzip');
+              // return a buffer so we can test bytes
+              return response.buffer();
+            })
+            .then(function (buffer) {
+              // JPEG magic number check
+              assert(buffer[0] === 0xFF);
+              assert(buffer[1] === 0xD8);
+              // clean up
+              uploadfs.remove(path, e => {
+                assert(!e, 'Remove uploaded file after testing');
+                return cb();
+              });
+            })
+            .catch(cb);
         }, e => {
           assert(!e, 'Can request all copyImageInned images');
           done();
