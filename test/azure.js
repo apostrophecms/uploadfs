@@ -166,7 +166,7 @@ describe('UploadFS Azure', function() {
       }
     })
       .then(function (response) {
-        assert(response.status >= 400, 'Bad response status');
+        assert(response.status < 400, 'Bad response status');
         return response.buffer();
       })
       .then(function (buffer) {
