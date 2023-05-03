@@ -1,9 +1,9 @@
 # Changelog
 
-## UNRELEASED
+## 1.22.0 2023-05-03
 
-* Remove `azure-storage` in favor of `@azure/storage-blob`, refactor. No public API changes.
-* Remove `request` package and all related dependencies in favor of `node-fetch@2`, refactor tests.
+* Remove `azure-storage` in favor of the actively supported `@azure/storage-blob`, refactor. No public API changes.
+* Remove `request` package and all related dependencies in favor of the actively supported `node-fetch@2`, refactor tests.
 * Update outdated dev dependencies.
 
 ## 1.21.0 2023-02-11
