@@ -2,7 +2,7 @@
 
 ## 1.22.1 2023-05-03
 
-* Corrected behavior of `getUrl` method for Azure storage, for Apostrophe compatibility.
+* Corrected behavior of `getUrl` method for Azure storage, for Apostrophe compatibility. This regression was introduced an hour ago in 1.22.0.
 
 ## 1.22.0 2023-05-03
 
