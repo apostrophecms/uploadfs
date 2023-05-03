@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.22.1 2023-05-03
+
+* Corrected behavior of `getUrl` method for Azure storage, for Apostrophe compatibility.
+
 ## 1.22.0 2023-05-03
 
 * Remove `azure-storage` in favor of the actively supported `@azure/storage-blob`, refactor. No public API changes.
