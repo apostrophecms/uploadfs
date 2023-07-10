@@ -1,5 +1,11 @@
 # Changelog
 
+## UNRELEASED
+
+* Bump to next major version of google cloud storage API to please `npm audit`. There was no actual security vulnerability due to the way the module in question was actually used.
+* Update our eslint configuration.
+* Modernize the source from `var` to `const` and `let` in all cases to satisfy eslint and help prevent future bugs. This does not change the behavior of the code.
+
 ## 1.22.1 2023-05-03
 
 * Corrected behavior of `getUrl` method for Azure storage, for Apostrophe compatibility. This regression was introduced an hour ago in 1.22.0.
@@ -327,9 +333,9 @@ Starting in version 0.3.0, you must explicitly create an instance of uploadfs. T
 Existing code that isn't concerned with sharing uploadfs between multiple modules will only need a two line change to be fully compatible:
 
     // CHANGE THIS
-    var uploadfs = require('uploadfs');
+    const uploadfs = require('uploadfs');
 
     // TO THIS (note the extra parens)
-    var uploadfs = require('uploadfs')();
+    const uploadfs = require('uploadfs')();
 
 If you use uploadfs in multiple source code files, you'll need to pass your `uploadfs` object explicitly, much as you pass your Express `app` object when you want to add routes to it via another file.

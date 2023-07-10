@@ -1,20 +1,20 @@
 /* global describe, it */
-var Mode = require('stat-mode');
-var assert = require('assert');
-var path = require('path');
+const Mode = require('stat-mode');
+const assert = require('assert');
+const path = require('path');
 
 describe('UploadFS Local', function () {
   this.timeout(4500);
-  var uploadfs = require('../uploadfs.js')();
-  var fs = require('fs');
-  var async = require('async');
-  var tempPath = path.join(__dirname, '/temp');
-  var localOptions = {
+  const uploadfs = require('../uploadfs.js')();
+  const fs = require('fs');
+  const async = require('async');
+  const tempPath = path.join(__dirname, '/temp');
+  const localOptions = {
     storage: 'local',
     uploadsPath: path.join(__dirname, '/files/'),
     uploadsUrl: 'http://localhost:3000/test/'
   };
-  var imageSizes = [
+  const imageSizes = [
     {
       name: 'small',
       width: 320,
@@ -45,8 +45,8 @@ describe('UploadFS Local', function () {
   it('copyIn should work for local filesystem', done => {
     return uploadfs.copyIn('./test.txt', '/test_copy.txt', e => {
       assert(!e);
-      var og = fs.readFileSync('./test.txt', 'utf8');
-      var next = fs.readFileSync('./test/files/test_copy.txt', 'utf8');
+      const og = fs.readFileSync('./test.txt', 'utf8');
+      const next = fs.readFileSync('./test/files/test_copy.txt', 'utf8');
       assert(og.length, 'lengthy');
       assert(next.length, 'lengthy');
       assert(og === next, 'Copies are equal');
@@ -57,8 +57,8 @@ describe('UploadFS Local', function () {
   it('copyOut should work for local filesystem', done => {
     return uploadfs.copyOut('/test_copy.txt', 'copy-out-test.txt', e => {
       assert(!e);
-      var og = fs.readFileSync('./test.txt', 'utf8');
-      var next = fs.readFileSync('./copy-out-test.txt', 'utf8');
+      const og = fs.readFileSync('./test.txt', 'utf8');
+      const next = fs.readFileSync('./copy-out-test.txt', 'utf8');
       assert(og.length, 'lengthy');
       assert(next.length, 'lengthy');
       assert(og === next, 'Copied files are equal');
@@ -69,8 +69,8 @@ describe('UploadFS Local', function () {
   it('overwrite with copyIn should work for local filesystem', done => {
     return uploadfs.copyIn('./test2.txt', '/test_copy.txt', e => {
       assert(!e);
-      var og = fs.readFileSync('./test2.txt', 'utf8');
-      var next = fs.readFileSync('./test/files/test_copy.txt', 'utf8');
+      const og = fs.readFileSync('./test2.txt', 'utf8');
+      const next = fs.readFileSync('./test/files/test_copy.txt', 'utf8');
       assert(og.length, 'lengthy');
       assert(next.length, 'lengthy');
       assert(og === next, 'Copies are equal');
@@ -81,8 +81,8 @@ describe('UploadFS Local', function () {
   it('copyOut should see update for local filesystem', done => {
     return uploadfs.copyOut('/test_copy.txt', 'copy-out-test.txt', e => {
       assert(!e);
-      var og = fs.readFileSync('./test2.txt', 'utf8');
-      var next = fs.readFileSync('./copy-out-test.txt', 'utf8');
+      const og = fs.readFileSync('./test2.txt', 'utf8');
+      const next = fs.readFileSync('./copy-out-test.txt', 'utf8');
       assert(og.length, 'lengthy');
       assert(next.length, 'lengthy');
       assert(og === next, 'Copied files are equal');
@@ -91,16 +91,16 @@ describe('UploadFS Local', function () {
   });
 
   it('Test disable / enable functionality', done => {
-    var srcFile = '/test_copy.txt';
-    var infile = './test/files/test_copy.txt';
+    const srcFile = '/test_copy.txt';
+    const infile = './test/files/test_copy.txt';
 
     return async.series({
       disable: cb => {
         assert(fs.existsSync(infile), 'copyIn file exissts');
 
         uploadfs.disable(srcFile, e => {
-          var stats = fs.statSync(infile);
-          var mode = new Mode(stats);
+          const stats = fs.statSync(infile);
+          const mode = new Mode(stats);
           assert(!e, 'uploadfs disable success!');
           assert(mode.toString() === '----------', 'File permissions locked down');
           return cb(null);
@@ -108,8 +108,8 @@ describe('UploadFS Local', function () {
       },
       enable: cb => {
         uploadfs.enable(srcFile, e => {
-          var stats = fs.statSync(infile);
-          var mode = new Mode(stats);
+          const stats = fs.statSync(infile);
+          const mode = new Mode(stats);
           assert(!e, 'uploadfs disable success!');
           assert(mode.toString() === '-rw-r--r--', 'Enabled file has expected permissions');
           assert(fs.existsSync(infile), 'copyIn visible to fs');
@@ -117,7 +117,7 @@ describe('UploadFS Local', function () {
         });
       },
       testCopyOut: cb => {
-        var outsucceeds = 'copy-out-test.txt';
+        const outsucceeds = 'copy-out-test.txt';
         uploadfs.copyOut(srcFile, outsucceeds, e => {
           assert(!e, 'node should not be able to copy this file!');
           return cb(null);
