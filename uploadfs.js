@@ -1,9 +1,9 @@
-var _ = require('lodash');
-var async = require('async');
-var crypto = require('crypto');
-var fs = require('fs');
-var rmRf = require('rimraf');
-var delimiter = require('path').delimiter;
+const _ = require('lodash');
+const async = require('async');
+const crypto = require('crypto');
+const fs = require('fs');
+const rmRf = require('rimraf');
+const delimiter = require('path').delimiter;
 
 function generateId() {
   return crypto.randomBytes(16).toString('hex');
@@ -15,10 +15,10 @@ function generateId() {
  */
 
 function Uploadfs() {
-  var tempPath, imageSizes;
-  var scaledJpegQuality;
-  var ensuredTempDir = false;
-  var self = this;
+  let tempPath, imageSizes;
+  let scaledJpegQuality;
+  let ensuredTempDir = false;
+  const self = this;
   /**
    * Initialize uploadfs. The init method passes options to the backend and invokes a callback when the backend is ready.
    * @param  {Object}   options: backend, imageSizes, orientOriginals, tempPath, copyOriginal, scaledJpegQuality, contentType, cdn. backend is the only mandatory option. See the README and individual methods for details.
@@ -261,15 +261,15 @@ function Uploadfs() {
       options = {};
     }
 
-    var sizes = options.sizes || imageSizes;
+    const sizes = options.sizes || imageSizes;
 
     ensureTempDir();
 
     // We'll pass this context to the image processing backend with
     // additional properties
-    var context = {
+    const context = {
       crop: options.crop,
-      sizes: sizes
+      sizes
     };
 
     context.scaledJpegQuality = options.scaledJpegQuality || scaledJpegQuality;
@@ -288,9 +288,9 @@ function Uploadfs() {
       });
     }
 
-    var originalDone = false;
-    var copyOriginal = options.copyOriginal !== false;
-    var originalPath;
+    let originalDone = false;
+    const copyOriginal = options.copyOriginal !== false;
+    let originalPath;
 
     async.series(
       {
@@ -355,7 +355,7 @@ function Uploadfs() {
               // Nowhere to do the work
               return callback(null);
             }
-            var filenames = _.map(sizes, function (size) {
+            const filenames = _.map(sizes, function (size) {
               return (
                 context.tempFolder + '/' + size.name + '.' + context.extension
               );
@@ -371,8 +371,8 @@ function Uploadfs() {
           // Push and pop the original size properties as we determined
           // those on the first identify and don't want to return the values
           // for the cropped and/or reoriented version
-          var originalWidth = context.info.originalWidth;
-          var originalHeight = context.info.originalHeight;
+          const originalWidth = context.info.originalWidth;
+          const originalHeight = context.info.originalHeight;
           return identify(context.adjustedOriginal, function (err) {
             if (err) {
               return callback(err);
@@ -387,9 +387,9 @@ function Uploadfs() {
           return async.each(
             sizes,
             function (size, callback) {
-              var suffix = size.name + '.' + context.extension;
-              var tempFile = context.tempFolder + '/' + suffix;
-              var permFile = context.basePath + '.' + suffix;
+              const suffix = size.name + '.' + context.extension;
+              const tempFile = context.tempFolder + '/' + suffix;
+              const permFile = context.basePath + '.' + suffix;
               return self.copyIn(tempFile, permFile, options, callback);
             },
             callback
@@ -541,7 +541,7 @@ function Uploadfs() {
    * @param {function} callback
    */
   self.destroy = function (callback) {
-    var callbacks = [
+    const callbacks = [
       self._storage.destroy || noOperation,
       self._image.destroy || noOperation
     ];
@@ -552,7 +552,7 @@ function Uploadfs() {
   };
 
   self.migrateToDisabledFileKey = function (callback) {
-    var method = self._storage.migrateToDisabledFileKey;
+    const method = self._storage.migrateToDisabledFileKey;
     if (!method) {
       // Not relevant for this backend
       return callback(null);
@@ -561,7 +561,7 @@ function Uploadfs() {
   };
 
   self.migrateFromDisabledFileKey = function (callback) {
-    var method = self._storage.migrateFromDisabledFileKey;
+    const method = self._storage.migrateFromDisabledFileKey;
     if (!method) {
       // Not relevant for this backend
       return callback(null);
@@ -573,22 +573,22 @@ function Uploadfs() {
   // for optimal file size, etc.
 
   self.postprocess = function (files, callback) {
-    var sample = files[0];
+    const sample = files[0];
     if (!sample) {
       return callback(null);
     }
-    var relevant = _.filter(
+    const relevant = _.filter(
       self.options.postprocessors || [],
       function (postprocessor) {
-        var matches = sample.match(/\.(\w+)$/);
+        const matches = sample.match(/\.(\w+)$/);
         if (!matches) {
           return false;
         }
-        var extension = matches[1];
+        const extension = matches[1];
         return _.includes(postprocessor.extensions, extension);
       }
     );
-    var folder = require('path').dirname(sample);
+    const folder = require('path').dirname(sample);
     return async.eachSeries(
       relevant,
       function (postprocessor, callback) {

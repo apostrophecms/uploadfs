@@ -1,20 +1,20 @@
-var uploadfs = require('./uploadfs.js')();
-var fs = require('fs');
-var async = require('async');
-var Promise = require('bluebird');
-var _ = require('lodash');
-var path = require('path');
+const uploadfs = require('./uploadfs.js')();
+const fs = require('fs');
+const async = require('async');
+const Promise = require('bluebird');
+const _ = require('lodash');
+const path = require('path');
 
 // Test the imagecrunch image backend, written specifically for Macs
 
-var localOptions = {
+const localOptions = {
   storage: 'local',
   image: 'imagemagick',
   uploadsPath: path.join(__dirname, '/test'),
   uploadsUrl: 'http://localhost:3000/test'
 };
 
-var imageSizes = [
+const imageSizes = [
   {
     name: 'small',
     width: 320,
@@ -32,15 +32,15 @@ var imageSizes = [
   }
 ];
 
-var tempPath = path.join(__dirname, '/temp');
-var basePath = '/images/profiles/me';
+const tempPath = path.join(__dirname, '/temp');
+const basePath = '/images/profiles/me';
 
 localOptions.imageSizes = imageSizes;
 localOptions.tempPath = tempPath;
 localOptions.backend = 'local';
 
 localTestStart(function () {
-  var filesSeen = false;
+  let filesSeen = false;
   console.log('RERUN TESTS WITH TEST OF POSTPROCESSORS');
   localOptions.postprocessors = [
     {
@@ -96,7 +96,7 @@ localTestStart(function () {
 });
 
 function localTestStart(cb) {
-  var options = localOptions;
+  const options = localOptions;
   console.log('Initializing uploadfs for the ' + options.backend + ' storage backend with the imagecrunch image backend');
   uploadfs.init(options, function(e) {
     if (e) {
@@ -138,7 +138,7 @@ function localTestStart(cb) {
         process.exit(1);
       }
 
-      var stats = fs.statSync('test/images/profiles/me.jpg');
+      const stats = fs.statSync('test/images/profiles/me.jpg');
 
       if (!stats.size) {
         console.log('Copied image is empty or missing');
@@ -149,8 +149,8 @@ function localTestStart(cb) {
       console.log('Removing files...');
       uploadfs.remove('/images/profiles/me.jpg', function(e) {
         async.each(imageSizes, function(size, callback) {
-          var name = info.basePath + '.' + size.name + '.jpg';
-          var stats = fs.statSync('test' + name);
+          const name = info.basePath + '.' + size.name + '.jpg';
+          const stats = fs.statSync('test' + name);
           if (!stats.size) {
             console.log('Scaled and copied image is empty or missing (2)');
             process.exit(1);
@@ -203,7 +203,7 @@ function localTestStart(cb) {
         process.exit(1);
       }
 
-      var stats = fs.statSync('test/images/profiles/me-cropped.jpg');
+      const stats = fs.statSync('test/images/profiles/me-cropped.jpg');
 
       if (!stats.size) {
         console.log('Copied image is empty or missing');
@@ -214,8 +214,8 @@ function localTestStart(cb) {
       console.log('Removing files...');
       uploadfs.remove(`${basePath}-cropped.jpg`, function(e) {
         async.each(imageSizes, function(size, callback) {
-          var name = info.basePath + '.' + size.name + '.jpg';
-          var stats = fs.statSync('test' + name);
+          const name = info.basePath + '.' + size.name + '.jpg';
+          const stats = fs.statSync('test' + name);
           if (!stats.size) {
             console.log('Scaled and copied image is empty or missing (2)');
             process.exit(1);

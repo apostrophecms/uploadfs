@@ -2,18 +2,18 @@
 // and stores them in either a local folder or s3,
 // depending on which backend you choose.
 
-var express = require('express');
-var uploadfs = require('uploadfs')();
-var multipart = require('connect-multiparty');
-var multipartMiddleware = multipart();
-var path = require('path');
+const express = require('express');
+const uploadfs = require('uploadfs')();
+const multipart = require('connect-multiparty');
+const multipartMiddleware = multipart();
+const path = require('path');
 
 // For the local backend
-var uploadsPath = path.join(__dirname, '/public/uploads');
-var uploadsLocalUrl = '/uploads';
-var options = {
+const uploadsPath = path.join(__dirname, '/public/uploads');
+const uploadsLocalUrl = '/uploads';
+const options = {
   backend: 'local',
-  uploadsPath: uploadsPath,
+  uploadsPath,
   uploadsUrl: 'http://localhost:3000' + uploadsLocalUrl,
   // Required if you use imageSizes and copyImageIn
   tempPath: path.join(__dirname, '/temp'),
@@ -43,7 +43,7 @@ function createApp(err) {
     console.log(err);
     process.exit(1);
   }
-  var app = express();
+  const app = express();
 
   // For the local backend: serve the uploaded files at /uploads.
   // With the s3 backend you don't need this of course, s3 serves

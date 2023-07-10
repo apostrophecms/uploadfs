@@ -1,24 +1,24 @@
 /* global describe, it */
-var assert = require('assert');
-var fs = require('fs');
-var fetch = require('node-fetch');
-var uploadfs = require('../uploadfs.js')();
+const assert = require('assert');
+const fs = require('fs');
+const fetch = require('node-fetch');
+const uploadfs = require('../uploadfs.js')();
 // A JPEG is not a good default because it is exempt from GZIP so
 // we get less coverage. -Tom
-var srcFile = process.env.AZURE_TEST_FILE || 'test.txt';
-var infilePath = 'one/two/three/';
-var infile = infilePath + srcFile;
-var _ = require('lodash');
+const srcFile = process.env.AZURE_TEST_FILE || 'test.txt';
+const infilePath = 'one/two/three/';
+const infile = infilePath + srcFile;
+const _ = require('lodash');
 
 /* helper to automate scraping files from blob svc */
-var _getOutfile = function(infile, done) {
-  var tmpFileName = new Date().getTime() + srcFile;
-  var ogFile = fs.readFileSync(srcFile, { encoding: 'utf8' });
+const _getOutfile = function(infile, done) {
+  const tmpFileName = new Date().getTime() + srcFile;
+  const ogFile = fs.readFileSync(srcFile, { encoding: 'utf8' });
 
   return uploadfs.copyOut(infile, tmpFileName, {}, function (e, res) {
     try {
       assert(!e, 'Azure copy out nominal success');
-      var content = fs.readFileSync(tmpFileName, { encoding: 'utf8' });
+      const content = fs.readFileSync(tmpFileName, { encoding: 'utf8' });
       assert(content.length, 'copyOut file has length');
       assert(ogFile.length, 'original file body has length');
       // console.log(ogFile, content);
@@ -34,9 +34,9 @@ var _getOutfile = function(infile, done) {
 describe('UploadFS Azure', function() {
   this.timeout(40000);
 
-  var tempPath = '../temp';
+  const tempPath = '../temp';
 
-  var azureOptions = require('../azureTestOptions.js');
+  const azureOptions = require('../azureTestOptions.js');
   azureOptions.tempPath = tempPath;
 
   it('Should connect to Azure cloud successfully', function(done) {
@@ -154,8 +154,8 @@ describe('UploadFS Azure', function() {
   });
 
   it('Uploadfs should return valid web-servable url pointing to uploaded file', function() {
-    var url = uploadfs.getUrl(infile);
-    var ogFile = fs.readFileSync(srcFile);
+    const url = uploadfs.getUrl(infile);
+    const ogFile = fs.readFileSync(srcFile);
     assert(ogFile.length);
     assert(url);
 
@@ -189,7 +189,7 @@ describe('UploadFS Azure', function() {
   });
 
   it('Azure test copyOut should fail', function(done) {
-    var tmpFileName = new Date().getTime() + '_text.txt';
+    const tmpFileName = new Date().getTime() + '_text.txt';
 
     uploadfs.copyOut(infile, tmpFileName, {}, function (e, res) {
       try {
