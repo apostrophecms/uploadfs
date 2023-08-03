@@ -1,6 +1,6 @@
 # Changelog
 
-## UNRELEASED
+## 1.22.2 2023-08-03
 
 * Bump to next major version of google cloud storage API to please `npm audit`. There was no actual security vulnerability due to the way the module in question was actually used.
 * Update our eslint configuration.
