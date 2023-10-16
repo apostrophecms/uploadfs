@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.22.3 2023-10-16
+
+* Security: update `sharp` to fix a [potential security risk](https://security.snyk.io/vuln/SNYK-JS-SHARP-5922108). You should update your project's
+dependencies manually or with `npm update` to ensure you get this fix.
+
 ## 1.22.2 2023-08-03
 
 * Bump to next major version of google cloud storage API to please `npm audit`. There was no actual security vulnerability due to the way the module in question was actually used.
