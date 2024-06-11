@@ -2,7 +2,7 @@ const _ = require('lodash');
 const async = require('async');
 const crypto = require('crypto');
 const fs = require('fs');
-const rmRf = require('rimraf');
+const { rimraf } = require('rimraf');
 const delimiter = require('path').delimiter;
 
 function generateId() {
@@ -413,7 +413,9 @@ function Uploadfs() {
         // failed, in which case there is nothing we can or should do,
         // thus the empty callback
         if (context.tempFolder) {
-          rmRf(context.tempFolder, function (e) {});
+          rimraf(context.tempFolder).then(() => {}).catch(e => {
+            // Ignore, it probably was not created in the first place
+          });
         }
         callback(
           err,
