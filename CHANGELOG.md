@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.22.4 2024-06-11
+
+* Use latest `rimraf` package, silencing a deprecation warning.
+
 ## 1.22.3 2023-10-16
 
 * Security: update `sharp` to fix a [potential security risk](https://security.snyk.io/vuln/SNYK-JS-SHARP-5922108). You should update your project's
