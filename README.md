@@ -392,7 +392,7 @@ Also, if you are using a CDN such as cloudfront that automatically mirrors the c
 
 Note that specifying a CDN in this way does not in any way activate that CDN for you. It just tells `uploadfs` to return a different result from `getUrl`. The rest is up to you. More CDN-related options may be added in the future.
 
-The `bucketObjectsACL` option sets the access control level for files uploaded to AWS S3, with a default of `public-read`. Setting this option to `private` ensures that only authorized users can access the files, enhancing security for sensitive content. This is useful when integrating with a CDN, where you can use signed URLs to securely serve private content to users.
+If you want to make your S3 bucket private and serve content through the Amazon CloudFront service, you need to set the objects' access control levels (ACL) in the bucket to `private`. By default, the `bucketObjectsACL` option sets the object ACL to `public-read`. You need to change this option to `private` to allow CloudFront access. Additionally, follow the [documentation](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-s3.html) to ensure your bucket is set up with an Origin Access Control correctly, otherwise CloudFront will not be able to access it.
 
 There is also a list which contains content types that should not be gzipped for faster delivery from s3. Note that gzip content delivery is completely transparent to the end user and supported by all browsers, so the only types that should be excluded are those that are already compressed (i.e. a waste of CPU to unzip) unless there is an issue with the gzip feature in a particular s3-compatible backend.
 
