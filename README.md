@@ -365,7 +365,7 @@ storage: require('mystorage.js')
 
 * In backends like Google Cloud Storage and S3, uploadfs finesses the path so that paths with a leading slash like `/foo/bar.txt` behave reasonably and a double slash never appears in the URL. For Apostrophe this is a requirement. However, if you have your heart set on the double slashes, you can set the `strictPaths` option to `true`.
 
-## Extra features for S3: caching, HTTPS, CDNs, and No Gzip Content Types
+## Extra features for S3: caching, HTTPS, CDNs, permissions, and No Gzip Content Types
 
 By default, when users fetch files from S3 via the web, the browser is instructed to cache them for 24 hours. This is reasonable, but you can change that cache lifetime by specifying the `cachingTime` option, in seconds:
 
@@ -392,7 +392,9 @@ Also, if you are using a CDN such as cloudfront that automatically mirrors the c
 
 Note that specifying a CDN in this way does not in any way activate that CDN for you. It just tells `uploadfs` to return a different result from `getUrl`. The rest is up to you. More CDN-related options may be added in the future.
 
-There is also a list which contains content types that shold not be gzipped for faster delivery from s3. Note that gzip content delivery is completely transparent to the end user and supported by all browsers, so the only types that should be excluded are those that are already compressed (i.e. a waste of CPU to unzip) unless there is an issue with the gzip feature in a particular s3-compatible backend.
+If you want to make your S3 bucket private and serve content through the Amazon CloudFront service, you need to set the objects' access control levels (ACL) in the bucket to `private`. By default, the `bucketObjectsACL` option sets the object ACL to `public-read`. You need to change this option to `private` to block public access. Additionally, follow the [documentation](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-s3.html) to ensure your bucket is set up with an Origin Access Control correctly, otherwise CloudFront will not be able to access it.
+
+There is also a list which contains content types that should not be gzipped for faster delivery from s3. Note that gzip content delivery is completely transparent to the end user and supported by all browsers, so the only types that should be excluded are those that are already compressed (i.e. a waste of CPU to unzip) unless there is an issue with the gzip feature in a particular s3-compatible backend.
 
 You can override this default list by setting the `noGzipContentTypes` option: 
 
