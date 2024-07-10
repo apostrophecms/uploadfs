@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.22.5 (2024-07-10)
+
+* Document options for avoiding a public S3 bucket.
+
 ## 1.22.4 2024-06-11
 
 * Use latest `rimraf` package, silencing a deprecation warning.
