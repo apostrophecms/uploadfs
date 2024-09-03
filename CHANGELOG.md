@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.22.6 (2024-09-03)
+
+* `.gz` files now receive the correct content type in S3.
+* `.gz` files are now exempt from gzip transfer encoding because they are already gzipped.
+
 ## 1.22.5 (2024-07-10)
 
 * Document options for avoiding a public S3 bucket.
