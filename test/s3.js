@@ -35,7 +35,7 @@ describe('UploadFS S3', function () {
     bucket: process.env.UPLOADFS_TEST_S3_BUCKET,
     key: process.env.UPLOADFS_TEST_S3_KEY,
     secret: process.env.UPLOADFS_TEST_S3_SECRET,
-    region: process.env.UPLOADFS_TEST_S3_REGION  
+    region: process.env.UPLOADFS_TEST_S3_REGION
   };
 
   s3Options.imageSizes = imageSizes;
