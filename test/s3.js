@@ -1,6 +1,10 @@
 /* global describe, it */
 const assert = require('assert');
 const fetch = require('node-fetch');
+const { pipeline: pipelineCb } = require('stream');
+
+const util = require('util');
+const fs = require('fs');
 
 describe('UploadFS S3', function () {
   this.timeout(50000);
@@ -27,7 +31,13 @@ describe('UploadFS S3', function () {
     }
   ];
 
-  const s3Options = require('../s3TestOptions.js');
+  const s3Options = {
+    storage: 's3',
+    bucket: process.env.UPLOADFS_TEST_S3_BUCKET,
+    key: process.env.UPLOADFS_TEST_S3_KEY,
+    secret: process.env.UPLOADFS_TEST_S3_SECRET,
+    region: process.env.UPLOADFS_TEST_S3_REGION  
+  };
 
   s3Options.imageSizes = imageSizes;
   s3Options.tempPath = tempPath;
@@ -38,18 +48,48 @@ describe('UploadFS S3', function () {
 
   it('S3 Should init s3 connection without error', function(done) {
     return uploadfs.init(s3Options, function(e) {
-      assert(!e, 'S3 init without error');
       if (e) {
-        console.log('=======E', e);
+        console.error(e);
       }
+      assert(!e, 'S3 init without error');
       uploadfs.copyIn('test.txt', dstPath, function(e) {
         if (e) {
-          console.log('=======EE', e);
+          console.error(e);
         }
         assert(!e, 'S3 copyIn without error');
         done();
       });
     });
+  });
+
+  it('S3 should store and retrieve a .tar.gz file without double-gzipping it', async function() {
+    const copyIn = util.promisify(uploadfs.copyIn);
+    const copyOut = util.promisify(uploadfs.copyOut);
+    const remove = util.promisify(uploadfs.remove);
+    const pipeline = util.promisify(pipelineCb);
+    await copyIn(`${__dirname}/test.tar.gz`, '/test.tar.gz');
+    // Is it returned in identical form using copyOut?
+    await copyOut('/test.tar.gz', `${__dirname}/test2.tar.gz`);
+    identical(`${__dirname}/test.tar.gz`, `${__dirname}/test2.tar.gz`);
+    fs.unlinkSync(`${__dirname}/test2.tar.gz`);
+    // Is it returned in identical form using fetch and the public URL of the file?
+    const url = uploadfs.getUrl() + '/test.tar.gz';
+    const result = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Accept-Encoding': 'gzip'
+      }
+    });
+    console.log(url);
+    // console.log(result.status);
+    // assert(result.status <= 400);
+    // const output = fs.createWriteStream(`${__dirname}/test3.tar.gz`);
+    // console.log('awaiting pipeline');
+    // await pipeline(result.body, output);
+    // console.log('after pipeline');
+    // identical(`${__dirname}/test.tar.gz`, `${__dirname}/test3.tar.gz`);
+    // // fs.unlinkSync(`${__dirname}/test3.tar.gz`);
+    // await remove('/test.tar.gz');
   });
 
   it('CopyIn should work', function (done) {
@@ -282,3 +322,12 @@ describe('UploadFS S3', function () {
     });
   });
 });
+
+function identical(f1, f2) {
+  const data1 = fs.readFileSync(f1);
+  const data2 = fs.readFileSync(f2);
+  console.log(data1, data2);
+  if (data1.compare(data2) !== 0) {
+    throw new Error(`${f1} and ${f2} are not identical.`);
+  }
+}
