@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.22.7 (2024-09-24)
+
+* `.mp3` does not benefit from gzip encoding and the transfer encoding header fails to be sent, so do not use it.
+
 ## 1.22.6 (2024-09-03)
 
 * `.gz` files now receive the correct content type in S3.
