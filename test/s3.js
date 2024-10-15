@@ -102,6 +102,25 @@ describe('UploadFS S3', function () {
     assert(data.equals(og), 'Streamed file is equal to previous upload');
   });
 
+  it('S3 streamOut should handle an error status code from S3 sensibly', async function() {
+    try {
+      const input = uploadfs.streamOut('made/up/path');
+      let status;
+      try {
+        // This should fail
+        const chunks = [];
+        for await (let chunk of input) {
+          chunks.push(chunk);
+        }
+      } catch (e) {
+        status = e.statusCode;
+      }
+      assert(status >= 400);
+    } catch (e) {
+      console.error('second error handler', e);
+    }
+  });
+
   it('S3 CopyOut should work', async function() {
     const cpOutPath = 'copy-out-test.txt';
     await copyOut(dstPath, cpOutPath);
