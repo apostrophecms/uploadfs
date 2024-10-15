@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.24.0 (2024-10-15)
+
+* Bug fix: `bucketObjectsACL` is respected by the `enable` method, that method no longer makes files `public` again. Previously it was only respected at `copyIn` / `copyImageIn` time.
+* New feature: `disabledBucketObjectsACL` is now also supported, it is used by the `disable` method rather than
+assuming `private` (still the default).
+
 ## 1.23.0 (2024-10-14)
 
 * Introduced `streamOut` API for `local` and `s3` storage backends.
