@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.24.1-alpha.1 (2024-10-15)
+
+* Bug fix: error handling for `streamOut`. If an HTTP error status code is encountered, the stream will emit an error, and the error object will have a `status` property, allowing downstream code to handle this situation appropriately.
+
 ## 1.24.0 (2024-10-15)
 
 * Bug fix: `bucketObjectsACL` is respected by the `enable` method, that method no longer makes files `public` again. Previously it was only respected at `copyIn` / `copyImageIn` time.
