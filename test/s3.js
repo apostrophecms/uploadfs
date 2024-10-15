@@ -109,6 +109,17 @@ describe('UploadFS S3', function () {
       });
   });
 
+  it('S3 streamOut should work', async function() {
+    const input = uploadfs.streamOut(dstPath);
+    const chunks = [];
+    for await (let chunk of input) {
+      chunks.push(chunk);
+    }
+    const data = Buffer.concat(chunks);
+    const og = fs.readFileSync('test.txt');
+    assert(data.equals(og), 'Streamed file is equal to previous upload');
+  });
+
   it('S3 CopyOut should work', done => {
     const cpOutPath = 'copy-out-test.txt';
     return uploadfs.copyOut(dstPath, cpOutPath, e => {

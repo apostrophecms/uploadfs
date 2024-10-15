@@ -52,6 +52,8 @@ You need:
 
 * The `copyOut` method takes a path in uploadfs and a local filename and copies the file back from uploadfs to the local filesystem. This should be used only rarely. Heavy reliance on this method sets you up for poor performance in S3 and Azure. However it may be necessary at times, for instance when you want to crop an image differently later. *Heavy reliance on copyOut is a recipe for bad S3 and/or Azure performance. Use it only for occasional operations like cropping.*
 
+* The `streamOut` method takes a path in uploadfs and returns a readable stream. This should be used only rarely. Heavy reliance on this method sets you up for poor performance in S3 and Azure. However it may be necessary at times, for instance when permissions must be checked on a request-by-request basis in a proxy route. **This method, which is not required for normal use in ApostropheCMS, is currently implemented only in the `local` and `s3` storage backends.** Contributions for Azure and GCS are welcome.
+
 * The `remove` method removes a file from uploadfs.
 
 * The `getUrl` method returns the URL to which you should append uploadfs paths to fetch them with a web browser.

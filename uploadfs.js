@@ -199,6 +199,17 @@ function Uploadfs() {
   };
 
   /**
+   * The streamOut method takes a path in uploadfs and a local filename and returns a readable stream. This should be used only rarely. Heavy reliance on this method sets you up for poor performance in S3. However it may be necessary at times, for instance when access to files must be secured on a request-by-request basis.
+   * @param  {String}   path    Path in uploadfs (begins with /)
+   * @param  {Object}   options    Options (passed to backend). May be skipped
+   * @param  {Function} callback    Receives the usual err argument
+   */
+  self.streamOut = function (path, options) {
+    path = prefixPath(path);
+    return self._storage.streamOut(path, options);
+  };
+  
+  /**
    * Copy an image into uploadfs. Scaled versions as defined by the imageSizes option
    * passed at init() time, or as overridden by `options.sizes` on this call,
    * are copied into uploadfs as follows:

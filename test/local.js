@@ -66,6 +66,17 @@ describe('UploadFS Local', function () {
     });
   });
 
+  it('streamOut should work for local filesystem', async function() {
+    const input = uploadfs.streamOut('/test_copy.txt');
+    const chunks = [];
+    for await (let chunk of input) {
+      chunks.push(chunk);
+    }
+    const data = Buffer.concat(chunks);
+    const og = fs.readFileSync('test.txt');
+    assert(data.equals(og));
+  });
+
   it('overwrite with copyIn should work for local filesystem', done => {
     return uploadfs.copyIn('./test2.txt', '/test_copy.txt', e => {
       assert(!e);

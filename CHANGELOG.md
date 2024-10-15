@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.23.0 (2024-10-14)
+
+* Introduced `streamOut` API for `local` and `s3` storage backends.
+
 ## 1.22.7 (2024-09-24)
 
 * `.mp3` does not benefit from gzip encoding and the transfer encoding header fails to be sent, so do not use it.
