@@ -8,8 +8,15 @@ const fs = require('fs');
 describe('UploadFS S3', function () {
   this.timeout(50000);
   const uploadfs = require('../uploadfs.js')();
+  const init = util.promisify(uploadfs.init);
+  const remove = util.promisify(uploadfs.remove);
+  const copyIn = util.promisify(uploadfs.copyIn);
+  const copyImageIn = util.promisify(uploadfs.copyImageIn);
+  const copyOut = util.promisify(uploadfs.copyOut);
+  const enable = util.promisify(uploadfs.enable);
+  const disable = util.promisify(uploadfs.disable);
+
   const fs = require('fs');
-  const async = require('async');
   const tempPath = '../temp';
   const dstPath = '/one/two/three/test.txt';
   const imageSizes = [
@@ -40,31 +47,13 @@ describe('UploadFS S3', function () {
 
   s3Options.imageSizes = imageSizes;
   s3Options.tempPath = tempPath;
-  s3Options.params = {
-    Bucket: s3Options.bucket,
-    ACL: 'public-read'
-  };
 
-  it('S3 Should init s3 connection without error', function(done) {
-    return uploadfs.init(s3Options, function(e) {
-      if (e) {
-        console.error(e);
-      }
-      assert(!e, 'S3 init without error');
-      uploadfs.copyIn('test.txt', dstPath, function(e) {
-        if (e) {
-          console.error(e);
-        }
-        assert(!e, 'S3 copyIn without error');
-        done();
-      });
-    });
+  it('S3 Should init s3 connection without error', async function() {
+    await init(s3Options);
+    await copyIn('test.txt', dstPath);
   });
 
   it('S3 should store and retrieve a .tar.gz file without double-gzipping it', async function() {
-    const copyIn = util.promisify(uploadfs.copyIn);
-    const copyOut = util.promisify(uploadfs.copyOut);
-    const remove = util.promisify(uploadfs.remove);
     await copyIn(`${__dirname}/test.tar.gz`, '/test.tar.gz');
     // Is it returned in identical form using copyOut?
     await copyOut('/test.tar.gz', `${__dirname}/test2.tar.gz`);
@@ -82,31 +71,24 @@ describe('UploadFS S3', function () {
     await remove('/test.tar.gz');
   });
 
-  it('CopyIn should work', function (done) {
-    return uploadfs.copyIn('test.txt', dstPath, function(e) {
-      assert(!e, 'S3 copyIn without error');
-      done();
-    });
+  it('CopyIn should work', async function() {
+    await copyIn('test.txt', dstPath);
   });
 
-  it('CopyIn file should be available via s3', function () {
+  it('CopyIn file should be available via s3', async function () {
     const url = uploadfs.getUrl() + '/one/two/three/test.txt';
     const og = fs.readFileSync('test.txt', 'utf8');
 
-    return fetch(url, {
+    const response = await fetch(url, {
       method: 'GET',
       headers: {
         'Accept-Encoding': 'gzip',
         'Content-type': 'text/plain; charset=utf-8'
       }
-    })
-      .then(function (response) {
-        assert(response.status === 200, `Request status 200 != ${response.status}`);
-        return response.text();
-      })
-      .then(function (body) {
-        assert(body === og, 'Res body equals uploaded file');
-      });
+    });
+    assert(response.status === 200, `Request status 200 != ${response.status}`);
+    const body = await response.text();
+    assert(body === og, 'Res body equals uploaded file');
   });
 
   it('S3 streamOut should work', async function() {
@@ -120,146 +102,81 @@ describe('UploadFS S3', function () {
     assert(data.equals(og), 'Streamed file is equal to previous upload');
   });
 
-  it('S3 CopyOut should work', done => {
+  it('S3 CopyOut should work', async function() {
     const cpOutPath = 'copy-out-test.txt';
-    return uploadfs.copyOut(dstPath, cpOutPath, e => {
-      assert(!e, 'S3 copyOut without error');
-      const dl = fs.readFileSync(cpOutPath, 'utf8');
+    await copyOut(dstPath, cpOutPath);
+    const dl = fs.readFileSync(cpOutPath, 'utf8');
+    const og = fs.readFileSync('test.txt', 'utf8');
+    assert(dl === og, 'Downloaded file is equal to previous upload');
+  });
+
+  it('S3 Disable / Enable should work as expected', async function() {
+    await disable(dstPath);
+    assert.rejects(testWeb());
+    await enable(dstPath);
+    await testWeb();
+
+    async function testWeb() {
       const og = fs.readFileSync('test.txt', 'utf8');
-      assert(dl === og, 'Downloaded file is equal to previous upload');
-      done();
-    });
-  });
-
-  it('S3 Disable / Enable should work as expected', done => {
-    return async.series({
-      disable: cb => {
-        uploadfs.disable(dstPath, e => {
-          assert(!e, 'uploadfs disable no err');
-          cb(null);
-        });
-      },
-      webShouldFail: cb => {
-        const url = uploadfs.getUrl() + dstPath;
-
-        fetch(url, {
-          method: 'GET',
-          headers: {
-            'Accept-Encoding': 'gzip'
-          }
-        })
-          .then(function (res) {
-            assert(res.status >= 400, 'Request on disabled resource should fail');
-            cb(null);
-          })
-          .catch(cb);
-      },
-      enable: cb => {
-        uploadfs.enable(dstPath, e => {
-          assert(!e, 'uploadfs enable should not fail');
-          cb(null);
-        });
-      },
-      webShouldSucceed: cb => {
-        const url = uploadfs.getUrl() + dstPath;
-        const og = fs.readFileSync('test.txt', 'utf8');
-
-        return fetch(url, {
-          method: 'GET',
-          headers: {
-            'Accept-Encoding': 'gzip',
-            'Content-type': 'text/plain; charset=utf-8'
-          }
-        })
-          .then(function (res) {
-            assert(res.status < 400, 'Request for enabled resource should not fail');
-            assert(res.headers.get('content-type') === 'text/plain', 'Check content-type header');
-            return res.text();
-          })
-          .then(function (body) {
-            assert(og === body, 'Downloaded content should be equal to previous upload');
-            cb(null);
-          })
-          .catch(cb);
+      const url = uploadfs.getUrl() + dstPath;
+      const res = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Accept-Encoding': 'gzip'
+        }
+      });
+      if (res.status >= 400) {
+        throw res;
       }
-    }, e => {
-      assert(!e, 'Series should succeed');
-      done();
-    });
+      const body = await res.text();
+      assert(res.headers.get('content-type') === 'text/plain', 'Check content-type header');
+      assert(og === body, 'Downloaded content should be equal to previous upload');
+    }
   });
 
-  it('S3 uploadfs Remove should work', done => {
-    return uploadfs.remove(dstPath, e => {
-      assert(!e, 'Remove should succeed');
-
-      setTimeout(() => {
-        const url = uploadfs.getUrl() + dstPath;
-        fetch(url, {
-          method: 'GET',
-          headers: {
-            'Accept-Encoding': 'gzip'
-          }
-        })
-          .then(function (res) {
-            assert(!e);
-            assert(res.status >= 400, 'Removed file is gone from s3');
-            done();
-          })
-          .catch(done);
-      }, 5000);
+  it('S3 uploadfs Remove should work', async function() {
+    await remove(dstPath);
+    const url = uploadfs.getUrl() + dstPath;
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Accept-Encoding': 'gzip'
+      }
     });
+    assert(res.status >= 400, 'Removed file is gone from s3');
   });
 
-  it('S3 uploadfs copyImageIn should work', done => {
+  it('S3 uploadfs copyImageIn should work', async function() {
     const imgDstPath = '/images/profiles/me';
 
-    uploadfs.copyImageIn('test.jpg', imgDstPath, (e, info) => {
-      assert(!e, 'S3 copyImageIn works');
+    const info = await copyImageIn('test.jpg', imgDstPath);
+    const url = uploadfs.getUrl();
+    const paths = [ info.basePath + '.jpg' ];
 
-      setTimeout(() => {
-        const url = uploadfs.getUrl();
-        const paths = [ info.basePath + '.jpg' ];
+    paths.push(info.basePath + '.small.jpg');
+    paths.push(info.basePath + '.medium.jpg');
+    paths.push(info.basePath + '.large.jpg');
 
-        paths.push(info.basePath + '.small.jpg');
-        paths.push(info.basePath + '.medium.jpg');
-        paths.push(info.basePath + '.large.jpg');
-
-        async.map(paths, (path, cb) => {
-          const imgPath = url + path;
-          fetch(imgPath, {
-            method: 'GET',
-            headers: {
-              'Accept-Encoding': 'gzip'
-            }
-          })
-            .then(function (response) {
-              assert(response.status === 200);
-              // Not suitable for images, make sure we didn't force it
-              assert(response.headers.get('content-encoding') !== 'gzip');
-              // return a buffer so we can test bytes
-              return response.buffer();
-            })
-            .then(function (buffer) {
-              // JPEG magic number check
-              assert(buffer[0] === 0xFF);
-              assert(buffer[1] === 0xD8);
-              // clean up
-              uploadfs.remove(path, e => {
-                assert(!e, 'Remove uploaded file after testing');
-                return cb();
-              });
-            })
-            .catch(cb);
-        }, e => {
-          assert(!e, 'Can request all copyImageInned images');
-          done();
-        });
-        // end async.each
-      }, 5000);
-    });
+    for (const path of paths) {
+      const imgPath = url + path;
+      const res = await fetch(imgPath, {
+        method: 'GET',
+        headers: {
+          'Accept-Encoding': 'gzip'
+        }
+      });
+      assert(res.status === 200);
+      // Not suitable for images, make sure we didn't force it
+      assert(res.headers.get('content-encoding') !== 'gzip');
+      const buffer = await res.buffer();
+      // JPEG magic number check
+      assert(buffer[0] === 0xFF);
+      assert(buffer[1] === 0xD8);
+      await remove(path);
+    }
   });
 
-  it('S3 uploadfs copyImageIn should work with custom sizes', done => {
+  it('S3 uploadfs copyImageIn should work with custom sizes', async function() {
     const imgDstPath = '/images/profiles/me';
 
     const customSizes = [
@@ -275,53 +192,92 @@ describe('UploadFS S3', function () {
       }
     ];
 
-    uploadfs.copyImageIn('test.jpg', imgDstPath, { sizes: customSizes }, (e, info) => {
-      assert(!e, 'S3 copyImageIn works');
+    const info = await copyImageIn('test.jpg', imgDstPath, { sizes: customSizes });
 
-      setTimeout(() => {
-        const url = uploadfs.getUrl();
-        // Default should be https
-        assert(url.startsWith('https://'));
-        const paths = [ info.basePath + '.jpg' ];
+    const url = uploadfs.getUrl();
+    // Default should be https
+    assert(url.startsWith('https://'));
+    const paths = [ info.basePath + '.jpg' ];
 
-        paths.push(info.basePath + '.tiny.jpg');
-        paths.push(info.basePath + '.nice.jpg');
+    paths.push(info.basePath + '.tiny.jpg');
+    paths.push(info.basePath + '.nice.jpg');
 
-        async.map(paths, (path, cb) => {
-          const imgPath = url + path;
-
-          fetch(imgPath, {
-            method: 'GET',
-            headers: {
-              'Accept-Encoding': 'gzip'
-            }
-          })
-            .then(function (response) {
-              assert(response.status === 200);
-              // Not suitable for images, make sure we didn't force it
-              assert(response.headers.get('content-encoding') !== 'gzip');
-              // return a buffer so we can test bytes
-              return response.buffer();
-            })
-            .then(function (buffer) {
-              // JPEG magic number check
-              assert(buffer[0] === 0xFF);
-              assert(buffer[1] === 0xD8);
-              // clean up
-              uploadfs.remove(path, e => {
-                assert(!e, 'Remove uploaded file after testing');
-                return cb();
-              });
-            })
-            .catch(cb);
-        }, e => {
-          assert(!e, 'Can request all copyImageInned images');
-          done();
-        });
-        // end async.each
-      }, 5000);
-    });
+    for (const path of paths) {
+      const imgPath = url + path;
+      const res = await fetch(imgPath, {
+        method: 'GET',
+        headers: {
+          'Accept-Encoding': 'gzip'
+        }
+      });
+      assert(res.status === 200);
+      // Not suitable for images, make sure we didn't force it
+      assert(res.headers.get('content-encoding') !== 'gzip');
+      const buffer = await res.buffer();
+      // JPEG magic number check
+      assert(buffer[0] === 0xFF);
+      assert(buffer[1] === 0xD8);
+      await remove(path);
+    }
   });
+});
+
+describe('UploadFS S3 with private ACL', async function () {
+  this.timeout(50000);
+  const uploadfs = require('../uploadfs.js')();
+  const init = util.promisify(uploadfs.init);
+  const remove = util.promisify(uploadfs.remove);
+  const copyIn = util.promisify(uploadfs.copyIn);
+  const copyOut = util.promisify(uploadfs.copyOut);
+  const enable = util.promisify(uploadfs.enable);
+  const disable = util.promisify(uploadfs.disable);
+
+  const fs = require('fs');
+  const tempPath = '../temp';
+  const dstPath = '/one/two/three/test2.txt';
+
+  const s3Options = {
+    storage: 's3',
+    bucket: process.env.UPLOADFS_TEST_S3_BUCKET,
+    key: process.env.UPLOADFS_TEST_S3_KEY,
+    secret: process.env.UPLOADFS_TEST_S3_SECRET,
+    region: process.env.UPLOADFS_TEST_S3_REGION,
+    bucketObjectsACL: 'private',
+    disabledBucketObjectsACL: 'private',
+    tempPath
+  };
+
+  it('initialize uploadfs', async function() {
+    await init(s3Options);
+  });
+
+  it('test with alternate ACLs', async function() {
+    await copyIn('test.txt', dstPath);
+    await testCopyOut();
+    assert.rejects(testWeb());
+    await disable(dstPath);
+    assert.rejects(testWeb());
+    await testCopyOut();
+    await enable(dstPath);
+    assert.rejects(testWeb());
+    await testCopyOut();
+    await remove(dstPath);  
+  });
+
+  async function testCopyOut() {
+    await copyOut(dstPath, `${tempPath}/test2.txt`);
+    identical('test.txt', `${tempPath}/test2.txt`);
+    fs.unlinkSync(`${tempPath}/test2.txt`);
+  }
+
+  async function testWeb() {
+    const url = uploadfs.getUrl() + '/test.tar.gz';
+    const response = await fetch(url);
+    if (result.status >= 400) {
+      console.log(result.status);
+      throw result;
+    }
+  }
 });
 
 function identical(f1, f2) {
