@@ -86,8 +86,10 @@ function Uploadfs() {
     if (typeof self._image === 'string' || self._image === undefined) {
       self._image = self._image === undefined ? 'sharp' : self._image;
       try {
-        self._image = require(`./lib/image/${self._image}.js`)();
+        const requiring = `./lib/image/${self._image}.js`;
+        self._image = require(requiring)();
       } catch {
+        console.error(e);
         if (self._image === 'sharp') {
           console.error(
             'Sharp not available on this operating system. Trying to fall back to imagemagick.'

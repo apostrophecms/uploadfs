@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.24.2 (2024-12-09)
+
+* Corrected npm audit warning by eliminating a dependency on `gm` which is not actively maintained.
+
 ## 1.24.1 (2024-10-15)
 
 * Bug fix: error handling for `streamOut`. If an HTTP error status code is encountered, the stream will emit an error, and the error object will have a `statusCode` property, allowing downstream code to handle this situation appropriately.

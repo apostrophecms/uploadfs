@@ -39,6 +39,8 @@ describe('UploadFS S3', function () {
 
   const s3Options = {
     storage: 's3',
+    // Usually not set so we get sharp, with imagemagick fallback (the default behavior)
+    image: process.env.UPLOADFS_TEST_IMAGE,
     bucket: process.env.UPLOADFS_TEST_S3_BUCKET,
     key: process.env.UPLOADFS_TEST_S3_KEY,
     secret: process.env.UPLOADFS_TEST_S3_SECRET,
@@ -257,6 +259,8 @@ describe('UploadFS S3 with private ACL', async function () {
 
   const s3Options = {
     storage: 's3',
+    // Usually not set so we get sharp, with imagemagick fallback (the default behavior)
+    image: process.env.UPLOADFS_TEST_IMAGE,
     bucket: process.env.UPLOADFS_TEST_S3_BUCKET,
     key: process.env.UPLOADFS_TEST_S3_KEY,
     secret: process.env.UPLOADFS_TEST_S3_SECRET,

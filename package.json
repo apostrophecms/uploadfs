@@ -1,6 +1,6 @@
 {
   "name": "uploadfs",
-  "version": "1.24.1",
+  "version": "1.24.2",
   "description": "Store files in a web-accessible location via a simplified API. Can automatically scale and rotate images. Includes S3, Azure and local filesystem-based backends with the most convenient features of each.",
   "main": "uploadfs.js",
   "scripts": {
@@ -27,7 +27,6 @@
     "bluebird": "^3.7.2",
     "es6-promise": "^4.1.0",
     "fs-extra": "^5.0.0",
-    "gm": "^1.9.0",
     "gzipme": "^0.1.1",
     "lodash": "^4.17.21",
     "rimraf": "^5.0.7"
