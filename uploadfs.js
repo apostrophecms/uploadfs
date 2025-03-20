@@ -88,7 +88,7 @@ function Uploadfs() {
       try {
         const requiring = `./lib/image/${self._image}.js`;
         self._image = require(requiring)();
-      } catch {
+      } catch (e) {
         console.error(e);
         if (self._image === 'sharp') {
           console.error(
@@ -210,7 +210,7 @@ function Uploadfs() {
     path = prefixPath(path);
     return self._storage.streamOut(path, options);
   };
-  
+
   /**
    * Copy an image into uploadfs. Scaled versions as defined by the imageSizes option
    * passed at init() time, or as overridden by `options.sizes` on this call,
