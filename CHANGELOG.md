@@ -1,5 +1,9 @@
 # Changelog
 
+## UNRELEASED
+
+* Fix missing variable.
+
 ## 1.24.2 (2024-12-09)
 
 * Corrected npm audit warning by eliminating a dependency on `gm` which is not actively maintained.
@@ -94,23 +98,29 @@ dependencies manually or with `npm update` to ensure you get this fix.
 ## 1.18.3 - 2021-08-13
 
 ### Fixed
+
 * Set Azure containers public access level to `blob` instead of `container` to ensure anonymous users cannot list the content.
 
 ## 1.18.2
+
 * Addressed `npm audit` complaints about `mkdirp` by using a simple `mkdirp` implementation that has no legacy compatibility issues.
 * Addressed `npm audit` complaints about `mocha` and friends by upgrading `mocha`.
 * There are currently `npm audit` warnings about `azure-storage`, however a fix for this is forthcoming according to the upstream maintainers, and the existing semver ranges in this package will pick it up on `npm audit` when released.
 
 ## 1.18.1
+
 * Bug fix: the `sizes` option to `copyImageIn` now works even if `imageSizes` was not passed at all when calling `init`.
 
 ## 1.18.0
+
 * Support for a `sizes` option when calling `copyImageIn`, removing the requirement that all uploads are scaled to the same set of sizes. If the option is not provided the globally configured sizes are used.
 
 ## 1.17.2
+
 * Documented the `endpoint` option. Thanks to Joe Innes for this contribution.
 
 ## 1.17.1
+
 * Updates ESLint configuration and fixes errors.
 
 ## 1.17.0
