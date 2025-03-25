@@ -1,8 +1,8 @@
 # Changelog
 
-## UNRELEASED
+## 1.24.3 (2025-03-25)
 
-* Fix missing variable.
+* Fix missing variable which led to confusing error messages if the configured image backend is unavailable and prevented automatic fallback from `sharp` to `imagemagick`.
 
 ## 1.24.2 (2024-12-09)
 
