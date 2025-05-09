@@ -15,7 +15,8 @@ module.exports = {
     {
       account: 'yourAccount2',
       container: 'account2_container1',
-      key: 'more_top_secret_999'
+      key: 'your_shared_access_signature',
+      sas: true
     }
   ]
 };
