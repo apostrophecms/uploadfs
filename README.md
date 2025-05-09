@@ -237,6 +237,7 @@ And, an equivalent configuration for Azure:
   container: 'storageContainerName',
   // If set to true, uploadfs will consider `key` to be a
   // SAS token. Otherwise, it will be considered an access key.
+  // Default is false.
   sas: false,
   key: 'accessKeyOrSASToken',
   disabledFileKey: 'a random string of your choosing',
