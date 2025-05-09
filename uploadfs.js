@@ -20,10 +20,14 @@ function Uploadfs() {
   let ensuredTempDir = false;
   const self = this;
   /**
-   * Initialize uploadfs. The init method passes options to the backend and invokes a callback when the backend is ready.
-   * @param  {Object}   options: backend, imageSizes, orientOriginals, tempPath, copyOriginal, scaledJpegQuality, contentType, cdn. backend is the only mandatory option. See the README and individual methods for details.
+   * Initialize uploadfs. The init method passes options to the backend and
+   * invokes a callback when the backend is ready.
+   * @param  {Object}   options: backend, imageSizes, orientOriginals, tempPath,
+   *                             copyOriginal, scaledJpegQuality, contentType, cdn.
+   *                             backend is the only mandatory option. See the
+   *                             README and individual methods for details.
    * @param  {Object}   options.cdn               - An object, that defines cdn settings
-   * @param  {Boolean}  options.cdn.enabled=true  - Whether the cdn should be anbled or not
+   * @param  {Boolean}  options.cdn.enabled=true  - Whether the cdn should be enabled
    * @param  {String}   options.cdn.url           - The cdn-url
    * @param  {Function} callback                  - Will receive the usual err argument
    */
@@ -81,8 +85,9 @@ function Uploadfs() {
     }
 
     let fallback = false;
-    // if processor is passed as an string (including 'imagemagick' or 'sharp'), try to load it or fail with warning
-    // if undefined try to load sharp and fallback to imagemagick upon fail
+    // if processor is passed as an string (including 'imagemagick' or 'sharp'),
+    // try to load it or fail with warning if undefined try to load sharp and
+    // fallback to imagemagick upon fail
     if (typeof self._image === 'string' || self._image === undefined) {
       self._image = self._image === undefined ? 'sharp' : self._image;
       try {
@@ -102,7 +107,8 @@ function Uploadfs() {
     }
 
     if (fallback) {
-      // Check for presence of imagemagick - if we fail sharp load it doesn't mean imagemagick is there
+      // Check for presence of imagemagick - if we fail sharp load it doesn't
+      // mean imagemagick is there
       const paths = (process.env.PATH || '').split(delimiter);
       if (
         _.find(paths, function (p) {
@@ -123,8 +129,8 @@ function Uploadfs() {
     }
 
     // Reasonable default JPEG quality setting for scaled copies. Imagemagick's default
-    // quality is the quality of the original being converted, which is usually a terrible idea
-    // when it's a super hi res original. And if that isn't apropos it defaults
+    // quality is the quality of the original being converted, which is usually a terrible
+    // idea when it's a super hi res original. And if that isn't apropos it defaults
     // to 92 which is still sky high and produces very large files
     // sub-comment - I'm not sure about the 92 above, it seems to be 80 below
 
@@ -161,7 +167,9 @@ function Uploadfs() {
   };
 
   /**
-   * The copyIn method takes a local filename and copies it to a path in uploadfs. Any intermediate folders that do not exist are automatically created if the storage requires such things. Just copy things where you want them to go.
+   * The copyIn method takes a local filename and copies it to a path in uploadfs.
+   * Any intermediate folders that do not exist are automatically created if the
+   * storage requires such things. Just copy things where you want them to go.
    * @param  {[String]}   localPath   The local filename
    * @param  {[String]}   path    The path in uploadfs, begins with /
    * @param  {[Object]}   options    Options (passed to storage). May be skipped
@@ -177,7 +185,8 @@ function Uploadfs() {
   };
 
   /**
-   * Obtain the temporary folder used for intermediate files created by copyImageIn. Can also be useful when doing your own manipulations with copyOut.
+   * Obtain the temporary folder used for intermediate files created by copyImageIn.
+   * Can also be useful when doing your own manipulations with copyOut.
    * @see Uploadfs#copyOut
    */
   self.getTempPath = function () {
@@ -185,7 +194,11 @@ function Uploadfs() {
   };
 
   /**
-   * The copyOut method takes a path in uploadfs and a local filename and copies the file back from uploadfs to the local filesystem. This should be used only rarely. Heavy reliance on this method sets you up for poor performance in S3. However it may be necessary at times, for instance when you want to crop an image differently later. Use it only for occasional operations like cropping.
+   * The copyOut method takes a path in uploadfs and a local filename and copies
+   * the file back from uploadfs to the local filesystem. This should be used only
+   * rarely. Heavy reliance on this method sets you up for poor performance in S3.
+   * However it may be necessary at times, for instance when you want to crop an
+   * image differently later. Use it only for occasional operations like cropping.
    * @param  {String}   path    Path in uploadfs (begins with /)
    * @param  {String}   localPath    Path in the local filesystem to copy to
    * @param  {Object}   options    Options (passed to backend). May be skipped
@@ -201,7 +214,11 @@ function Uploadfs() {
   };
 
   /**
-   * The streamOut method takes a path in uploadfs and a local filename and returns a readable stream. This should be used only rarely. Heavy reliance on this method sets you up for poor performance in S3. However it may be necessary at times, for instance when access to files must be secured on a request-by-request basis.
+   * The streamOut method takes a path in uploadfs and a local filename and
+   * returns a readable stream. This should be used only rarely.
+   * Heavy reliance on this method sets you up for poor performance in S3.
+   * However it may be necessary at times, for instance when access to files
+   * must be secured on a request-by-request basis.
    * @param  {String}   path    Path in uploadfs (begins with /)
    * @param  {Object}   options    Options (passed to backend). May be skipped
    * @param  {Function} callback    Receives the usual err argument
@@ -244,8 +261,8 @@ function Uploadfs() {
    * not copied into uploadfs at all.
    *
    * If options.crop is present, the image is cropped according to the
-   * top, left, width and height properties of options.crop. All properties must be integers.
-   * If cropping is done, it is performed first before scaling.
+   * top, left, width and height properties of options.crop. All properties
+   * must be integers. If cropping is done, it is performed first before scaling.
    *
    * IMPORTANT: if options.crop is present, the uncropped original is
    * NOT copied into uploadfs. The cropped version is what is copied
@@ -261,7 +278,8 @@ function Uploadfs() {
    * so that they will display properly in web browsers.
    *
    * @param {String} localPath    Local filesystem path of existing image file
-   * @param {String} path    Path in uploadfs to copy original to. Leave off the extension to autodetect the true type. Path begins with /
+   * @param {String} path    Path in uploadfs to copy original to. Leave off the
+   *                         extension to autodetect the true type. Path begins with /
    * @param {Object} options Options: scaledJpegQuality, copyOriginal, crop (see above)
    * @param {Function} callback Receives the usual err argument
    */
@@ -523,7 +541,9 @@ function Uploadfs() {
    * other backend) used and are not guaranteed.
    *
    * @param {String} path Local filesystem path to image file
-   * @param {Function} callback Receives the usual err argument, followed by an object with extension, width, height, orientation, originalWidth and originalHeight properties. Any other properties depend on the backend in use and are not guaranteed
+   * @param {Function} callback Receives the usual err argument, followed by an
+   * object with extension, width, height, orientation, originalWidth and originalHeight
+   * properties. Any other properties depend on the backend in use and are not guaranteed.
    *
    * @see Uploadfs#copyImageIn
    */
