@@ -1,5 +1,9 @@
 # Changelog
 
+## UNRELEASED
+
+* Adds SAS token support for the Azure storage backend.
+
 ## 1.24.3 (2025-03-25)
 
 * Fix missing variable which led to confusing error messages if the configured image backend is unavailable and prevented automatic fallback from `sharp` to `imagemagick`.

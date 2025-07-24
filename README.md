@@ -235,7 +235,11 @@ And, an equivalent configuration for Azure:
   storage: 'azure',
   account: 'storageAccountName',
   container: 'storageContainerName',
-  key: 'accessKey',
+  // If set to true, uploadfs will consider `key` to be a
+  // SAS token. Otherwise, it will be considered an access key.
+  // Default is false.
+  sas: false,
+  key: 'accessKeyOrSASToken',
   disabledFileKey: 'a random string of your choosing',
   // Always required for Azure
   tempPath: __dirname + '/temp',
@@ -279,13 +283,14 @@ With Azure you may optionally replicate the content across a cluster:
     {
       account: 'storageAccountName1',
       container: 'storageContainerName1',
-      key: 'accessKey1',
+      key: 'accessKey1'
     },
     {
       account: 'storageAccountName2',
       container: 'storageContainerName2',
-      key: 'accessKey2',
-    },
+      sas: true,
+      key: 'sharedAccessSignature'
+    }
   ],
   ...
 }

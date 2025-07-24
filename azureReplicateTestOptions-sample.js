@@ -15,7 +15,8 @@ module.exports = {
     {
       account: 'yourAccount2',
       container: 'account2_container1',
-      key: 'more_top_secret_999'
+      sas: true,
+      key: 'your_sas_token'
     }
   ]
 };
