@@ -1,6 +1,6 @@
 # Changelog
 
-## UNRELEASED
+## 1.25.0 (2025-08-06)
 
 * Adds SAS token support for the Azure storage backend.
 
