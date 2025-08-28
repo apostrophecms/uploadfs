@@ -1,5 +1,9 @@
 # Changelog
 
+## UNRELEASED
+
+* Bump `@google-cloud/storage` to 7.x to address a deprecation warning.
+
 ## 1.25.0 (2025-08-06)
 
 * Adds SAS token support for the Azure storage backend.

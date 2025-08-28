@@ -33,7 +33,7 @@
   },
   "optionalDependencies": {
     "@azure/storage-blob": "^12.14.0",
-    "@google-cloud/storage": "^6.11.0",
+    "@google-cloud/storage": "^7.17.0",
     "aws-sdk": "^2.645.0",
     "sharp": "^0.32.6"
   },
