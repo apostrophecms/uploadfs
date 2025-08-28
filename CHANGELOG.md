@@ -3,6 +3,7 @@
 ## UNRELEASED
 
 * Bump `@google-cloud/storage` to 7.x to address a deprecation warning.
+* `npx mocha test/gcs.js` exits without hanging (there was no bug in the actual functionality, just the test).
 
 ## 1.25.0 (2025-08-06)
 

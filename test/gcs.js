@@ -165,37 +165,36 @@ describe('UploadFS GCS', function () {
     uploadfs.copyImageIn('test.jpg', imgDstPath, (e, info) => {
       assert(!e, 'gcs copyImageIn works');
 
-      setTimeout(() => {
-        const url = uploadfs.getUrl();
-        const paths = [ info.basePath + '.jpg' ];
+      const url = uploadfs.getUrl();
+      const paths = [ info.basePath + '.jpg' ];
 
-        paths.push(info.basePath + '.small.jpg');
-        paths.push(info.basePath + '.medium.jpg');
-        paths.push(info.basePath + '.large.jpg');
+      paths.push(info.basePath + '.small.jpg');
+      paths.push(info.basePath + '.medium.jpg');
+      paths.push(info.basePath + '.large.jpg');
 
-        async.map(paths, (path, cb) => {
-          const imgPath = url + path;
+      async.map(paths, (path, cb) => {
+        const imgPath = url + path;
 
-          fetch(imgPath, {
-            method: 'GET'
+        fetch(imgPath, {
+          method: 'GET'
+        })
+          .then(function(res) {
+            assert(res.status === 200, `Request status 200 != ${res.status}`);
+            return res.text();
+          }).then(function(res) {
+            /* @@TODO we should test the correctness of uploaded images */
+
+            // clean up
+            uploadfs.remove(path, e => {
+              assert(!e, 'Remove uploaded file after testing');
+              return cb();
+            });
           })
-            .then(function (res) {
-              assert(res.status === 200, `Request status 200 != ${res.status}`);
-              /* @@TODO we should test the correctness of uploaded images */
-
-              // clean up
-              uploadfs.remove(path, e => {
-                assert(!e, 'Remove uploaded file after testing');
-                return cb();
-              });
-            })
-            .catch(cb);
-        }, e => {
-          assert(!e, 'Can request all copyImageInned images');
-          done();
-        });
-        // end async.each
-      }, 5000);
+          .catch(cb);
+      }, e => {
+        assert(!e, 'Can request all copyImageInned images');
+        done();
+      });
     });
   });
 });
