@@ -1,5 +1,9 @@
 # Changelog
 
+## UNRELEASED
+
+* Fix typo in documentation (`disableFileKey` > `disabledFileKey`).
+
 ## 1.25.1 (2025-08-28)
 
 * Bump `@google-cloud/storage` to 7.x to address a deprecation warning.
