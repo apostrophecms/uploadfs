@@ -1,6 +1,6 @@
 # Changelog
 
-## UNRELEASED
+## 1.25.2 (2025-10-01)
 
 * Fix typo in documentation (`disableFileKey` > `disabledFileKey`).
 
