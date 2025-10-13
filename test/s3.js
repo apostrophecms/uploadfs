@@ -276,7 +276,7 @@ describe('UploadFS S3 with private ACL', async function () {
     await init(s3Options);
   });
 
-  it.skip('test with alternate ACLs', async function() {
+  it('test with alternate ACLs', async function() {
     await copyIn('test.txt', dstPath);
     await testCopyOut();
     assert.rejects(testWeb());
