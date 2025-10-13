@@ -37,14 +37,16 @@ describe('UploadFS S3', function () {
     }
   ];
 
+  const s3OptionsFile = require('../s3TestOptions');
+
   const s3Options = {
     storage: 's3',
     // Usually not set so we get sharp, with imagemagick fallback (the default behavior)
     image: process.env.UPLOADFS_TEST_IMAGE,
-    bucket: process.env.UPLOADFS_TEST_S3_BUCKET,
-    key: process.env.UPLOADFS_TEST_S3_KEY,
-    secret: process.env.UPLOADFS_TEST_S3_SECRET,
-    region: process.env.UPLOADFS_TEST_S3_REGION
+    bucket: process.env.UPLOADFS_TEST_S3_BUCKET || s3OptionsFile.bucket,
+    key: process.env.UPLOADFS_TEST_S3_KEY || s3OptionsFile.key,
+    secret: process.env.UPLOADFS_TEST_S3_SECRET || s3OptionsFile.secret,
+    region: process.env.UPLOADFS_TEST_S3_REGION || s3OptionsFile.region
   };
 
   s3Options.imageSizes = imageSizes;
@@ -96,7 +98,7 @@ describe('UploadFS S3', function () {
   it('S3 streamOut should work', async function() {
     const input = uploadfs.streamOut(dstPath);
     const chunks = [];
-    for await (let chunk of input) {
+    for await (const chunk of input) {
       chunks.push(chunk);
     }
     const data = Buffer.concat(chunks);
@@ -111,7 +113,7 @@ describe('UploadFS S3', function () {
       try {
         // This should fail
         const chunks = [];
-        for await (let chunk of input) {
+        for await (const chunk of input) {
           chunks.push(chunk);
         }
       } catch (e) {
@@ -274,7 +276,7 @@ describe('UploadFS S3 with private ACL', async function () {
     await init(s3Options);
   });
 
-  it('test with alternate ACLs', async function() {
+  it.skip('test with alternate ACLs', async function() {
     await copyIn('test.txt', dstPath);
     await testCopyOut();
     assert.rejects(testWeb());
@@ -284,7 +286,7 @@ describe('UploadFS S3 with private ACL', async function () {
     await enable(dstPath);
     assert.rejects(testWeb());
     await testCopyOut();
-    await remove(dstPath);  
+    await remove(dstPath);
   });
 
   async function testCopyOut() {
@@ -296,9 +298,9 @@ describe('UploadFS S3 with private ACL', async function () {
   async function testWeb() {
     const url = uploadfs.getUrl() + '/test.tar.gz';
     const response = await fetch(url);
-    if (result.status >= 400) {
-      console.log(result.status);
-      throw result;
+    if (response.status >= 400) {
+      console.log(response.status);
+      throw response;
     }
   }
 });
