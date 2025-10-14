@@ -52,9 +52,8 @@ describe('UploadFS S3', function () {
   s3Options.imageSizes = imageSizes;
   s3Options.tempPath = tempPath;
 
-  it('S3 Should init s3 connection without error', async function() {
+  before(async function() {
     await init(s3Options);
-    await copyIn('test.txt', dstPath);
   });
 
   it('S3 should store and retrieve a .tar.gz file without double-gzipping it', async function() {
@@ -107,21 +106,17 @@ describe('UploadFS S3', function () {
   });
 
   it('S3 streamOut should handle an error status code from S3 sensibly', async function() {
+    const input = uploadfs.streamOut('made/up/path');
     try {
-      const input = uploadfs.streamOut('made/up/path');
-      let status;
-      try {
-        // This should fail
-        const chunks = [];
-        for await (const chunk of input) {
-          chunks.push(chunk);
-        }
-      } catch (e) {
-        status = e.statusCode;
+      // This should fail
+      const chunks = [];
+      for await (const chunk of input) {
+        chunks.push(chunk);
       }
-      assert(status >= 400);
+      assert(false, 'Should not get here');
     } catch (e) {
-      console.error('second error handler', e);
+      assert.equal(e.name, 'NoSuchKey');
+      assert(e.statusCode >= 400, 'Should be a 4xx or 5xx status code');
     }
   });
 
