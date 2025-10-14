@@ -4,7 +4,6 @@ const fetch = require('node-fetch');
 const exec = require('child_process').execSync;
 const util = require('util');
 const fs = require('fs');
-const s3OptionsFile = require('../s3TestOptions');
 
 describe('UploadFS S3', function () {
   this.timeout(50000);
@@ -37,6 +36,8 @@ describe('UploadFS S3', function () {
       height: 1140
     }
   ];
+
+  const s3OptionsFile = require('../s3TestOptions');
 
   const s3Options = {
     storage: 's3',
@@ -252,6 +253,8 @@ describe('UploadFS S3 with private ACL', async function () {
   const fs = require('fs');
   const tempPath = '../temp';
   const dstPath = '/one/two/three/test2.txt';
+
+  const s3OptionsFile = require('../s3TestOptions');
 
   const s3Options = {
     storage: 's3',
