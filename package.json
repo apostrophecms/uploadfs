@@ -36,6 +36,7 @@
     "@aws-sdk/lib-storage": "^3.908.0",
     "@azure/storage-blob": "^12.14.0",
     "@google-cloud/storage": "^7.17.0",
+    "@smithy/node-http-handler": "^4.4.0",
     "sharp": "^0.32.6"
   },
   "devDependencies": {
