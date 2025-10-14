@@ -4,6 +4,7 @@ const fetch = require('node-fetch');
 const exec = require('child_process').execSync;
 const util = require('util');
 const fs = require('fs');
+const s3OptionsFile = require('../s3TestOptions');
 
 describe('UploadFS S3', function () {
   this.timeout(50000);
@@ -36,8 +37,6 @@ describe('UploadFS S3', function () {
       height: 1140
     }
   ];
-
-  const s3OptionsFile = require('../s3TestOptions');
 
   const s3Options = {
     storage: 's3',
@@ -258,28 +257,28 @@ describe('UploadFS S3 with private ACL', async function () {
     storage: 's3',
     // Usually not set so we get sharp, with imagemagick fallback (the default behavior)
     image: process.env.UPLOADFS_TEST_IMAGE,
-    bucket: process.env.UPLOADFS_TEST_S3_BUCKET,
-    key: process.env.UPLOADFS_TEST_S3_KEY,
-    secret: process.env.UPLOADFS_TEST_S3_SECRET,
-    region: process.env.UPLOADFS_TEST_S3_REGION,
+    bucket: process.env.UPLOADFS_TEST_S3_BUCKET || s3OptionsFile.bucket,
+    key: process.env.UPLOADFS_TEST_S3_KEY || s3OptionsFile.key,
+    secret: process.env.UPLOADFS_TEST_S3_SECRET || s3OptionsFile.secret,
+    region: process.env.UPLOADFS_TEST_S3_REGION || s3OptionsFile.region,
     bucketObjectsACL: 'private',
     disabledBucketObjectsACL: 'private',
     tempPath
   };
 
-  it('initialize uploadfs', async function() {
+  before(async function() {
     await init(s3Options);
   });
 
   it('test with alternate ACLs', async function() {
     await copyIn('test.txt', dstPath);
     await testCopyOut();
-    assert.rejects(testWeb());
+    await assert.rejects(testWeb);
     await disable(dstPath);
-    assert.rejects(testWeb());
+    await assert.rejects(testWeb);
     await testCopyOut();
     await enable(dstPath);
-    assert.rejects(testWeb());
+    await assert.rejects(testWeb);
     await testCopyOut();
     await remove(dstPath);
   });
@@ -294,7 +293,6 @@ describe('UploadFS S3 with private ACL', async function () {
     const url = uploadfs.getUrl() + '/test.tar.gz';
     const response = await fetch(url);
     if (response.status >= 400) {
-      console.log(response.status);
       throw response;
     }
   }
