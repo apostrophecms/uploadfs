@@ -37,16 +37,14 @@ describe('UploadFS S3', function () {
     }
   ];
 
-  const s3OptionsFile = require('../s3TestOptions');
-
   const s3Options = {
     storage: 's3',
     // Usually not set so we get sharp, with imagemagick fallback (the default behavior)
     image: process.env.UPLOADFS_TEST_IMAGE,
-    bucket: process.env.UPLOADFS_TEST_S3_BUCKET || s3OptionsFile.bucket,
-    key: process.env.UPLOADFS_TEST_S3_KEY || s3OptionsFile.key,
-    secret: process.env.UPLOADFS_TEST_S3_SECRET || s3OptionsFile.secret,
-    region: process.env.UPLOADFS_TEST_S3_REGION || s3OptionsFile.region
+    bucket: process.env.UPLOADFS_TEST_S3_BUCKET,
+    key: process.env.UPLOADFS_TEST_S3_KEY,
+    secret: process.env.UPLOADFS_TEST_S3_SECRET,
+    region: process.env.UPLOADFS_TEST_S3_REGION
   };
 
   s3Options.imageSizes = imageSizes;
@@ -254,16 +252,14 @@ describe('UploadFS S3 with private ACL', async function () {
   const tempPath = '../temp';
   const dstPath = '/one/two/three/test2.txt';
 
-  const s3OptionsFile = require('../s3TestOptions');
-
   const s3Options = {
     storage: 's3',
     // Usually not set so we get sharp, with imagemagick fallback (the default behavior)
     image: process.env.UPLOADFS_TEST_IMAGE,
-    bucket: process.env.UPLOADFS_TEST_S3_BUCKET || s3OptionsFile.bucket,
-    key: process.env.UPLOADFS_TEST_S3_KEY || s3OptionsFile.key,
-    secret: process.env.UPLOADFS_TEST_S3_SECRET || s3OptionsFile.secret,
-    region: process.env.UPLOADFS_TEST_S3_REGION || s3OptionsFile.region,
+    bucket: process.env.UPLOADFS_TEST_S3_BUCKET,
+    key: process.env.UPLOADFS_TEST_S3_KEY,
+    secret: process.env.UPLOADFS_TEST_S3_SECRET,
+    region: process.env.UPLOADFS_TEST_S3_REGION,
     bucketObjectsACL: 'private',
     disabledBucketObjectsACL: 'private',
     tempPath
