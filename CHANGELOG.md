@@ -1,6 +1,6 @@
 # Changelog
 
-## UNRELEASED
+## 1.26.0 (2025-10-30)
 
 * Replace aws-sdk with @aws-sdk/client-s3.
 
