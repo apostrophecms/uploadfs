@@ -51,6 +51,7 @@ function Uploadfs() {
             self._storage +
             ' storage backend, your node version may be too old for it'
         );
+        console.error(e);
         return callback(e);
       }
       self._storage = library();
